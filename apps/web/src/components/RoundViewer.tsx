@@ -14,6 +14,7 @@ import {
   Check,
   Tag,
   AlignLeft,
+  Lightbulb,
 } from "lucide-react";
 
 interface RoundViewerProps {
@@ -22,7 +23,7 @@ interface RoundViewerProps {
 
 export default function RoundViewer({ rounds }: RoundViewerProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
-  const [activeTab, setActiveTab] = useState<"questions" | "coding" | "raw">("questions");
+  const [activeTab, setActiveTab] = useState<"walkthrough" | "questions" | "coding" | "raw">("walkthrough");
   const [copied, setCopied] = useState(false);
 
   if (!rounds || rounds.length === 0) {
@@ -34,8 +35,35 @@ export default function RoundViewer({ rounds }: RoundViewerProps) {
   }
 
   const currentRound = rounds[selectedIdx] || rounds[0];
-  const questions = currentRound.questions || [];
-  const codingProblems = currentRound.coding?.problems || [];
+
+  // Normalize questions (handles both string and object)
+  const questions = (currentRound.questions || []).map((q: any) => {
+    if (typeof q === "string") {
+      return { question: q, topic: "Core CS", difficulty: "medium", category: "technical" };
+    }
+    return {
+      question: q.question || "",
+      topic: q.topic || "Core CS",
+      difficulty: q.difficulty || "medium",
+      category: q.category || "technical",
+      details: q.details || null,
+    };
+  }).filter((q) => q.question.trim().length > 0);
+
+  // Normalize coding problems (handles both string and object)
+  const codingProblems = (currentRound.coding?.problems || []).map((p: any) => {
+    if (typeof p === "string") {
+      return { title: p.slice(0, 80), description: p, difficulty: "medium", topics: ["Algorithms"] };
+    }
+    return {
+      title: p.title || "Coding Problem",
+      description: p.description || p.title || "",
+      difficulty: p.difficulty || "medium",
+      topics: p.topics || [],
+    };
+  });
+
+  const narrative = currentRound.description || currentRound.raw_content || "";
 
   const handleCopyRaw = () => {
     if (currentRound.raw_content) {
@@ -55,15 +83,7 @@ export default function RoundViewer({ rounds }: RoundViewerProps) {
             return (
               <button
                 key={idx}
-                onClick={() => {
-                  setSelectedIdx(idx);
-                  // Auto pick tab with content
-                  if (activeTab === "questions" && (r.questions?.length || 0) === 0 && (r.coding?.problems?.length || 0) > 0) {
-                    setActiveTab("coding");
-                  } else if (activeTab === "coding" && (r.coding?.problems?.length || 0) === 0 && (r.questions?.length || 0) > 0) {
-                    setActiveTab("questions");
-                  }
-                }}
+                onClick={() => setSelectedIdx(idx)}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
                   isSelected
                     ? "bg-indigo-600 text-white shadow-sm"
@@ -105,11 +125,6 @@ export default function RoundViewer({ rounds }: RoundViewerProps) {
                 Source heading: <span className="font-mono text-slate-600 dark:text-slate-300">"{currentRound.original_name}"</span>
               </p>
             )}
-            {currentRound.description && (
-              <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
-                {currentRound.description}
-              </p>
-            )}
           </div>
 
           {/* Metadata badges */}
@@ -137,6 +152,18 @@ export default function RoundViewer({ rounds }: RoundViewerProps) {
 
         {/* Content Navigation Sub-tabs */}
         <div className="flex items-center gap-2 mt-6 border-b border-slate-200 dark:border-slate-800">
+          <button
+            onClick={() => setActiveTab("walkthrough")}
+            className={`flex items-center gap-1.5 pb-2.5 px-2 text-sm font-medium border-b-2 transition-all ${
+              activeTab === "walkthrough"
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 font-semibold"
+                : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+            }`}
+          >
+            <Lightbulb className="w-4 h-4" />
+            <span>Walkthrough & Narrative</span>
+          </button>
+
           <button
             onClick={() => setActiveTab("questions")}
             className={`flex items-center gap-1.5 pb-2.5 px-2 text-sm font-medium border-b-2 transition-all ${
@@ -177,12 +204,35 @@ export default function RoundViewer({ rounds }: RoundViewerProps) {
 
       {/* Content Area */}
       <div className="p-6">
+        {/* Tab 0: Walkthrough & Narrative */}
+        {activeTab === "walkthrough" && (
+          <div className="space-y-4">
+            <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 space-y-3">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-amber-500" />
+                <span>Round Walkthrough & Experience Description</span>
+              </div>
+              <div className="space-y-3 text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-sans">
+                {narrative ? (
+                  narrative.split("\n\n").map((para, pIdx) => (
+                    <p key={pIdx} className="leading-relaxed">
+                      {para}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-slate-400 italic">No narrative recorded for this round.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tab 1: Questions */}
         {activeTab === "questions" && (
           <div>
             {questions.length === 0 ? (
               <div className="text-center py-10 text-slate-400 text-sm">
-                No discrete interview questions tagged for this round. Check the verbatim source text tab for full details.
+                No discrete interview questions tagged for this round. Check the walkthrough or verbatim source text tab for full details.
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-1">
@@ -264,11 +314,6 @@ export default function RoundViewer({ rounds }: RoundViewerProps) {
                             {p.difficulty}
                           </span>
                         )}
-                        {p.platform && (
-                          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                            {p.platform}
-                          </span>
-                        )}
                       </div>
                     </div>
 
@@ -281,7 +326,7 @@ export default function RoundViewer({ rounds }: RoundViewerProps) {
                     {p.topics && p.topics.length > 0 && (
                       <div className="flex flex-wrap items-center gap-1.5 pt-1">
                         <span className="text-xs text-slate-400 font-medium mr-1">Tags:</span>
-                        {p.topics.map((tag, tIdx) => (
+                        {p.topics.map((tag: string, tIdx: number) => (
                           <span
                             key={tIdx}
                             className="text-xs px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"

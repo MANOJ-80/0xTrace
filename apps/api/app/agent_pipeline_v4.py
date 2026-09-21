@@ -14,6 +14,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from .agent_pipeline import SourceSpan, ask_agent, make_source_spans
 from .agent_pipeline_v3 import build_result as _build_result
 from .config import get_settings
+from .quality_agent import clean_experience
 from .semantic_viewer import _layout_text
 
 app = FastAPI(title="0xTrace extraction agent", version="4.0.0")
@@ -28,6 +29,7 @@ def _title_from_original(round_data: dict[str, Any]) -> str:
 
 def polish_document(result: dict[str, Any]) -> dict[str, Any]:
     experience = result["experiences"][0]
+    clean_experience(experience)
     for sequence, round_data in enumerate(experience["rounds"], 1):
         round_data["sequence"] = sequence
         round_data["original_name"] = round_data.get("original_name") or round_data["name"]

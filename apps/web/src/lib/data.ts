@@ -169,24 +169,36 @@ export async function getQuestionBank() {
     const roleName = exp.job?.role || "Software Engineer";
 
     for (const round of exp.rounds || []) {
-      for (const q of round.questions || []) {
-        questions.push({
-          ...q,
-          company: companyName,
-          role: roleName,
-          experienceId: exp.id,
-          roundName: round.name,
-        });
+      for (const rawQ of round.questions || []) {
+        const qObj: InterviewQuestion =
+          typeof rawQ === "string"
+            ? { question: rawQ, topic: "Core CS", difficulty: "medium" }
+            : (rawQ as InterviewQuestion);
+        if (qObj && qObj.question) {
+          questions.push({
+            ...qObj,
+            company: companyName,
+            role: roleName,
+            experienceId: exp.id,
+            roundName: round.name,
+          });
+        }
       }
 
-      for (const cp of round.coding?.problems || []) {
-        codingProblems.push({
-          ...cp,
-          company: companyName,
-          role: roleName,
-          experienceId: exp.id,
-          roundName: round.name,
-        });
+      for (const rawCp of round.coding?.problems || []) {
+        const cpObj: CodingProblem =
+          typeof rawCp === "string"
+            ? { title: (rawCp as string).slice(0, 80), description: rawCp as string, difficulty: "medium" }
+            : (rawCp as CodingProblem);
+        if (cpObj && cpObj.title) {
+          codingProblems.push({
+            ...cpObj,
+            company: companyName,
+            role: roleName,
+            experienceId: exp.id,
+            roundName: round.name,
+          });
+        }
       }
     }
   }

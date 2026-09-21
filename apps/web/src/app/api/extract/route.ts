@@ -84,6 +84,7 @@ import sys, json, os, hashlib, re
 from pathlib import Path
 from app.pdf_text import extract_pdf_text
 from app.agent_pipeline import make_source_spans
+from app.quality_agent import clean_experience
 
 with open("${tmpPdfPath}", "rb") as f:
     extracted = extract_pdf_text(f.read())
@@ -204,6 +205,8 @@ experience = {
     "quality": {"lossless": True},
     "raw_text": raw_text
 }
+
+experience = clean_experience(experience)
 
 output = {
     "dataset_metadata": {
