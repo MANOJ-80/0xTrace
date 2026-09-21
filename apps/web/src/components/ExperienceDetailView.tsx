@@ -30,7 +30,9 @@ import {
   Calendar,
   AlertTriangle,
   Lightbulb,
+  FileText,
 } from "lucide-react";
+import DocumentReader from "./DocumentReader";
 
 interface ExperienceDetailViewProps {
   experience: Experience;
@@ -42,6 +44,7 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [mainTab, setMainTab] = useState<"rounds" | "transcript">("rounds");
 
   const rounds = experience.rounds || [];
   const companyName =
@@ -206,86 +209,130 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
             </div>
           </div>
 
-          {/* Interview Rounds List */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-bold text-white">Interview Rounds</h2>
-              <button
-                onClick={() => handleOpenRound(0)}
-                className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>View All</span>
-              </button>
-            </div>
+          {/* Main View Mode Tabs */}
+          <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[#11141c] border border-[#1e2433]">
+            <button
+              onClick={() => setMainTab("rounds")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all ${
+                mainTab === "rounds"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/50"
+                  : "text-slate-400 hover:text-white hover:bg-[#161a24]"
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>Interview Rounds ({rounds.length})</span>
+            </button>
+            <button
+              onClick={() => setMainTab("transcript")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold transition-all ${
+                mainTab === "transcript"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-950/50"
+                  : "text-slate-400 hover:text-white hover:bg-[#161a24]"
+              }`}
+            >
+              <FileText className="w-4 h-4" />
+              <span>Full Untouched Transcript</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-800/50">
+                100% Verbatim
+              </span>
+            </button>
+          </div>
 
-            <div className="space-y-2.5">
-              {rounds.map((round, idx) => {
-                const roundTitle = round.name.includes("Round")
-                  ? round.name.replace(/-/g, ":")
-                  : `Round ${round.sequence}: ${round.name}`;
-
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => handleOpenRound(idx)}
-                    className="group bg-[#11141c] hover:bg-[#151924] border border-[#1e2433] hover:border-indigo-500/50 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer transition-all shadow-sm"
+          {/* Tab 1: Rounds Breakdown */}
+          {mainTab === "rounds" && (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <h2 className="text-lg font-bold text-white">Interview Rounds</h2>
+                  <button
+                    onClick={() => handleOpenRound(0)}
+                    className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
                   >
-                    <div className="flex items-center gap-4 min-w-0">
-                      <div className="w-11 h-11 rounded-xl bg-[#181d28] border border-[#232938] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                        {getRoundIcon(round.type)}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-indigo-300 transition-colors truncate">
-                          {roundTitle}
-                        </h3>
-                        <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-slate-500" />
-                            {round.duration || "60"}
-                          </span>
-                          <span>•</span>
-                          <span>{round.platform || round.mode || "In - Person"}</span>
+                    <Layers className="w-3.5 h-3.5" />
+                    <span>View All</span>
+                  </button>
+                </div>
+
+                <div className="space-y-2.5">
+                  {rounds.map((round, idx) => {
+                    const roundTitle = round.name.includes("Round")
+                      ? round.name.replace(/-/g, ":")
+                      : `Round ${round.sequence}: ${round.name}`;
+
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => handleOpenRound(idx)}
+                        className="group bg-[#11141c] hover:bg-[#151924] border border-[#1e2433] hover:border-indigo-500/50 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer transition-all shadow-sm"
+                      >
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className="w-11 h-11 rounded-xl bg-[#181d28] border border-[#232938] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            {getRoundIcon(round.type)}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-indigo-300 transition-colors truncate">
+                              {roundTitle}
+                            </h3>
+                            <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                                {round.duration || "60"}
+                              </span>
+                              <span>•</span>
+                              <span>{round.platform || round.mode || "In - Person"}</span>
+                            </div>
+                            <p className="text-xs text-slate-400/90 mt-1 font-sans">
+                              Click to view round details
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-slate-400/90 mt-1 font-sans">
-                          Click to view round details
-                        </p>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/80">
+                            <CheckCircle2 className="w-3 h-3" />
+                            {outcomeStatus}
+                          </span>
+                          <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
+                        </div>
                       </div>
-                    </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/80">
-                        <CheckCircle2 className="w-3 h-3" />
-                        {outcomeStatus}
-                      </span>
-                      <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+              {/* Tags */}
+              <div className="bg-[#11141c] border border-[#1e2433] rounded-2xl p-5 space-y-3">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
+                  Tags
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs px-3 py-1 rounded-lg bg-[#181d28] border border-[#232938] text-indigo-300 font-medium">
+                    #{companyName.toLowerCase().replace(/\s+/g, " ")}
+                  </span>
+                  <span className="text-xs px-3 py-1 rounded-lg bg-[#181d28] border border-[#232938] text-indigo-300 font-medium">
+                    #{roleName.toLowerCase().replace(/\s+/g, " ")}
+                  </span>
+                  <span className="text-xs px-3 py-1 rounded-lg bg-[#181d28] border border-[#232938] text-indigo-300 font-medium">
+                    #{experience.job?.employment_type || "full-time"}
+                  </span>
+                  <span className="text-xs px-3 py-1 rounded-lg bg-[#181d28] border border-[#232938] text-indigo-300 font-medium">
+                    #campus placement
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
 
-          {/* Tags */}
-          <div className="bg-[#11141c] border border-[#1e2433] rounded-2xl p-5 space-y-3">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-              Tags
-            </span>
-            <div className="flex flex-wrap gap-2">
-              <span className="text-xs px-3 py-1 rounded-lg bg-[#181d28] border border-[#232938] text-indigo-300 font-medium">
-                #{companyName.toLowerCase().replace(/\s+/g, " ")}
-              </span>
-              <span className="text-xs px-3 py-1 rounded-lg bg-[#181d28] border border-[#232938] text-indigo-300 font-medium">
-                #{roleName.toLowerCase().replace(/\s+/g, " ")}
-              </span>
-              <span className="text-xs px-3 py-1 rounded-lg bg-[#181d28] border border-[#232938] text-indigo-300 font-medium">
-                #{experience.job?.employment_type || "full-time"}
-              </span>
-              <span className="text-xs px-3 py-1 rounded-lg bg-[#181d28] border border-[#232938] text-indigo-300 font-medium">
-                #campus placement
-              </span>
+          {/* Tab 2: Full Untouched Transcript */}
+          {mainTab === "transcript" && (
+            <div className="space-y-3">
+              <DocumentReader
+                content={experience.raw_text || ""}
+                title={`${companyName} — Full Interview Experience Transcript`}
+                subtitle={`Original submission by ${candidateName} · 100% untouched raw text`}
+              />
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right Column: Sidebar (approx 4 / 12 cols) */}
