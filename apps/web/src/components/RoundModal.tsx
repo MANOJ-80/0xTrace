@@ -25,6 +25,7 @@ import {
   Tag,
   Flame,
 } from "lucide-react";
+import DocumentReader from "./DocumentReader";
 
 interface RoundModalProps {
   rounds: Round[];
@@ -417,20 +418,12 @@ export default function RoundModal({
             </button>
 
             {showRawSource && (
-              <div className="p-4 border-t border-[#1e2433] space-y-2 bg-[#0a0c12]">
-                <div className="flex items-center justify-between text-[11px] text-slate-500">
-                  <span>Exact characters extracted directly from PDF source stream:</span>
-                  <button
-                    onClick={handleCopyText}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] transition-colors"
-                  >
-                    {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    <span>{copied ? "Copied" : "Copy Raw"}</span>
-                  </button>
-                </div>
-                <pre className="p-3.5 rounded-lg bg-[#050608] text-slate-300 font-mono text-xs overflow-x-auto leading-relaxed whitespace-pre-wrap border border-slate-800">
-                  {currentRound.raw_content || "(No raw source content recorded)"}
-                </pre>
+              <div className="p-4 border-t border-[#1e2433] bg-[#0a0c12]">
+                <DocumentReader
+                  content={currentRound.raw_content || ""}
+                  title={`${roundTitle} Transcript`}
+                  subtitle="Original candidate write-up · Exact text preserved"
+                />
               </div>
             )}
           </div>

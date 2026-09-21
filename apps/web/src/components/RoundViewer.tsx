@@ -16,6 +16,7 @@ import {
   AlignLeft,
   Lightbulb,
 } from "lucide-react";
+import DocumentReader from "./DocumentReader";
 
 interface RoundViewerProps {
   rounds: Round[];
@@ -343,26 +344,13 @@ export default function RoundViewer({ rounds }: RoundViewerProps) {
           </div>
         )}
 
-        {/* Tab 3: Verbatim Source Content */}
+        {/* Tab 3: Verbatim Source Content (Document Reader) */}
         {activeTab === "raw" && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-slate-500">
-              <span className="flex items-center gap-1">
-                <AlignLeft className="w-3.5 h-3.5" />
-                Original raw content preserved directly from PDF source spans:
-              </span>
-              <button
-                onClick={handleCopyRaw}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 transition-colors"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? "Copied" : "Copy Raw"}</span>
-              </button>
-            </div>
-            <pre className="p-4 rounded-xl bg-slate-900 text-slate-200 font-mono text-xs overflow-x-auto leading-relaxed whitespace-pre-wrap selection:bg-indigo-500 selection:text-white border border-slate-800">
-              {currentRound.raw_content || "(No raw content preserved for this round)"}
-            </pre>
-          </div>
+          <DocumentReader
+            content={currentRound.raw_content || ""}
+            title={`${currentRound.name} Transcript`}
+            subtitle="Original candidate write-up · Exact text preserved"
+          />
         )}
       </div>
     </div>
