@@ -47,9 +47,10 @@ def section_raw_text(text: str) -> list[RawSection]:
         sections.append(RawSection(id="00-document", kind="document", heading="Document details", raw_text=text[:starts[0]]))
     for index, match in enumerate(matches):
         heading = match.group(0).strip()
+        normalized_heading = heading.lower().rstrip(":! ").strip()
         kind = "round" if ROUND.match(heading) else {
             "insights": "insights", "contact": "contact", "linkedin": "contact", "all the best": "conclusion"
-        }.get(heading.lower().rstrip(":"), "other")
+        }.get(normalized_heading, "other")
         slug = re.sub(r"[^a-z0-9]+", "-", heading.lower()).strip("-")
         sections.append(RawSection(id=f"{index + 1:02d}-{slug}", kind=kind, heading=heading, raw_text=text[match.start():starts[index + 1]]))
     return sections

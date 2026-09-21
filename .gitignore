@@ -1,8 +1,21 @@
 # Dependencies
 node_modules/
+.venv/
+venv/
 
-# Chrome profile data
+# Python cache & test
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Next.js build
+.next/
+next-env.d.ts
+
+# Chrome profile data & scratch
 .chrome_profile/
+scratch/
+*.bak
 
 # OS files
 .DS_Store
