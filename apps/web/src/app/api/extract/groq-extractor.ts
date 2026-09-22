@@ -9,7 +9,7 @@ export async function extractWithGroq(
   pageCount: number
 ): Promise<ExtractionResponse> {
   const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+  const model = process.env.GROQ_MODEL || "qwen/qwen3.8-27b";
 
   if (!apiKey) {
     throw new Error(
@@ -86,12 +86,25 @@ CRITICAL RULES:
 
   let parsedJson: unknown;
   try {
-    parsedJson = JSON.parse(content);
-  } catch {
+    const first = content.indexOf('{');
+    const last = content.lastIndexOf('}');
+    let cleanContent = content;
+    if (first !== -1 && last !== -1) {
+      cleanContent = content.substring(first, last + 1);
+    }
+    parsedJson = JSON.parse(cleanContent);
+  } catch (e) {
+    console.error("JSON Parse Failed. Raw:", content);
     parsedJson = {};
   }
 
-  require("fs").writeFileSync("/tmp/llm_raw.json", content);
+  const { ExperienceExtractionSchema } = await import("@/lib/extraction-schema");
+  const parsed = ExperienceExtractionSchema.safeParse(parsedJson);
+  if (!parsed.success) {
+    console.error("ZOD VALIDATION FAILED:", parsed.error.issues);
+    console.error("RAW LLM CONTENT:", content);
+  }
+
   const validated = parseExtractionResult(parsedJson, rawText, filename);
   validated.source = {
     ...validated.source,
