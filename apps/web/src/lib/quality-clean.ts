@@ -30,7 +30,7 @@ function redactText(text: string): string {
     return `${username[0]}${'*'.repeat(Math.max(1, username.length - 2))}${username[username.length - 1]}@${domain}`;
   });
   
-  const phoneRegex = /(?:(?:\+|00)\d{1,3}[\s-]?)?(?:\(?\d{2,4}\)?[\s-]?)?\d{3,4}[\s-]?\d{3,4}/g;
+  const phoneRegex = /(?:(?:\+|00)\d{1,3}[\s-]?)?(?:\d[\s-]?){9,14}\d/g;
   redacted = redacted.replace(phoneRegex, (match) => {
     const numCount = (match.match(/\d/g) || []).length;
     if (numCount >= 8 && numCount <= 15) {
