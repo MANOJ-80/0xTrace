@@ -118,6 +118,7 @@ CRITICAL RULES:
   };
 
   const cleaned = cleanExtractedExperience(validated) as Experience;
+  const { redactObject } = await import("@/lib/quality-clean");
 
   // Build ui_document sections. Since the LLM no longer outputs verbatim raw_content,
   // we provide the entire rawText as a single document section to preserve lossless verification.
@@ -125,7 +126,7 @@ CRITICAL RULES:
     {
       type: "metadata" as const,
       title: "Verbatim Source Document",
-      raw_content: rawText,
+      raw_content: redactObject(rawText),
     },
   ];
 

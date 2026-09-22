@@ -1,5 +1,69 @@
 import type { Experience } from "@/lib/types";
 
+function maskEmail(email: string): string {
+  if (!email) return email;
+  const parts = email.split('@');
+  if (parts.length !== 2) return email;
+  const [username, domain] = parts;
+  if (username.length <= 1) return `*@${domain}`;
+  return `${username[0]}${'*'.repeat(Math.max(1, username.length - 2))}${username[username.length - 1]}@${domain}`;
+}
+
+function maskPhone(phone: string): string {
+  if (!phone) return phone;
+  const numeric = phone.replace(/\D/g, '');
+  if (numeric.length < 8) return phone;
+  return phone.replace(/\d/g, (match, offset, str) => {
+    let digitIndex = 0;
+    for(let i=0; i<=offset; i++) if (/\d/.test(str[i])) digitIndex++;
+    if (digitIndex <= 2 || digitIndex > numeric.length - 2) return match;
+    return '*';
+  });
+}
+
+function redactText(text: string): string {
+  if (!text || typeof text !== 'string') return text;
+  
+  const emailRegex = /([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  let redacted = text.replace(emailRegex, (match, username, domain) => {
+    if (username.length <= 1) return `*@${domain}`;
+    return `${username[0]}${'*'.repeat(Math.max(1, username.length - 2))}${username[username.length - 1]}@${domain}`;
+  });
+  
+  const phoneRegex = /(?:(?:\+|00)\d{1,3}[\s-]?)?(?:\(?\d{2,4}\)?[\s-]?)?\d{3,4}[\s-]?\d{3,4}/g;
+  redacted = redacted.replace(phoneRegex, (match) => {
+    const numCount = (match.match(/\d/g) || []).length;
+    if (numCount >= 8 && numCount <= 15) {
+      return maskPhone(match);
+    }
+    return match;
+  });
+  
+  return redacted;
+}
+
+// Helper for deep redaction of the entire extracted object
+export function redactObject<T>(obj: T): T {
+  if (Array.isArray(obj)) {
+    return obj.map(item => redactObject(item)) as unknown as T;
+  } else if (obj !== null && typeof obj === 'object') {
+    const newObj: any = {};
+    for (const key in obj) {
+      if (key === 'contacts') {
+        newObj[key] = { ...(obj as any)[key] };
+        if (newObj[key].email) newObj[key].email = maskEmail(newObj[key].email);
+        if (newObj[key].phone) newObj[key].phone = maskPhone(newObj[key].phone);
+      } else {
+        newObj[key] = redactObject((obj as any)[key]);
+      }
+    }
+    return newObj as T;
+  } else if (typeof obj === 'string') {
+    return redactText(obj) as unknown as T;
+  }
+  return obj;
+}
+
 export function cleanExtractedExperience(exp: Experience): Experience {
   const cleanedExp = { ...exp };
   
@@ -76,5 +140,5 @@ export function cleanExtractedExperience(exp: Experience): Experience {
     });
   }
 
-  return cleanedExp;
+  return redactObject(cleanedExp);
 }
