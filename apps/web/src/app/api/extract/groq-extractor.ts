@@ -49,7 +49,7 @@ FIELDS TO EXTRACT:
 CRITICAL RULES:
 1. Extract each interview question as a SEPARATE item in the questions array.
 2. Coding problems should be identified by LeetCode/GFG references, algorithm names, or problem statements.
-3. If a field is not present in the document, use null.
+3. EXTREMELY IMPORTANT: OMIT ANY KEYS that are null, empty arrays, or false. DO NOT output keys with null values. This is critical to save tokens.
 4. Return ONLY a valid JSON object. No markdown, no explanatory text.`;
 
   const response = await fetch(
@@ -61,10 +61,10 @@ CRITICAL RULES:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model,
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-20b",
         temperature: 0,
         response_format: { type: "json_object" },
-        max_tokens: 3000,
+        max_tokens: 4000,
         messages: [
           { role: "system", content: systemPrompt },
           {
@@ -84,7 +84,7 @@ CRITICAL RULES:
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || "{}";
 
-  let parsedJson: unknown;
+  let parsedJson: any;
   try {
     const first = content.indexOf('{');
     const last = content.lastIndexOf('}');
@@ -93,6 +93,11 @@ CRITICAL RULES:
       cleanContent = content.substring(first, last + 1);
     }
     parsedJson = JSON.parse(cleanContent);
+    
+    // Clean up LLM array hallucinations (e.g., injecting "" mid-array)
+    if (parsedJson && Array.isArray(parsedJson.rounds)) {
+      parsedJson.rounds = parsedJson.rounds.filter((r: any) => typeof r === 'object' && r !== null && !Array.isArray(r));
+    }
   } catch (e) {
     console.error("JSON Parse Failed. Raw:", content);
     parsedJson = {};

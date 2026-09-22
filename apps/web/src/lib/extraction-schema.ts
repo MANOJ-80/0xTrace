@@ -51,9 +51,9 @@ export const ExperienceExtractionSchema = z.object({
     duration: z.string().nullable().optional(),
     difficulty: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
-    raw_content: z.string(),
+    raw_content: z.string().nullable().optional().default(""),
     questions: z.array(z.object({
-      question: z.string(),
+      question: z.string().optional().default(""),
       topic: z.string().nullable().optional(),
       difficulty: z.string().nullable().optional(),
       category: z.string().nullable().optional(),
@@ -62,7 +62,7 @@ export const ExperienceExtractionSchema = z.object({
     coding: z.object({
       problem_count: z.number().optional(),
       problems: z.array(z.object({
-        title: z.string(),
+        title: z.string().optional().default(""),
         description: z.string().nullable().optional(),
         difficulty: z.string().nullable().optional(),
         topics: z.array(z.string()).optional(),
