@@ -4,7 +4,7 @@ import ExperienceDirectoryClient from "./ExperienceDirectoryClient";
 
 export const metadata = {
   title: "All Experiences — 0xTrace Placement Intelligence",
-  description: "Browse 126 audited placement interview experiences across 60+ top companies.",
+  description: "Browse audited placement interview experiences across top companies.",
 };
 
 export default async function ExperiencesPage() {
@@ -14,15 +14,15 @@ export default async function ExperiencesPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-          Interview Experiences Directory
+        <h1 className="text-xl font-bold text-ox-ink">
+          Interview experiences directory
         </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-ox-muted">
           Explore {experiences.length} canonical interview records. Filter by company, outcome, and role to inspect verbatim round questions and candidate preparation insights.
         </p>
       </div>
 
-      <Suspense fallback={<div className="text-sm text-slate-500 py-8 text-center">Loading experiences directory...</div>}>
+      <Suspense fallback={<div className="text-sm text-ox-muted py-8 text-center">Loading experiences directory...</div>}>
         <ExperienceDirectoryClient
           initialExperiences={experiences}
           companies={companies.map((c) => c.name)}

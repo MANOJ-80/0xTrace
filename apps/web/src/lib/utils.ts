@@ -14,30 +14,36 @@ export function formatCTC(val?: string | number | null): string {
   return `₹${str} LPA`;
 }
 
+/**
+ * Returns neobrutalist badge classes for outcome status.
+ * "Selected" → flat green with hard shadow.
+ * "Rejected" → flat red with hard shadow.
+ * Everything else → amber.
+ */
 export function getOutcomeBadgeColor(status?: string | null) {
   const s = (status || "").toLowerCase();
   if (s.includes("select") || s.includes("offer")) {
-    return "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800";
+    return "bg-ox-signal-pass text-black border-0 rounded-none shadow-[2px_2px_0px_#052e16]";
   }
   if (s.includes("reject")) {
-    return "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800";
+    return "bg-ox-signal-fail text-white border-2 border-white shadow-[2px_2px_0px_rgba(0,0,0,0.5)]";
   }
-  return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800";
+  return "bg-ox-signal-warn text-black shadow-[2px_2px_0px_#451a03]";
 }
 
 export function getRoundTypeBadgeColor(type: string) {
   const t = (type || "").toLowerCase();
   if (t.includes("online") || t.includes("oa") || t.includes("assessment")) {
-    return "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800";
+    return "bg-blue-500/15 text-blue-400 border border-blue-500/30";
   }
   if (t.includes("tech") || t.includes("coding")) {
-    return "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800";
+    return "bg-ox-accent/15 text-ox-accent border border-ox-accent/30";
   }
   if (t.includes("hr") || t.includes("behavioral") || t.includes("fit")) {
-    return "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800";
+    return "bg-purple-500/15 text-purple-400 border border-purple-500/30";
   }
   if (t.includes("manager")) {
-    return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800";
+    return "bg-amber-500/15 text-amber-400 border border-amber-500/30";
   }
-  return "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-800";
+  return "bg-ox-surface-raised text-ox-muted border border-ox-edge";
 }

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "0xTrace — Placement Intelligence & Lossless Interview Viewer",
+  title: "0xTrace — Campus Interview Intelligence",
   description:
-    "Evidence-first placement intelligence platform powered by canonical V1.3 interview experiences and lossless extraction.",
+    "126 audited campus placement experiences with verbatim questions, round breakdowns, and lossless source preservation.",
 };
 
 export default function RootLayout({
@@ -14,20 +16,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-slate-50 text-slate-900 dark:bg-[#0b0f19] dark:text-slate-100 flex flex-col min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
+      <body className="font-geist bg-ox-void text-ox-ink flex flex-col min-h-screen antialiased">
         <Navbar />
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 w-full max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {children}
         </main>
-        <footer className="border-t border-slate-200 dark:border-slate-800/80 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
-          <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <div>
-              <span className="font-semibold text-slate-700 dark:text-slate-300">0xTrace</span> • Canonical V1.3 Dataset Invariant & Lossless Source Preservation
-            </div>
-            <div>
-              Built for campus placement candidates & technical interview preparation
-            </div>
+        <footer className="border-t border-ox-edge py-5 text-center text-xs text-ox-muted">
+          <div className="max-w-container mx-auto px-4">
+            <span className="font-semibold text-ox-ink">0xTrace</span>
+            {" · "}Canonical V1.3 · 126 experiences · Lossless source preservation
           </div>
         </footer>
       </body>

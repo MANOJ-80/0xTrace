@@ -12,16 +12,11 @@ import {
   Briefcase,
   Lightbulb,
   Clock,
-  Laptop,
-  CheckCircle2,
   Copy,
   Check,
-  Star,
-  Layers,
   ChevronDown,
   ChevronUp,
   FileCode2,
-  HelpCircle,
   Tag,
   Flame,
 } from "lucide-react";
@@ -51,31 +46,20 @@ export default function RoundModal({
   const totalRounds = rounds.length;
 
   const handlePrev = useCallback(() => {
-    if (currentIndex > 0) {
-      onSelectIndex(currentIndex - 1);
-    }
+    if (currentIndex > 0) onSelectIndex(currentIndex - 1);
   }, [currentIndex, onSelectIndex]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < totalRounds - 1) {
-      onSelectIndex(currentIndex + 1);
-    }
+    if (currentIndex < totalRounds - 1) onSelectIndex(currentIndex + 1);
   }, [currentIndex, totalRounds, onSelectIndex]);
 
-  // Keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      } else if (e.key === "ArrowLeft") {
-        handlePrev();
-      } else if (e.key === "ArrowRight") {
-        handleNext();
-      }
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowLeft") handlePrev();
+      else if (e.key === "ArrowRight") handleNext();
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose, handlePrev, handleNext]);
@@ -90,30 +74,26 @@ export default function RoundModal({
     }
   };
 
-  // Get icon by round type
   const getRoundIcon = (type: string) => {
     const t = (type || "").toLowerCase();
     if (t.includes("online") || t.includes("oa") || t.includes("assessment") || t.includes("coding")) {
-      return <Code className="w-5 h-5 text-indigo-400" />;
+      return <Code className="w-4 h-4 text-blue-400" />;
     }
     if (t.includes("hr") || t.includes("behavioral") || t.includes("fit")) {
-      return <UserCheck className="w-5 h-5 text-purple-400" />;
+      return <UserCheck className="w-4 h-4 text-purple-400" />;
     }
     if (t.includes("manager")) {
-      return <Briefcase className="w-5 h-5 text-amber-400" />;
+      return <Briefcase className="w-4 h-4 text-amber-400" />;
     }
-    return <Zap className="w-5 h-5 text-amber-400" />;
+    return <Zap className="w-4 h-4 text-ox-accent" />;
   };
 
-  // Format round title (e.g. "Round 2: Technical Interview")
   const roundTitle = currentRound.name.includes("Round")
     ? currentRound.name.replace(/-/g, ":")
     : `Round ${currentRound.sequence}: ${currentRound.name}`;
 
-  // Use cleaned description if present, else fallback to raw_content
   const narrativeContent = currentRound.description || currentRound.raw_content || "";
 
-  // Normalize questions (handles both object and string shapes)
   const normalizedQuestions = (currentRound.questions || []).map((q: any) => {
     if (typeof q === "string") {
       return { question: q, topic: "Core CS", difficulty: "medium", category: "technical" };
@@ -127,7 +107,6 @@ export default function RoundModal({
     };
   }).filter((q) => q.question.trim().length > 0);
 
-  // Normalize coding problems (handles both object and string shapes)
   const normalizedCoding = (currentRound.coding?.problems || []).map((p: any) => {
     if (typeof p === "string") {
       return { title: p.slice(0, 80), description: p, difficulty: "medium", topics: ["Algorithms"] };
@@ -140,12 +119,10 @@ export default function RoundModal({
     };
   });
 
-  // Render narrative with formatted paragraphs and bullet items
-  const renderNarrativeBlocks = (text: string) => {
+  const renderNarrative = (text: string) => {
     if (!text.trim()) {
-      return <p className="text-slate-400 italic">No description recorded for this round.</p>;
+      return <p className="text-ox-muted italic">No description recorded for this round.</p>;
     }
-
     const paragraphs = text.split("\n\n").filter((p) => p.trim());
     return paragraphs.map((para, pIdx) => {
       const lines = para.split("\n").map((l) => l.trim()).filter(Boolean);
@@ -155,8 +132,8 @@ export default function RoundModal({
         return (
           <ul key={pIdx} className="space-y-1.5 my-2">
             {lines.map((l, lIdx) => (
-              <li key={lIdx} className="flex items-start gap-2 text-slate-200 text-sm leading-relaxed">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 mt-2" />
+              <li key={lIdx} className="flex items-start gap-2 text-ox-ink text-sm leading-relaxed">
+                <span className="w-1 h-1 rounded-full bg-ox-muted shrink-0 mt-2" />
                 <span>{l.replace(/^[•\-*]\s*/, "")}</span>
               </li>
             ))}
@@ -165,7 +142,7 @@ export default function RoundModal({
       }
 
       return (
-        <p key={pIdx} className="text-sm text-slate-200 leading-relaxed font-sans selection:bg-indigo-500/30">
+        <p key={pIdx} className="text-sm text-ox-ink leading-relaxed">
           {para}
         </p>
       );
@@ -173,165 +150,136 @@ export default function RoundModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
-      {/* Backdrop click to close */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm">
       <div className="fixed inset-0" onClick={onClose} />
 
-      {/* Modal Dialog Card */}
       <div
-        className="relative z-10 w-full max-w-3xl max-h-[90vh] bg-[#11141c] border border-[#232938] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-100"
+        className="relative z-10 w-full max-w-3xl max-h-[90vh] bg-ox-surface border border-ox-edge rounded-xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
-        <div className="px-5 py-4 border-b border-[#1e2433] flex items-center justify-between bg-[#0e1017]">
-          <div className="flex items-center gap-2">
-            <h2 className="font-bold text-base sm:text-lg text-white">
-              {roundTitle}
-            </h2>
-            <span className="text-xs text-slate-400 font-mono">
-              {currentIndex + 1} of {totalRounds}
-            </span>
+        {/* Header */}
+        <div className="px-5 py-3 border-b border-ox-edge flex items-center justify-between bg-ox-void">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-md bg-ox-surface-raised flex items-center justify-center shrink-0">
+              {getRoundIcon(currentRound.type)}
+            </div>
+            <div className="min-w-0">
+              <h2 className="font-semibold text-sm text-ox-ink truncate">
+                {roundTitle}
+              </h2>
+              <span className="text-xs text-ox-muted font-mono">
+                {currentIndex + 1} of {totalRounds}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={handlePrev}
               disabled={currentIndex === 0}
-              className="p-1.5 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition-colors"
-              title="Previous Round (Left Arrow)"
+              className="p-1.5 rounded-md hover:bg-ox-surface-raised disabled:opacity-30 text-ox-muted transition-colors"
+              title="Previous round"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-
             <button
               onClick={handleNext}
               disabled={currentIndex === totalRounds - 1}
-              className="p-1.5 rounded-lg hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent text-slate-300 transition-colors"
-              title="Next Round (Right Arrow)"
+              className="p-1.5 rounded-md hover:bg-ox-surface-raised disabled:opacity-30 text-ox-muted transition-colors"
+              title="Next round"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-
             <button
               onClick={onClose}
-              className="p-1.5 ml-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              title="Close (Escape)"
+              className="p-1.5 ml-2 rounded-md hover:bg-ox-surface-raised text-ox-muted hover:text-ox-ink transition-colors"
+              title="Close"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-          {/* Sub-header with icon & badges */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1e2433]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-800/90 border border-slate-700/60 flex items-center justify-center shrink-0">
-                {getRoundIcon(currentRound.type)}
-              </div>
-              <div>
-                <h3 className="font-bold text-base text-white capitalize">
-                  {currentRound.type.replace(/_/g, " ")}
-                </h3>
-                <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    {currentRound.duration || "60 minutes"}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Laptop className="w-3.5 h-3.5 text-slate-400" />
-                    {currentRound.platform || currentRound.mode || "In-Person"}
-                  </span>
-                  {currentRound.difficulty && (
-                    <span className="flex items-center gap-1 text-amber-400 capitalize">
-                      <Flame className="w-3.5 h-3.5" />
-                      {currentRound.difficulty}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/80">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {outcomeStatus || "Selected"}
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          {/* Metadata row */}
+          <div className="flex flex-wrap items-center gap-3 text-xs text-ox-muted">
+            <span className="capitalize font-medium text-ox-ink">
+              {currentRound.type.replace(/_/g, " ")}
+            </span>
+            {currentRound.duration && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {currentRound.duration}
               </span>
-            </div>
+            )}
+            {(currentRound.platform || currentRound.mode) && (
+              <span>{currentRound.platform || currentRound.mode}</span>
+            )}
+            {currentRound.difficulty && (
+              <span className="flex items-center gap-1 text-ox-signal-warn capitalize">
+                <Flame className="w-3 h-3" />
+                {currentRound.difficulty}
+              </span>
+            )}
           </div>
 
-          {/* Clean Round Narrative Card */}
-          <div className="rounded-xl border border-[#232938] bg-[#141824] p-5 space-y-3 shadow-sm">
-            <div className="flex items-center justify-between text-xs font-semibold text-amber-300">
-              <div className="flex items-center gap-1.5">
-                <Lightbulb className="w-4 h-4 text-amber-400" />
-                <span>Round Walkthrough & Experience</span>
-              </div>
+          {/* Narrative */}
+          <div className="bg-ox-void border border-ox-edge rounded-lg p-4 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-ox-muted flex items-center gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5" />
+                Round walkthrough
+              </span>
               <button
                 onClick={handleCopyText}
-                className="flex items-center gap-1 px-2.5 py-1 rounded bg-[#1e2433] hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition-colors"
-                title="Copy raw round text"
+                className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-ox-surface-raised text-ox-muted transition-colors"
+                title="Copy raw text"
               >
-                {copied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                {copied ? <Check className="w-3 h-3 text-ox-signal-pass" /> : <Copy className="w-3 h-3" />}
                 <span>{copied ? "Copied" : "Copy"}</span>
               </button>
             </div>
-
-            {/* Formatted Clean Text Content */}
-            <div className="space-y-2.5 pt-1">
-              {renderNarrativeBlocks(narrativeContent)}
+            <div className="space-y-2 pt-1">
+              {renderNarrative(narrativeContent)}
             </div>
           </div>
 
-          {/* Discrete Questions Section */}
+          {/* Questions */}
           {normalizedQuestions.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  <HelpCircle className="w-4 h-4 text-indigo-400" />
-                  <span>Interview Questions Asked ({normalizedQuestions.length})</span>
-                </div>
-                <span className="text-[11px] text-slate-400 font-mono">
-                  {normalizedQuestions.length} item{normalizedQuestions.length > 1 ? "s" : ""}
-                </span>
-              </div>
-
-              <div className="grid gap-2.5">
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-ox-muted">
+                Questions asked ({normalizedQuestions.length})
+              </span>
+              <div className="space-y-2">
                 {normalizedQuestions.map((q, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-xl border border-[#1e2433] bg-[#161a24] hover:border-indigo-900/50 transition-colors text-xs space-y-2"
+                    className="p-3 rounded-lg border border-ox-edge bg-ox-void text-sm space-y-1.5"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2.5">
-                        <span className="w-5 h-5 rounded-md bg-indigo-950/80 border border-indigo-800/60 text-indigo-300 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                          {idx + 1}
-                        </span>
-                        <p className="font-semibold text-slate-100 text-sm leading-snug">
-                          {q.question}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                        {q.topic && (
-                          <span className="px-2 py-0.5 rounded bg-indigo-950/70 text-indigo-300 border border-indigo-800/60 shrink-0 font-medium text-[10px] flex items-center gap-1">
-                            <Tag className="w-2.5 h-2.5" />
-                            {q.topic}
-                          </span>
-                        )}
-                        {q.difficulty && (
-                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 shrink-0 font-medium text-[10px] capitalize">
-                            {q.difficulty}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {q.details && (
-                      <p className="text-slate-400 leading-relaxed text-xs pl-7">
-                        {q.details}
+                    <div className="flex items-start gap-2">
+                      <span className="w-5 h-5 rounded-md bg-ox-surface-raised text-ox-muted text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 font-mono">
+                        {idx + 1}
+                      </span>
+                      <p className="font-medium text-ox-ink leading-snug">
+                        {q.question}
                       </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 pl-7 flex-wrap">
+                      {q.topic && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-ox-accent/10 text-ox-accent border border-ox-accent/20 font-medium flex items-center gap-0.5">
+                          <Tag className="w-2.5 h-2.5" />
+                          {q.topic}
+                        </span>
+                      )}
+                      {q.difficulty && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-ox-surface-raised text-ox-muted capitalize font-medium">
+                          {q.difficulty}
+                        </span>
+                      )}
+                    </div>
+                    {q.details && (
+                      <p className="text-xs text-ox-muted leading-relaxed pl-7">{q.details}</p>
                     )}
                   </div>
                 ))}
@@ -339,55 +287,44 @@ export default function RoundModal({
             </div>
           )}
 
-          {/* Coding Problems Section */}
+          {/* Coding problems */}
           {normalizedCoding.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-                  <Code className="w-4 h-4" />
-                  <span>Coding & DSA Challenges ({normalizedCoding.length})</span>
-                </div>
-                <span className="text-[11px] text-slate-400 font-mono">
-                  {normalizedCoding.length} problem{normalizedCoding.length > 1 ? "s" : ""}
-                </span>
-              </div>
-
-              <div className="grid gap-3">
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-ox-muted">
+                Coding challenges ({normalizedCoding.length})
+              </span>
+              <div className="space-y-2">
                 {normalizedCoding.map((p, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-xl border border-[#1e2433] bg-[#161a24] hover:border-emerald-900/50 transition-colors space-y-2.5"
+                    className="p-3 rounded-lg border border-ox-edge bg-ox-void space-y-2"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 flex items-center justify-center font-bold text-xs">
+                        <span className="w-6 h-6 rounded-md bg-ox-signal-pass/10 text-ox-signal-pass flex items-center justify-center font-bold text-xs font-mono">
                           P{idx + 1}
                         </span>
-                        <h4 className="font-bold text-sm text-slate-100">
-                          {p.title}
-                        </h4>
+                        <h4 className="font-semibold text-sm text-ox-ink">{p.title}</h4>
                       </div>
-
                       {p.difficulty && (
-                        <span className="text-[10px] px-2 py-0.5 rounded font-medium bg-amber-950/60 text-amber-300 border border-amber-800/60 capitalize shrink-0">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-ox-signal-warn/10 text-ox-signal-warn font-medium capitalize shrink-0">
                           {p.difficulty}
                         </span>
                       )}
                     </div>
 
                     {p.description && p.description !== p.title && (
-                      <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line bg-[#0e1017] p-3 rounded-lg border border-slate-800/80 font-sans">
+                      <p className="text-xs text-ox-ink/70 leading-relaxed whitespace-pre-line bg-ox-surface p-3 rounded-md border border-ox-edge font-mono">
                         {p.description}
                       </p>
                     )}
 
                     {p.topics && p.topics.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                        <span className="text-[11px] text-slate-500 font-medium mr-1">Tags:</span>
+                      <div className="flex flex-wrap items-center gap-1 pt-0.5">
                         {p.topics.map((tag: string, tIdx: number) => (
                           <span
                             key={tIdx}
-                            className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-800/50"
+                            className="text-[10px] px-1.5 py-0.5 rounded-sm bg-ox-signal-pass/10 text-ox-signal-pass/80 border border-ox-signal-pass/20"
                           >
                             {tag}
                           </span>
@@ -400,56 +337,51 @@ export default function RoundModal({
             </div>
           )}
 
-          {/* Lossless Untouched Raw Source Accordion */}
-          <div className="border border-[#1e2433] rounded-xl overflow-hidden bg-[#0d0f16]">
+          {/* Raw source accordion */}
+          <div className="border border-ox-edge rounded-lg overflow-hidden">
             <button
               onClick={() => setShowRawSource(!showRawSource)}
-              className="w-full px-4 py-3 flex items-center justify-between text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
+              className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-medium text-ox-muted hover:text-ox-ink transition-colors"
             >
               <div className="flex items-center gap-2">
-                <FileCode2 className="w-4 h-4 text-slate-500" />
-                <span>View Untouched Raw Spans (Lossless Audit)</span>
+                <FileCode2 className="w-3.5 h-3.5" />
+                <span>Verbatim source text</span>
               </div>
               {showRawSource ? (
-                <ChevronUp className="w-4 h-4 text-slate-500" />
+                <ChevronUp className="w-3.5 h-3.5" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-slate-500" />
+                <ChevronDown className="w-3.5 h-3.5" />
               )}
             </button>
 
             {showRawSource && (
-              <div className="p-4 border-t border-[#1e2433] bg-[#0a0c12]">
+              <div className="p-4 border-t border-ox-edge bg-ox-void">
                 <DocumentReader
                   content={currentRound.raw_content || ""}
-                  title={`${roundTitle} Transcript`}
-                  subtitle="Original candidate write-up · Exact text preserved"
+                  title={`${roundTitle} transcript`}
+                  subtitle="Original text preserved exactly"
                 />
               </div>
             )}
           </div>
         </div>
 
-        {/* Modal Footer */}
-        <div className="px-5 py-3 border-t border-[#1e2433] bg-[#0e1017] flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
-          <span className="text-[11px]">Use arrow keys or buttons to navigate between rounds</span>
-          <div className="flex items-center gap-2">
-            <span>
-              {currentIndex + 1} of {totalRounds}
-            </span>
-            <div className="flex items-center gap-1">
-              {rounds.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => onSelectIndex(i)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    i === currentIndex
-                      ? "bg-indigo-400 w-4"
-                      : "bg-slate-700 hover:bg-slate-600"
-                  }`}
-                  title={`Go to Round ${i + 1}`}
-                />
-              ))}
-            </div>
+        {/* Footer */}
+        <div className="px-5 py-2.5 border-t border-ox-edge bg-ox-void flex items-center justify-between text-xs text-ox-muted">
+          <span>Arrow keys to navigate</span>
+          <div className="flex items-center gap-1.5">
+            {rounds.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => onSelectIndex(i)}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  i === currentIndex
+                    ? "bg-ox-accent w-3"
+                    : "bg-ox-edge hover:bg-ox-muted"
+                }`}
+                title={`Round ${i + 1}`}
+              />
+            ))}
           </div>
         </div>
       </div>

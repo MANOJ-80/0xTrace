@@ -3,17 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { InterviewQuestion, CodingProblem } from "@/lib/types";
-import {
-  Search,
-  HelpCircle,
-  Code2,
-  Building2,
-  Tag,
-  ArrowRight,
-  Flame,
-  X,
-  Filter,
-} from "lucide-react";
+import { Search, Code2, ArrowRight, X } from "lucide-react";
 
 interface EnrichedQuestion extends InterviewQuestion {
   company: string;
@@ -53,26 +43,16 @@ export default function QuestionBankClient({
         const topic = (q.topic || "").toLowerCase();
         const category = (q.category || "").toLowerCase();
         const comp = (q.company || "").toLowerCase();
-        if (
-          !text.includes(query) &&
-          !topic.includes(query) &&
-          !category.includes(query) &&
-          !comp.includes(query)
-        ) {
+        if (!text.includes(query) && !topic.includes(query) && !category.includes(query) && !comp.includes(query)) {
           return false;
         }
       }
-
       if (selectedCompany && selectedCompany !== "all") {
         if (q.company.toLowerCase() !== selectedCompany.toLowerCase()) return false;
       }
-
       if (selectedDifficulty !== "all") {
-        if ((q.difficulty || "").toLowerCase() !== selectedDifficulty.toLowerCase()) {
-          return false;
-        }
+        if ((q.difficulty || "").toLowerCase() !== selectedDifficulty.toLowerCase()) return false;
       }
-
       return true;
     });
   }, [questions, search, selectedCompany, selectedDifficulty]);
@@ -85,112 +65,96 @@ export default function QuestionBankClient({
         const desc = (p.description || "").toLowerCase();
         const comp = (p.company || "").toLowerCase();
         const topics = (p.topics || []).map((t) => t.toLowerCase()).join(" ");
-        if (
-          !title.includes(query) &&
-          !desc.includes(query) &&
-          !comp.includes(query) &&
-          !topics.includes(query)
-        ) {
+        if (!title.includes(query) && !desc.includes(query) && !comp.includes(query) && !topics.includes(query)) {
           return false;
         }
       }
-
       if (selectedCompany && selectedCompany !== "all") {
         if (p.company.toLowerCase() !== selectedCompany.toLowerCase()) return false;
       }
-
       if (selectedDifficulty !== "all") {
-        if ((p.difficulty || "").toLowerCase() !== selectedDifficulty.toLowerCase()) {
-          return false;
-        }
+        if ((p.difficulty || "").toLowerCase() !== selectedDifficulty.toLowerCase()) return false;
       }
-
       return true;
     });
   }, [codingProblems, search, selectedCompany, selectedDifficulty]);
 
   return (
-    <div className="space-y-6">
-      {/* Top Tab Switcher */}
-      <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-2xl w-fit">
+    <div className="space-y-5">
+      {/* Tab switcher — text tabs with bottom border */}
+      <div className="flex items-center gap-0 border-b border-ox-edge">
         <button
           onClick={() => setActiveTab("questions")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "questions"
-              ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+              ? "border-ox-accent text-ox-ink"
+              : "border-transparent text-ox-muted hover:text-ox-ink"
           }`}
         >
-          <HelpCircle className="w-4 h-4" />
-          <span>Interview Questions ({questions.length})</span>
+          <span>Interview questions ({questions.length})</span>
         </button>
-
         <button
           onClick={() => setActiveTab("coding")}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "coding"
-              ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-sm"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+              ? "border-ox-accent text-ox-ink"
+              : "border-transparent text-ox-muted hover:text-ox-ink"
           }`}
         >
           <Code2 className="w-4 h-4" />
-          <span>Coding Problems ({codingProblems.length})</span>
+          <span>Coding problems ({codingProblems.length})</span>
         </button>
       </div>
 
-      {/* Filter Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+      {/* Filter bar */}
+      <div className="bg-ox-surface border border-ox-edge rounded-lg p-4 space-y-3">
         <div className="flex flex-col md:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-ox-muted absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={
                 activeTab === "questions"
-                  ? "Search questions (e.g. 'deadlock', 'indexing', 'polymorphism', 'LRU cache')..."
-                  : "Search coding problems (e.g. 'two sum', 'binary tree', 'graph', 'dynamic programming')..."
+                  ? "Search questions by topic, keyword, or company..."
+                  : "Search coding problems by title, topic, or company..."
               }
-              className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+              className="w-full pl-9 pr-8 py-2 rounded-md border border-ox-edge bg-ox-void text-sm text-ox-ink placeholder:text-ox-muted focus:outline-none focus:ring-2 focus:ring-ox-accent/30 focus:border-ox-accent transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ox-muted hover:text-ox-ink"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          <div className="w-full md:w-56 shrink-0">
-            <select
-              value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
-              className="w-full py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none"
-            >
-              <option value="">All Companies ({companies.length})</option>
-              {companies.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={selectedCompany}
+            onChange={(e) => setSelectedCompany(e.target.value)}
+            className="w-full md:w-52 shrink-0 py-2 px-3 rounded-md border border-ox-edge bg-ox-void text-sm text-ox-ink font-medium focus:outline-none focus:ring-2 focus:ring-ox-accent/30"
+          >
+            <option value="">All companies ({companies.length})</option>
+            {companies.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-ox-edge text-xs">
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-medium mr-1">Difficulty:</span>
+            <span className="text-ox-muted font-medium">Difficulty:</span>
             {["all", "easy", "medium", "hard"].map((diff) => (
               <button
                 key={diff}
                 onClick={() => setSelectedDifficulty(diff)}
-                className={`px-3 py-1 rounded-lg font-medium capitalize transition-all ${
+                className={`px-2.5 py-1 rounded-md font-medium capitalize transition-colors ${
                   selectedDifficulty === diff
-                    ? "bg-indigo-600 text-white"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
+                    ? "text-ox-ink font-semibold border-b-2 border-ox-accent"
+                    : "text-ox-muted hover:text-ox-ink"
                 }`}
               >
                 {diff}
@@ -198,60 +162,57 @@ export default function QuestionBankClient({
             ))}
           </div>
 
-          <span className="text-slate-500 font-medium">
+          <span className="text-ox-muted">
             Showing{" "}
-            <strong className="text-slate-900 dark:text-slate-100">
+            <strong className="text-ox-ink font-mono tabular-nums">
               {activeTab === "questions" ? filteredQuestions.length : filteredProblems.length}
             </strong>{" "}
-            entries
+            results
           </span>
         </div>
       </div>
 
-      {/* Questions Tab Content */}
+      {/* Questions list */}
       {activeTab === "questions" && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filteredQuestions.length === 0 ? (
-            <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400 text-sm">
-              No questions found matching your filter criteria.
+            <div className="text-center py-12 text-ox-muted text-sm">
+              No questions match your filters.
             </div>
           ) : (
             filteredQuestions.map((q, idx) => (
               <div
                 key={idx}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 hover:border-indigo-300 dark:hover:border-indigo-800 hover:shadow-sm transition-all"
+                className="bg-ox-surface border border-ox-edge rounded-lg p-4 hover:border-ox-accent transition-colors"
               >
-                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                  <div className="space-y-1.5 flex-1">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-relaxed">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                  <div className="space-y-1 flex-1">
+                    <p className="text-sm font-medium text-ox-ink leading-relaxed">
                       {q.question}
                     </p>
                     {q.details && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                        {q.details}
-                      </p>
+                      <p className="text-xs text-ox-muted leading-relaxed">{q.details}</p>
                     )}
                   </div>
 
-                  <div className="flex flex-wrap md:flex-col items-start md:items-end gap-2 shrink-0">
+                  <div className="flex flex-wrap md:flex-col items-start md:items-end gap-1.5 shrink-0">
                     <Link
                       href={`/experiences/${q.experienceId}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-ox-accent hover:underline"
                     >
-                      <Building2 className="w-3.5 h-3.5" />
                       <span>{q.company}</span>
-                      <span className="text-slate-400">({q.roundName.split("-")[0].trim()})</span>
+                      <span className="text-ox-muted">({q.roundName.split("-")[0].trim()})</span>
                       <ArrowRight className="w-3 h-3" />
                     </Link>
 
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-1 flex-wrap">
                       {q.topic && (
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-medium">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-ox-accent/10 text-ox-accent border border-ox-accent/20 font-medium">
                           {q.topic}
                         </span>
                       )}
                       {q.difficulty && (
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 capitalize">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-ox-signal-warn/10 text-ox-signal-warn capitalize font-medium">
                           {q.difficulty}
                         </span>
                       )}
@@ -264,50 +225,44 @@ export default function QuestionBankClient({
         </div>
       )}
 
-      {/* Coding Problems Tab Content */}
+      {/* Coding problems grid */}
       {activeTab === "coding" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filteredProblems.length === 0 ? (
-            <div className="col-span-2 text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400 text-sm">
-              No coding problems found matching your filter criteria.
+            <div className="col-span-2 text-center py-12 text-ox-muted text-sm">
+              No coding problems match your filters.
             </div>
           ) : (
             filteredProblems.map((p, idx) => (
               <div
                 key={idx}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 hover:border-emerald-300 dark:hover:border-emerald-800 hover:shadow-sm transition-all flex flex-col justify-between"
+                className="bg-ox-surface border border-ox-edge rounded-lg p-4 hover:border-ox-signal-pass/50 transition-colors flex flex-col justify-between"
               >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center border border-emerald-200 dark:border-emerald-800">
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-md bg-ox-signal-pass/10 text-ox-signal-pass font-bold text-xs flex items-center justify-center font-mono">
                         P{idx + 1}
-                      </div>
-                      <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">
-                        {p.title}
-                      </h3>
+                      </span>
+                      <h3 className="font-semibold text-sm text-ox-ink">{p.title}</h3>
                     </div>
-
                     {p.difficulty && (
-                      <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 capitalize shrink-0">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-ox-signal-warn/10 text-ox-signal-warn capitalize font-medium shrink-0">
                         {p.difficulty}
                       </span>
                     )}
                   </div>
 
                   {p.description && (
-                    <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-line leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800 line-clamp-4">
+                    <p className="text-xs text-ox-muted whitespace-pre-line leading-relaxed bg-ox-void p-2.5 rounded-md border border-ox-edge line-clamp-4">
                       {p.description}
                     </p>
                   )}
 
                   {p.topics && p.topics.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
+                    <div className="flex flex-wrap gap-1">
                       {p.topics.map((tag, tIdx) => (
-                        <span
-                          key={tIdx}
-                          className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700"
-                        >
+                        <span key={tIdx} className="text-[10px] px-1.5 py-0.5 rounded-sm bg-ox-surface-raised text-ox-muted border border-ox-edge">
                           {tag}
                         </span>
                       ))}
@@ -315,17 +270,13 @@ export default function QuestionBankClient({
                   )}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                    {p.company}
-                  </span>
-
+                <div className="mt-3 pt-2.5 border-t border-ox-edge flex items-center justify-between text-xs">
+                  <span className="font-medium text-ox-ink">{p.company}</span>
                   <Link
                     href={`/experiences/${p.experienceId}`}
-                    className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                    className="flex items-center gap-1 font-medium text-ox-signal-pass hover:underline"
                   >
-                    <span>View Experience</span>
+                    <span>View experience</span>
                     <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
