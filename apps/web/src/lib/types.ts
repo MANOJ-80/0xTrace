@@ -115,6 +115,7 @@ export interface Experience {
   rounds: Round[];
   outcome: Outcome;
   tips: string[];
+  mistakes?: string[];
   conclusion?: string | null;
   contacts: Contacts;
   additional_information: string[];

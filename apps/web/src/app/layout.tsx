@@ -25,7 +25,12 @@ export default function RootLayout({
         <footer className="border-t border-ox-edge py-5 text-center text-xs text-ox-muted">
           <div className="max-w-container mx-auto px-4">
             <span className="font-semibold text-ox-ink">0xTrace</span>
-            {" · "}Canonical V1.3 · 126 experiences · Lossless source preservation
+            <span className="mx-2 text-ox-edge">|</span>
+            Canonical V1.3
+            <span className="mx-2 text-ox-edge">|</span>
+            126 experiences
+            <span className="mx-2 text-ox-edge">|</span>
+            Lossless source preservation
           </div>
         </footer>
       </body>

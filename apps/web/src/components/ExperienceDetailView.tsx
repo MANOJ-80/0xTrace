@@ -16,7 +16,6 @@ import {
   ArrowLeft,
   FileText,
   Lightbulb,
-  AlertTriangle,
   User,
   GraduationCap,
   Building2,
@@ -64,13 +63,8 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
   const candidateCollege =
     experience.candidate?.college || "PSG College of Technology";
 
-  // Common pitfalls / mistakes
-  const mistakes = [
-    "Spent too much time stuck on one problem without communicating progress",
-    "Did not test code with edge cases (empty inputs, large values, off-by-one bounds)",
-    "Glossed over core CS fundamentals (OS, DBMS, indexing, ACID properties, OOP)",
-    "Jumped straight to coding without first explaining brute-force and optimal complexity",
-  ];
+  // Common pitfalls / mistakes — sourced from experience data
+  const mistakes = experience.mistakes || [];
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -224,7 +218,7 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
                 <div
                   key={idx}
                   onClick={() => handleOpenRound(idx)}
-                  className="group bg-ox-surface border border-ox-edge rounded-lg p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-ox-accent transition-all shadow-subtle"
+                  className="group bg-ox-surface border border-ox-edge rounded-lg p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-ox-accent transition-all"
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="w-10 h-10 rounded-md bg-ox-surface-raised flex items-center justify-center shrink-0">
@@ -272,58 +266,30 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
             })}
           </div>
 
-          {/* Tips & Mistakes Section (Natural Takeaways after rounds) */}
-          <div className="bg-ox-surface border border-ox-edge rounded-lg p-5 sm:p-6 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-ox-edge">
-              <h2 className="text-base font-bold text-ox-ink flex items-center gap-2">
+          {/* Candidate Advice (combined tips + pitfalls) */}
+          {((experience.tips && experience.tips.length > 0) || mistakes.length > 0) && (
+            <div className="bg-ox-surface border border-ox-edge rounded-lg p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-ox-edge">
                 <Lightbulb className="w-4 h-4 text-amber-400" />
-                <span>Preparation Strategy & Key Takeaways</span>
-              </h2>
-              <span className="text-xs text-ox-muted">
-                Candidate retrospective & feedback
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column: Key Tips */}
-              <div className="space-y-3 bg-ox-void/50 border border-ox-edge p-4 rounded-lg">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-ox-signal-pass flex items-center gap-1.5">
-                  <Lightbulb className="w-3.5 h-3.5" />
-                  Key Tips & Strategy
-                </h3>
-                <div className="text-xs text-ox-ink/90 space-y-2.5 leading-relaxed">
-                  {experience.tips && experience.tips.length > 0 ? (
-                    experience.tips.map((tip, i) => (
-                      <div key={i} className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-ox-signal-pass shrink-0 mt-1.5" />
-                        <span>{tip}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-ox-muted italic">
-                      Focus on core CS fundamentals (OS, DBMS, OOP), resume projects, and clean communication.
-                    </p>
-                  )}
-                </div>
+                <h2 className="text-base font-bold text-ox-ink">Candidate advice</h2>
               </div>
 
-              {/* Right Column: Common Mistakes to Avoid */}
-              <div className="space-y-3 bg-ox-void/50 border border-ox-edge p-4 rounded-lg">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-ox-signal-fail flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  Common Pitfalls to Avoid
-                </h3>
-                <div className="text-xs text-ox-ink/90 space-y-2.5 leading-relaxed">
-                  {mistakes.map((m, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-ox-signal-fail shrink-0 mt-1.5" />
-                      <span>{m}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-2.5 text-sm text-ox-ink/90 leading-relaxed">
+                {experience.tips && experience.tips.length > 0 && experience.tips.map((tip, i) => (
+                  <div key={`tip-${i}`} className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-ox-signal-pass shrink-0 mt-2" />
+                    <span>{tip}</span>
+                  </div>
+                ))}
+                {mistakes.length > 0 && mistakes.map((m, i) => (
+                  <div key={`pit-${i}`} className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-ox-signal-fail shrink-0 mt-2" />
+                    <span>{m}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 

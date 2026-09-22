@@ -42,7 +42,7 @@ export default async function DashboardPage() {
             href="/experiences"
             className="text-sm text-ox-accent hover:underline flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ox-accent rounded-sm"
           >
-            View all &rarr;
+            View all
           </Link>
         </div>
 
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
             <Link
               key={comp.name}
               href={`/experiences?company=${encodeURIComponent(comp.name)}`}
-              className="block p-4 bg-ox-surface border border-ox-edge rounded-lg hover:border-ox-accent transition-colors shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ox-accent"
+              className="block p-4 bg-ox-surface border border-ox-edge rounded-lg hover:border-ox-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ox-accent"
             >
               <div className="flex items-start justify-between">
                 <h3 className="font-bold text-ox-ink">{comp.name}</h3>
@@ -85,7 +85,7 @@ export default async function DashboardPage() {
             href="/experiences"
             className="text-sm text-ox-accent hover:underline flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ox-accent rounded-sm"
           >
-            All {allExperiences.length} &rarr;
+            All {allExperiences.length}
           </Link>
         </div>
 
