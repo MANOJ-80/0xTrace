@@ -9,7 +9,7 @@ export async function extractWithGroq(
   pageCount: number
 ): Promise<ExtractionResponse> {
   const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
   if (!apiKey) {
     throw new Error(
@@ -35,8 +35,8 @@ FIELDS TO EXTRACT:
   - platform: e.g. "HackerRank", "Zoom", null
   - duration: e.g. "60 minutes", null
   - difficulty: "easy" | "medium" | "hard" | null
-  - description: the candidate's narrative walkthrough of the round (NOT the metadata headers, NOT the questions list)
-  - raw_content: the EXACT verbatim text for this round from the document
+  - description: the candidate's narrative walkthrough of the round
+  - raw_content: Leave this as an empty string ""
   - questions: array of { question, topic, difficulty, category ("technical" | "behavioral" | "hr"), details }
   - coding: { problem_count, problems: [{ title, description, difficulty, topics: [] }] }
 - outcome: { status ("selected" | "rejected" | "waitlisted" | "unknown"), offer_type, candidates_selected, candidates_appeared }
@@ -47,12 +47,10 @@ FIELDS TO EXTRACT:
 - additional_information: array of any other notable info
 
 CRITICAL RULES:
-1. Use ONLY text present in the document. Never paraphrase, infer, or hallucinate.
-2. Extract each interview question as a SEPARATE item in the questions array.
-3. Coding problems should be identified by LeetCode/GFG references, algorithm names, or problem statements.
-4. For raw_content of each round, copy the EXACT text from the document for that round section.
-5. If a field is not present in the document, use null (not empty string).
-6. Return ONLY a valid JSON object. No markdown, no explanatory text.`;
+1. Extract each interview question as a SEPARATE item in the questions array.
+2. Coding problems should be identified by LeetCode/GFG references, algorithm names, or problem statements.
+3. If a field is not present in the document, use null.
+4. Return ONLY a valid JSON object. No markdown, no explanatory text.`;
 
   const response = await fetch(
     "https://api.groq.com/openai/v1/chat/completions",
@@ -66,7 +64,7 @@ CRITICAL RULES:
         model,
         temperature: 0,
         response_format: { type: "json_object" },
-        max_tokens: 8192,
+        max_tokens: 3000,
         messages: [
           { role: "system", content: systemPrompt },
           {
@@ -93,6 +91,7 @@ CRITICAL RULES:
     parsedJson = {};
   }
 
+  require("fs").writeFileSync("/tmp/llm_raw.json", content);
   const validated = parseExtractionResult(parsedJson, rawText, filename);
   validated.source = {
     ...validated.source,
@@ -102,12 +101,15 @@ CRITICAL RULES:
 
   const cleaned = cleanExtractedExperience(validated) as Experience;
 
-  // Build ui_document sections from rounds
-  const sections = cleaned.rounds.map((r, idx) => ({
-    type: "round" as const,
-    title: r.name,
-    raw_content: r.raw_content,
-  }));
+  // Build ui_document sections. Since the LLM no longer outputs verbatim raw_content,
+  // we provide the entire rawText as a single document section to preserve lossless verification.
+  const sections = [
+    {
+      type: "metadata" as const,
+      title: "Verbatim Source Document",
+      raw_content: rawText,
+    },
+  ];
 
   return {
     dataset_metadata: {
