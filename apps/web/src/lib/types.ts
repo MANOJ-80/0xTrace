@@ -74,7 +74,7 @@ export interface Round {
   duration?: string | null;
   difficulty?: string | null;
   description?: string | null;
-  raw_content: string;
+  raw_content: string | null;
   questions?: InterviewQuestion[];
   coding?: RoundCoding;
 }
