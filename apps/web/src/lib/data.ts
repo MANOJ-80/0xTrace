@@ -339,3 +339,173 @@ export async function ingestExperienceToCanonical(draftExperience: any): Promise
   };
 }
 
+/* ------------------------------------------------------------------ */
+/*  Analytics Aggregation                                              */
+/* ------------------------------------------------------------------ */
+
+export interface AnalyticsData {
+  totals: {
+    experiences: number;
+    rounds: number;
+    questions: number;
+    codingProblems: number;
+    companies: number;
+    tips: number;
+  };
+  companyBreakdown: { name: string; count: number; selected: number; rejected: number }[];
+  roundTypes: { type: string; label: string; count: number; pct: number }[];
+  outcomes: { status: string; count: number; pct: number }[];
+  questionTopics: { topic: string; count: number }[];
+  difficulty: { level: string; count: number; pct: number }[];
+  employmentTypes: { type: string; label: string; count: number; pct: number }[];
+  seasonality: { month: string; count: number }[];
+}
+
+const ROUND_TYPE_LABELS: Record<string, string> = {
+  technical_interview: "Technical Interview",
+  online_assessment: "Online Assessment",
+  hr_interview: "HR Interview",
+  coding_test: "Coding Test",
+  managerial_interview: "Managerial Interview",
+  hackathon: "Hackathon",
+  mcq: "MCQ",
+  group_discussion: "Group Discussion",
+  combined_interview: "Combined Interview",
+  aptitude: "Aptitude",
+  technical_test: "Technical Test",
+  behavioral_interview: "Behavioral Interview",
+  ppt: "PPT",
+  case_study: "Case Study",
+  system_design: "System Design",
+  resume_screening: "Resume Screening",
+  prompt_engineering: "Prompt Engineering",
+  other: "Other",
+};
+
+const EMP_TYPE_LABELS: Record<string, string> = {
+  full_time: "Full Time",
+  fte: "Full Time",
+  internship: "Internship",
+  internship_and_full_time: "Internship + FTE",
+  internship_plus_fte: "Internship + FTE",
+  unknown: "Unknown",
+};
+
+const MONTH_ORDER = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+export async function getAnalyticsData(): Promise<AnalyticsData> {
+  const experiences = await getAllExperiences();
+
+  let totalRounds = 0;
+  let totalQuestions = 0;
+  let totalCodingProblems = 0;
+  let totalTips = 0;
+
+  const companyMap = new Map<string, { count: number; selected: number; rejected: number }>();
+  const roundTypeMap = new Map<string, number>();
+  const outcomeMap = new Map<string, number>();
+  const topicMap = new Map<string, number>();
+  const diffMap = new Map<string, number>();
+  const empMap = new Map<string, number>();
+  const monthMap = new Map<string, number>();
+
+  for (const exp of experiences) {
+    // Company
+    const cName = exp.company?.name || exp.company?.normalized_name || "Unknown";
+    if (!companyMap.has(cName)) companyMap.set(cName, { count: 0, selected: 0, rejected: 0 });
+    const cs = companyMap.get(cName)!;
+    cs.count++;
+    const status = (exp.outcome?.status || "unknown").toLowerCase();
+    if (status.includes("select") || status.includes("offer")) cs.selected++;
+    if (status.includes("reject")) cs.rejected++;
+
+    // Outcome
+    const oKey = status.includes("select") || status.includes("offer") ? "selected" : status.includes("reject") ? "rejected" : "other";
+    outcomeMap.set(oKey, (outcomeMap.get(oKey) || 0) + 1);
+
+    // Employment type
+    const empRaw = (exp.job?.employment_type || "unknown").toLowerCase();
+    empMap.set(empRaw, (empMap.get(empRaw) || 0) + 1);
+
+    // Seasonality
+    const month = exp.timeline?.month || null;
+    if (month) monthMap.set(month, (monthMap.get(month) || 0) + 1);
+
+    // Tips
+    totalTips += (exp.tips || []).length;
+
+    // Rounds
+    for (const r of exp.rounds || []) {
+      totalRounds++;
+      const rType = (r.type || "unknown").toLowerCase();
+      roundTypeMap.set(rType, (roundTypeMap.get(rType) || 0) + 1);
+
+      // Difficulty
+      const diff = (r.difficulty || "unspecified").toLowerCase();
+      diffMap.set(diff, (diffMap.get(diff) || 0) + 1);
+
+      // Questions
+      for (const q of r.questions || []) {
+        totalQuestions++;
+        const topic = q.topic || q.category || "Untagged";
+        topicMap.set(topic, (topicMap.get(topic) || 0) + 1);
+      }
+
+      // Coding
+      totalCodingProblems += (r.coding?.problems || []).length;
+    }
+  }
+
+  // Build sorted arrays
+  const companyBreakdown = Array.from(companyMap.entries())
+    .map(([name, v]) => ({ name, ...v }))
+    .sort((a, b) => b.count - a.count);
+
+  const roundTypes = Array.from(roundTypeMap.entries())
+    .map(([type, count]) => ({ type, label: ROUND_TYPE_LABELS[type] || type, count, pct: Math.round((count / totalRounds) * 1000) / 10 }))
+    .sort((a, b) => b.count - a.count);
+
+  const totalExp = experiences.length;
+  const outcomes = Array.from(outcomeMap.entries())
+    .map(([status, count]) => ({ status, count, pct: Math.round((count / totalExp) * 1000) / 10 }))
+    .sort((a, b) => b.count - a.count);
+
+  const questionTopics = Array.from(topicMap.entries())
+    .map(([topic, count]) => ({ topic, count }))
+    .sort((a, b) => b.count - a.count);
+
+  // Filter out 'unspecified' from difficulty for the chart, keep only meaningful ones
+  const diffEntries = Array.from(diffMap.entries()).filter(([k]) => k !== "unspecified" && k !== "null");
+  const diffTotal = diffEntries.reduce((s, [, c]) => s + c, 0);
+  const difficulty = diffEntries
+    .map(([level, count]) => ({ level, count, pct: diffTotal > 0 ? Math.round((count / diffTotal) * 1000) / 10 : 0 }))
+    .sort((a, b) => b.count - a.count);
+
+  const empTotal = experiences.length;
+  const employmentTypes = Array.from(empMap.entries())
+    .map(([type, count]) => ({ type, label: EMP_TYPE_LABELS[type] || type, count, pct: Math.round((count / empTotal) * 1000) / 10 }))
+    .sort((a, b) => b.count - a.count);
+
+  const seasonality = MONTH_ORDER.map((m) => ({ month: m.slice(0, 3), count: monthMap.get(m) || 0 }));
+
+  const uniqueCompanies = companyMap.size;
+
+  return {
+    totals: {
+      experiences: totalExp,
+      rounds: totalRounds,
+      questions: totalQuestions,
+      codingProblems: totalCodingProblems,
+      companies: uniqueCompanies,
+      tips: totalTips,
+    },
+    companyBreakdown,
+    roundTypes,
+    outcomes,
+    questionTopics,
+    difficulty,
+    employmentTypes,
+    seasonality,
+  };
+}
+
