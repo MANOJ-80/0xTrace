@@ -1,116 +1,218 @@
+/**
+ * Multi-stage extraction pipeline.
+ * Stage 1: PDF → Text (handled by route.ts)
+ * Stage 2: Text → Chunks (deterministic regex)
+ * Stage 3: Chunks → Structured JSON (focused LLM prompts)
+ * Stage 4: Assembly → Final Experience
+ */
+
+import { chunkDocument, type ChunkedDocument, type RoundChunk } from "@/lib/chunker";
+import { llmExtractJSON } from "@/lib/llm-providers";
 import { parseExtractionResult } from "@/lib/extraction-schema";
 import { cleanExtractedExperience } from "@/lib/quality-clean";
 import type { ExtractionResponse, Experience } from "@/lib/types";
 import crypto from "crypto";
+
+/* ------------------------------------------------------------------ */
+/*  Stage 3a: LLM — Header Extraction                                 */
+/* ------------------------------------------------------------------ */
+
+async function extractHeader(headerChunk: string, programmatic: ChunkedDocument["programmatic"]) {
+  // If we already got company + candidate programmatically, skip LLM for header
+  if (programmatic.company_name && programmatic.candidate_name) {
+    return {
+      candidate_name: programmatic.candidate_name,
+      company_name: programmatic.company_name,
+      department: programmatic.department,
+      college: programmatic.college,
+      role: null,
+      employment_type: null,
+      degree: null,
+    };
+  }
+
+  // Only call LLM if programmatic extraction missed something
+  const { data } = await llmExtractJSON(
+    `Extract candidate and company information from this interview experience header.
+Return JSON: { "candidate_name": string|null, "company_name": string|null, "department": string|null, "degree": string|null, "college": string|null, "role": string|null, "employment_type": "full_time"|"internship"|"internship_plus_fte"|null }`,
+    headerChunk,
+    300
+  );
+
+  return {
+    candidate_name: data.candidate_name || programmatic.candidate_name,
+    company_name: data.company_name || programmatic.company_name,
+    department: data.department || programmatic.department,
+    college: data.college || programmatic.college,
+    role: data.role || null,
+    employment_type: data.employment_type || null,
+    degree: data.degree || null,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Stage 3b: LLM — Per-Round Extraction                               */
+/* ------------------------------------------------------------------ */
+
+async function extractRound(chunk: RoundChunk) {
+  const { data } = await llmExtractJSON(
+    `Extract interview questions and coding problems from this interview round text.
+Each interview question should be a SEPARATE item. Identify coding problems by algorithm names, LeetCode references, or problem statements.
+Return JSON: {
+  "description": "brief narrative of what happened in this round",
+  "questions": [{ "question": "the actual question asked", "topic": "OS|DBMS|DSA|OOPS|Python|Java|SQL|HR|Behavioral|null", "category": "technical|behavioral|hr|null" }],
+  "coding_problems": [{ "title": "short title", "description": "problem statement", "difficulty": "easy|medium|hard|null", "topics": ["array","string","dp","graph","tree","greedy","math","other"] }],
+  "shortlisted_count": number|null,
+  "sections": [{ "name": "section name", "question_count": number }]
+}`,
+    chunk.raw,
+    800
+  );
+
+  return {
+    sequence: chunk.sequence,
+    name: `Round ${chunk.sequence}`,
+    original_name: chunk.detected_name,
+    type: chunk.detected_type,
+    date: chunk.detected_date,
+    mode: chunk.detected_mode,
+    platform: chunk.detected_platform,
+    duration: chunk.detected_duration,
+    difficulty: chunk.detected_difficulty,
+    description: data.description || null,
+    raw_content: chunk.raw,
+    questions: (data.questions || []).filter((q: any) => q && q.question),
+    coding: {
+      problem_count: (data.coding_problems || []).length || null,
+      problems: (data.coding_problems || []).filter((p: any) => p && p.title),
+    },
+    shortlisting: data.shortlisted_count
+      ? { shortlisted: data.shortlisted_count }
+      : {},
+    sections: data.sections || [],
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Stage 3c: LLM — Tips & Conclusion                                 */
+/* ------------------------------------------------------------------ */
+
+async function extractTips(tipsChunk: string | null, resultChunk: string | null) {
+  if (!tipsChunk && !resultChunk) {
+    return { tips: [], conclusion: null };
+  }
+
+  const text = [tipsChunk, resultChunk].filter(Boolean).join("\n\n");
+
+  const { data } = await llmExtractJSON(
+    `Extract tips/advice and any concluding remarks from this text.
+Each tip should be a SEPARATE string in the array.
+Return JSON: { "tips": ["tip 1", "tip 2", ...], "conclusion": "concluding remark or null" }`,
+    text,
+    400
+  );
+
+  return {
+    tips: Array.isArray(data.tips) ? data.tips : [],
+    conclusion: data.conclusion || null,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main Pipeline                                                      */
+/* ------------------------------------------------------------------ */
 
 export async function extractWithGroq(
   rawText: string,
   filename: string,
   pageCount: number
 ): Promise<ExtractionResponse> {
-  const apiKey = process.env.GROQ_API_KEY;
-  const model = process.env.GROQ_MODEL || "qwen/qwen3.8-27b";
+  // ── Stage 2: Chunk the document ──
+  const chunks = chunkDocument(rawText);
+  console.log(`[Pipeline] Chunked: ${chunks.round_chunks.length} rounds, company="${chunks.programmatic.company_name}", candidate="${chunks.programmatic.candidate_name}"`);
 
-  if (!apiKey) {
-    throw new Error(
-      "GROQ_API_KEY is not set. Add it to apps/web/.env.local to enable live PDF extraction."
-    );
-  }
+  // ── Stage 3a: Extract header (LLM only if needed) ──
+  const header = await extractHeader(chunks.header_chunk, chunks.programmatic);
+  console.log(`[Pipeline] Header: company="${header.company_name}", candidate="${header.candidate_name}"`);
 
-  const systemPrompt = `You are an expert structured-data extraction engine. You receive the raw text of a campus placement interview experience PDF from an Indian engineering college student. Extract ALL information into a single JSON object.
-
-FIELDS TO EXTRACT:
-- candidate: { name, department, degree, college, cgpa (number or string), roll_no }
-- company: { name, normalized_name (lowercase, no suffixes like "Ltd") }
-- job: { role, employment_type ("full_time" | "internship" | "internship_plus_fte"), location }
-- timeline: { month, year (number), drive_type }
-- eligibility: { min_cgpa, branches_eligible (array), history_of_arrears, standing_arrears }
-- compensation: { ctc (string like "12 LPA"), base, stipend, breakdown }
-- rounds: array of objects, each containing:
-  - sequence: 1-indexed number
-  - name: "Round N: <descriptive title>"
-  - original_name: the heading text as it appears in the document
-  - type: ONE OF: online_assessment, aptitude, coding_test, technical_test, mcq, group_discussion, technical_interview, managerial_interview, behavioral_interview, hr_interview, final_interview, other, unknown
-  - mode: "online" | "offline" | null
-  - platform: e.g. "HackerRank", "Zoom", null
-  - duration: e.g. "60 minutes", null
-  - difficulty: "easy" | "medium" | "hard" | null
-  - description: the candidate's narrative walkthrough of the round
-  - raw_content: Leave this as an empty string ""
-  - questions: array of { question, topic, difficulty, category ("technical" | "behavioral" | "hr"), details }
-  - coding: { problem_count, problems: [{ title, description, difficulty, topics: [] }] }
-- outcome: { status ("selected" | "rejected" | "waitlisted" | "unknown"), offer_type, candidates_selected, candidates_appeared }
-- tips: array of advice strings the candidate shared
-- mistakes: array of mistakes/pitfalls mentioned
-- conclusion: concluding remarks if any
-- contacts: { email, linkedin, phone }
-- additional_information: array of any other notable info
-
-CRITICAL RULES:
-1. Extract each interview question as a SEPARATE item in the questions array.
-2. Coding problems should be identified by LeetCode/GFG references, algorithm names, or problem statements.
-3. EXTREMELY IMPORTANT: OMIT ANY KEYS that are null, empty arrays, or false. DO NOT output keys with null values. This is critical to save tokens.
-4. Return ONLY a valid JSON object. No markdown, no explanatory text.`;
-
-  const response = await fetch(
-    "https://api.groq.com/openai/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: process.env.GROQ_MODEL || "openai/gpt-oss-20b",
-        temperature: 0,
-        response_format: { type: "json_object" },
-        max_tokens: 4000,
-        messages: [
-          { role: "system", content: systemPrompt },
-          {
-            role: "user",
-            content: `Extract structured data from this interview experience document:\n\n${rawText}`,
-          },
-        ],
-      }),
+  // ── Stage 3b: Extract each round (LLM per round) ──
+  const rounds = [];
+  for (const roundChunk of chunks.round_chunks) {
+    try {
+      console.log(`[Pipeline] Extracting Round ${roundChunk.sequence}...`);
+      const round = await extractRound(roundChunk);
+      rounds.push(round);
+    } catch (err: any) {
+      console.warn(`[Pipeline] Round ${roundChunk.sequence} LLM failed, using programmatic only:`, err.message);
+      // Fallback: use what we have programmatically
+      rounds.push({
+        sequence: roundChunk.sequence,
+        name: `Round ${roundChunk.sequence}`,
+        original_name: roundChunk.detected_name,
+        type: roundChunk.detected_type,
+        date: roundChunk.detected_date,
+        mode: roundChunk.detected_mode,
+        platform: roundChunk.detected_platform,
+        duration: roundChunk.detected_duration,
+        difficulty: roundChunk.detected_difficulty,
+        description: roundChunk.raw.substring(0, 500),
+        raw_content: roundChunk.raw,
+        questions: [],
+        coding: { problem_count: null, problems: [] },
+        shortlisting: {},
+        sections: [],
+      });
     }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Groq API error ${response.status}: ${errorText}`);
   }
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || "{}";
-
-  let parsedJson: any;
+  // ── Stage 3c: Extract tips ──
+  let tips: string[] = [];
+  let conclusion: string | null = null;
   try {
-    const first = content.indexOf('{');
-    const last = content.lastIndexOf('}');
-    let cleanContent = content;
-    if (first !== -1 && last !== -1) {
-      cleanContent = content.substring(first, last + 1);
-    }
-    parsedJson = JSON.parse(cleanContent);
-    
-    // Clean up LLM array hallucinations (e.g., injecting "" mid-array)
-    if (parsedJson && Array.isArray(parsedJson.rounds)) {
-      parsedJson.rounds = parsedJson.rounds.filter((r: any) => typeof r === 'object' && r !== null && !Array.isArray(r));
-    }
-  } catch (e) {
-    console.error("JSON Parse Failed. Raw:", content);
-    parsedJson = {};
+    const tipsResult = await extractTips(chunks.tips_chunk, chunks.result_chunk);
+    tips = tipsResult.tips;
+    conclusion = tipsResult.conclusion;
+  } catch (err: any) {
+    console.warn(`[Pipeline] Tips extraction failed:`, err.message);
+    if (chunks.tips_chunk) tips = [chunks.tips_chunk];
   }
 
-  const { ExperienceExtractionSchema } = await import("@/lib/extraction-schema");
-  const parsed = ExperienceExtractionSchema.safeParse(parsedJson);
-  if (!parsed.success) {
-    console.error("ZOD VALIDATION FAILED:", parsed.error.issues);
-    console.error("RAW LLM CONTENT:", content);
-  }
+  // ── Stage 4: Assemble final Experience ──
+  const outcome = chunks.programmatic.outcome_status
+    ? {
+        status: chunks.programmatic.outcome_status,
+        selected_count: chunks.programmatic.selected_count,
+        total_candidates: chunks.programmatic.total_candidates,
+      }
+    : { status: "unknown" };
 
-  const validated = parseExtractionResult(parsedJson, rawText, filename);
+  const assembled: any = {
+    candidate: {
+      name: header.candidate_name,
+      department: header.department,
+      degree: header.degree,
+      college: header.college,
+    },
+    company: {
+      name: header.company_name,
+      normalized_name: header.company_name?.toLowerCase().replace(/\s*(ltd|pvt|inc|limited|private|corporation|corp|technologies|tech)\.?\s*/gi, "").trim() || null,
+    },
+    job: {
+      role: header.role,
+      employment_type: header.employment_type,
+    },
+    compensation: {
+      ctc: chunks.programmatic.ctc,
+    },
+    rounds,
+    outcome,
+    tips,
+    conclusion,
+    raw_text: rawText,
+  };
+
+  // Run through existing validation + cleaning pipeline
+  const validated = parseExtractionResult(assembled, rawText, filename);
   validated.source = {
     ...validated.source,
     file_name: filename,
@@ -120,8 +222,6 @@ CRITICAL RULES:
   const cleaned = cleanExtractedExperience(validated) as Experience;
   const { redactObject } = await import("@/lib/quality-clean");
 
-  // Build ui_document sections. Since the LLM no longer outputs verbatim raw_content,
-  // we provide the entire rawText as a single document section to preserve lossless verification.
   const sections = [
     {
       type: "metadata" as const,
