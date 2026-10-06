@@ -18,7 +18,7 @@ export default function ExperienceCard({ experience }: ExperienceCardProps) {
 
   return (
     <Link
-      href={`/experiences/${experience.id}`}
+      href={`/experiences/${experience._id || experience.id}`}
       className="block bg-ox-surface border border-ox-edge hover:border-ox-accent rounded-lg p-4 outline-none focus-visible:ring-2 focus-visible:ring-ox-accent focus-visible:border-ox-accent"
     >
       <div className="flex items-start justify-between gap-4 mb-4">

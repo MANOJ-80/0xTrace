@@ -91,7 +91,7 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {recentExperiences.map((exp) => (
-            <ExperienceCard key={exp.id} experience={exp} />
+            <ExperienceCard key={exp._id || exp.id} experience={exp} />
           ))}
         </div>
       </section>

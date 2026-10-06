@@ -6,6 +6,7 @@ import {
   ExtractionResponse,
 } from "./types";
 import { getCollection } from "./mongodb";
+import { ObjectId } from "mongodb";
 
 /* ------------------------------------------------------------------ */
 /*  Core Data Access (MongoDB)                                         */
@@ -17,14 +18,23 @@ export function invalidateCache() {
 
 export async function getAllExperiences(): Promise<Experience[]> {
   const col = await getCollection("experiences");
-  const docs = await col.find({}, { projection: { _id: 0 } }).toArray();
-  return docs as unknown as Experience[];
+  const docs = await col.find({}).toArray();
+  return docs.map(doc => ({ ...doc, _id: doc._id.toString() })) as unknown as Experience[];
 }
 
 export async function getExperienceById(id: string): Promise<Experience | null> {
   const col = await getCollection("experiences");
-  const doc = await col.findOne({ id }, { projection: { _id: 0 } });
-  return doc as unknown as Experience | null;
+  let doc = null;
+  
+  if (ObjectId.isValid(id)) {
+    doc = await col.findOne({ _id: new ObjectId(id) });
+  } else {
+    // Fallback for legacy exp_XXX URLs
+    doc = await col.findOne({ id });
+  }
+
+  if (!doc) return null;
+  return { ...doc, _id: doc._id.toString() } as unknown as Experience;
 }
 
 export async function getCompanyStats(): Promise<CompanyStats[]> {
@@ -145,7 +155,7 @@ export async function getQuestionBank() {
             ...qObj,
             company: companyName,
             role: roleName,
-            experienceId: exp.id,
+            experienceId: exp._id || exp.id,
             roundName: round.name,
           });
         }
@@ -161,7 +171,7 @@ export async function getQuestionBank() {
             ...cpObj,
             company: companyName,
             role: roleName,
-            experienceId: exp.id,
+            experienceId: exp._id || exp.id,
             roundName: round.name,
           });
         }
@@ -217,7 +227,7 @@ export async function ingestExperienceToCanonical(draftExperience: any): Promise
   }
 
   // Insert into MongoDB
-  await col.insertOne(approved);
+  const result = await col.insertOne(approved);
 
   // Update metadata
   const totalCount = await col.countDocuments();
@@ -234,7 +244,7 @@ export async function ingestExperienceToCanonical(draftExperience: any): Promise
 
   return {
     success: true,
-    assigned_id: nextId,
+    assigned_id: result.insertedId.toString(),
     experience_number: nextNum,
     total_experiences: totalCount,
   };

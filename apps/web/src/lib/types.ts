@@ -98,6 +98,7 @@ export interface Quality {
 }
 
 export interface Experience {
+  _id?: string;
   id: string;
   source: {
     experience_number?: number;
