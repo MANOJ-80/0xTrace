@@ -130,7 +130,7 @@ function extractOutcome(text: string): { status: string | null; selected: number
 
 function extractCompanyName(headerText: string): string | null {
   // Usually the first non-empty line is the company name
-  const lines = headerText.split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = headerText.split(/(?:\n|\s\s\s+)/).map((l) => l.trim()).filter(Boolean);
   if (lines.length === 0) return null;
 
   // Skip common prefixes
@@ -139,25 +139,34 @@ function extractCompanyName(headerText: string): string | null {
     if (/placement\s*experience/i.test(line)) continue;
     if (/^[-–—]/.test(line)) continue; // candidate name line like "-Candidate K"
     if (line.length < 2) continue;
+    
     // This is likely the company name
-    return line.replace(/^[^a-zA-Z]+/, "").trim();
+    const company = line.replace(/^[^a-zA-Z]+/, "").trim();
+    if (company.length > 60) return null; // Too long, PyPDF flattened string, let LLM handle it
+    return company;
   }
+  
+  if (lines[0].length > 60) return null;
   return lines[0];
 }
 
 function extractCandidateName(headerText: string): string | null {
-  const lines = headerText.split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = headerText.split(/(?:\n|\s\s\s+)/).map((l) => l.trim()).filter(Boolean);
 
-  // Look for patterns: "-Name", "– Name", "Name (Roll No)", "By: Name"
+  // Look for patterns: "-Name", "– Name", "Name (Roll No)", "By: Name", "Name : Kalyan"
   for (const line of lines) {
     // "-Candidate K"
     const dashMatch = line.match(/^[-–—]\s*(.+)/);
     if (dashMatch && dashMatch[1].length > 2 && !/round|interview|experience/i.test(dashMatch[1])) {
-      return dashMatch[1].trim();
+      const candidate = dashMatch[1].trim();
+      if (candidate.length <= 60) return candidate;
     }
-    // "By: Name" or "Author: Name"
+    // "By: Name" or "Author: Name" or "Name : Name"
     const byMatch = line.match(/(?:by|author|name)\s*[:–-]\s*(.+)/i);
-    if (byMatch) return byMatch[1].trim();
+    if (byMatch) {
+      const candidate = byMatch[1].trim();
+      if (candidate.length <= 60) return candidate;
+    }
   }
   return null;
 }
@@ -174,16 +183,20 @@ export function chunkDocument(rawText: string): ChunkedDocument {
   const text = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
   // 1. Find round boundaries
-  // Patterns: "Round 1:", "Round 1 -", "Round 1 :-", "ROUND 1", "Round 1 – Online Test"
-  const roundPattern = /^(?:Round\s*(\d+)\s*[:–\-]*\s*(.*?)$)/gim;
+  // Handle both well-formatted newlines and flattened strings from PyPDF
+  const roundPattern = /(?:^|\n|\s\s+)(Round\s*(\d+)\s*[:–\-]\s*(.*?))(?=\n|$|\s\s+Round)/gi;
   const roundMatches: { index: number; number: number; title: string }[] = [];
 
   let match: RegExpExecArray | null;
   while ((match = roundPattern.exec(text)) !== null) {
+    if (match.index === roundPattern.lastIndex) {
+      roundPattern.lastIndex++;
+    }
+    const offset = match[0].indexOf(match[1]);
     roundMatches.push({
-      index: match.index,
-      number: parseInt(match[1], 10),
-      title: match[0].trim(),
+      index: match.index + offset,
+      number: parseInt(match[2], 10),
+      title: match[1].trim(),
     });
   }
 

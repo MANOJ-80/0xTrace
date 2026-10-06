@@ -23,11 +23,8 @@ async function extractHeader(headerChunk: string, programmatic: ChunkedDocument[
     return {
       candidate_name: programmatic.candidate_name,
       company_name: programmatic.company_name,
-      department: programmatic.department,
-      college: programmatic.college,
-      role: null,
-      employment_type: null,
-      degree: null,
+      department: programmatic.department || undefined,
+      college: programmatic.college || undefined,
     };
   }
 
@@ -42,11 +39,11 @@ Return JSON: { "candidate_name": string|null, "company_name": string|null, "depa
   return {
     candidate_name: data.candidate_name || programmatic.candidate_name,
     company_name: data.company_name || programmatic.company_name,
-    department: data.department || programmatic.department,
-    college: data.college || programmatic.college,
-    role: data.role || null,
-    employment_type: data.employment_type || null,
-    degree: data.degree || null,
+    department: data.department || programmatic.department || undefined,
+    college: data.college || programmatic.college || undefined,
+    role: data.role || undefined,
+    employment_type: data.employment_type || undefined,
+    degree: data.degree || undefined,
   };
 }
 
@@ -66,7 +63,7 @@ Return JSON: {
   "sections": [{ "name": "section name", "question_count": number }]
 }`,
     chunk.raw,
-    800
+    4096
   );
 
   return {
@@ -74,16 +71,16 @@ Return JSON: {
     name: `Round ${chunk.sequence}`,
     original_name: chunk.detected_name,
     type: chunk.detected_type,
-    date: chunk.detected_date,
-    mode: chunk.detected_mode,
-    platform: chunk.detected_platform,
-    duration: chunk.detected_duration,
-    difficulty: chunk.detected_difficulty,
-    description: data.description || null,
+    date: chunk.detected_date || undefined,
+    mode: chunk.detected_mode || undefined,
+    platform: chunk.detected_platform || undefined,
+    duration: chunk.detected_duration || undefined,
+    difficulty: chunk.detected_difficulty || undefined,
+    description: data.description || undefined,
     raw_content: chunk.raw,
     questions: (data.questions || []).filter((q: any) => q && q.question),
     coding: {
-      problem_count: (data.coding_problems || []).length || null,
+      problem_count: (data.coding_problems || []).length || undefined,
       problems: (data.coding_problems || []).filter((p: any) => p && p.title),
     },
     shortlisting: data.shortlisted_count
@@ -135,35 +132,34 @@ export async function extractWithGroq(
   const header = await extractHeader(chunks.header_chunk, chunks.programmatic);
   console.log(`[Pipeline] Header: company="${header.company_name}", candidate="${header.candidate_name}"`);
 
-  // ── Stage 3b: Extract each round (LLM per round) ──
-  const rounds = [];
-  for (const roundChunk of chunks.round_chunks) {
-    try {
-      console.log(`[Pipeline] Extracting Round ${roundChunk.sequence}...`);
-      const round = await extractRound(roundChunk);
-      rounds.push(round);
-    } catch (err: any) {
-      console.warn(`[Pipeline] Round ${roundChunk.sequence} LLM failed, using programmatic only:`, err.message);
-      // Fallback: use what we have programmatically
-      rounds.push({
-        sequence: roundChunk.sequence,
-        name: `Round ${roundChunk.sequence}`,
-        original_name: roundChunk.detected_name,
-        type: roundChunk.detected_type,
-        date: roundChunk.detected_date,
-        mode: roundChunk.detected_mode,
-        platform: roundChunk.detected_platform,
-        duration: roundChunk.detected_duration,
-        difficulty: roundChunk.detected_difficulty,
-        description: roundChunk.raw.substring(0, 500),
-        raw_content: roundChunk.raw,
-        questions: [],
-        coding: { problem_count: null, problems: [] },
-        shortlisting: {},
-        sections: [],
-      });
-    }
-  }
+  // ── Stage 3b: Extract each round (Parallel) ──
+  const rounds = await Promise.all(
+    chunks.round_chunks.map(async (roundChunk) => {
+      try {
+        console.log(`[Pipeline] Extracting Round ${roundChunk.sequence}...`);
+        return await extractRound(roundChunk);
+      } catch (err: any) {
+        console.warn(`[Pipeline] Round ${roundChunk.sequence} LLM failed, using programmatic only:`, err.message);
+        // Fallback: use what we have programmatically
+        return {
+          sequence: roundChunk.sequence,
+          name: `Round ${roundChunk.sequence}`,
+          original_name: roundChunk.detected_name,
+          type: roundChunk.detected_type,
+          date: roundChunk.detected_date || undefined,
+          mode: roundChunk.detected_mode || undefined,
+          platform: roundChunk.detected_platform || undefined,
+          duration: roundChunk.detected_duration || undefined,
+          difficulty: roundChunk.detected_difficulty || undefined,
+          description: roundChunk.raw.substring(0, 500),
+          raw_content: roundChunk.raw,
+          questions: [],
+          coding: { problems: [] },
+          sections: [],
+        };
+      }
+    })
+  );
 
   // ── Stage 3c: Extract tips ──
   let tips: string[] = [];
@@ -181,8 +177,8 @@ export async function extractWithGroq(
   const outcome = chunks.programmatic.outcome_status
     ? {
         status: chunks.programmatic.outcome_status,
-        selected_count: chunks.programmatic.selected_count,
-        total_candidates: chunks.programmatic.total_candidates,
+        selected_count: chunks.programmatic.selected_count || undefined,
+        total_candidates: chunks.programmatic.total_candidates || undefined,
       }
     : { status: "unknown" };
 
@@ -195,19 +191,19 @@ export async function extractWithGroq(
     },
     company: {
       name: header.company_name,
-      normalized_name: header.company_name?.toLowerCase().replace(/\s*(ltd|pvt|inc|limited|private|corporation|corp|technologies|tech)\.?\s*/gi, "").trim() || null,
+      normalized_name: header.company_name?.toLowerCase().replace(/\s*(ltd|pvt|inc|limited|private|corporation|corp|technologies|tech)\.?\s*/gi, "").trim() || undefined,
     },
     job: {
       role: header.role,
       employment_type: header.employment_type,
     },
     compensation: {
-      ctc: chunks.programmatic.ctc,
+      ctc: chunks.programmatic.ctc || undefined,
     },
     rounds,
     outcome,
     tips,
-    conclusion,
+    conclusion: conclusion || undefined,
     raw_text: rawText,
   };
 
