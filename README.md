@@ -11,8 +11,9 @@
 - **AI Extraction Studio (`/upload`)**: Upload raw interview PDFs and extract structured data (rounds, coding problems, questions, outcomes) using the Groq LLM API. Features an interactive review workbench before database ingestion.
 - **Experience Directory (`/experiences`)**: A comprehensive, searchable database of past interview experiences. Filter by company, outcome (Selected/Rejected), role, or candidate name.
 - **Question & Coding Bank (`/questions`)**: An aggregated repository of 490+ interview questions and 170+ coding problems drawn directly from real interviews. Filter by difficulty, topic (OS, DBMS, System Design), and company.
-- **Lossless Preservation**: View the extracted structured data side-by-side with the unedited, verbatim transcript of the original PDF submission.
+- **Analytics Dashboard (`/analytics`)**: Detailed statistics and visualizations of the hiring landscape, including company-wise breakdowns, round type distributions, and outcome percentages.
 - **Manual Contribution (`/contribute`)**: A 4-step wizard allowing users to manually submit their interview walkthroughs, complete with dynamic round configurations.
+- **Admin Dashboard (`/admin`)**: Secure interface to manage the platform's data. View, edit (via raw JSON editor), and delete experiences directly from the database.
 - **Privacy First (PII Scrubbing)**: Built-in redaction pipeline that automatically masks candidate emails and phone numbers from both the structured JSON and the verbatim raw text.
 
 ---
@@ -26,11 +27,10 @@
 - **Icons**: Lucide React
 - **Validation**: Zod
 
-**Backend (API & Extraction)**
-- **Framework**: Python FastAPI
-- **PDF Processing**: `pypdf`, `pdftoppm`, Tesseract OCR
-- **AI Extraction**: Groq SDK (`openai/gpt-oss-20b` or Llama 3)
-- **Database**: Flat-file Canonical JSON (`interview_experiences_v1.3.json`)
+**Backend (API & Database)**
+- **Database**: MongoDB Atlas (Primary Data Store)
+- **AI Extraction**: Groq SDK (`llama-3.3-70b-versatile`)
+- **PDF Processing**: Python FastAPI, `pypdf`, Tesseract OCR
 
 ---
 
@@ -42,11 +42,10 @@
 │   ├── api/                          # FastAPI Python backend (PDF parsing, OCR)
 │   └── web/                          # Next.js 14 frontend web application
 ├── data/
-│   ├── canonical/                    # Immutable golden dataset (JSON)
+│   ├── canonical/                    # Legacy JSON dataset backups
 │   ├── audits/                       # Semantic audits & schema validation reports
 │   └── schema/                       # JSON Schema definition
-├── ExperiencePDFs/                   # Sample raw college campus interview PDFs
-└── scripts/                          # Hygiene and testing scripts
+└── scripts/                          # Seeding (seed-mongodb.mjs) and testing scripts
 ```
 
 ---
@@ -73,7 +72,9 @@ npm install
 Set up your environment variables. Create an `apps/web/.env.local` file:
 ```env
 GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=openai/gpt-oss-20b
+GROQ_MODEL=llama-3.3-70b-versatile
+MONGODB_URI=mongodb+srv://...
+ADMIN_PASSWORD=your_admin_password
 ```
 
 Run the development server:
