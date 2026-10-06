@@ -161,32 +161,7 @@ export default function ExtractionStudio({ initialSample }: ExtractionStudioProp
           </button>
         </form>
 
-        {/* Sample fixtures */}
-        <div className="mt-6 pt-5 border-t border-ox-edge max-w-2xl mx-auto">
-          <div className="text-xs font-medium text-ox-muted text-center mb-3">
-            Or test with preloaded verified samples:
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {([
-              { key: "walmart" as const, label: "Candidate — Walmart", desc: "4 rounds · 23 questions · 3 coding" },
-              { key: "phonepe" as const, label: "Candidate — PhonePe", desc: "4 rounds · 6,086 chars · lossless" },
-              { key: "idfc" as const, label: "Praveen — IDFC First", desc: "5 rounds · normalized headings" },
-            ]).map(({ key, label, desc }) => (
-              <button
-                key={key}
-                onClick={() => handleLoadSample(key)}
-                className={`p-3 rounded-lg border text-left text-xs transition-colors ${
-                  selectedSample === key
-                    ? "border-ox-accent bg-ox-accent/10 text-ox-ink"
-                    : "border-ox-edge bg-ox-void hover:border-ox-accent text-ox-muted"
-                }`}
-              >
-                <div className="font-semibold text-ox-ink">{label}</div>
-                <div className="text-[11px] text-ox-muted mt-0.5">{desc}</div>
-              </button>
-            ))}
-          </div>
-        </div>
+
 
         {/* Error */}
         {error && (

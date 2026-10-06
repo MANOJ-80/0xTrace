@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useState } from "react";
 import { Round } from "@/lib/types";
+import MarkdownRenderer from "./MarkdownRenderer";
 import {
   X,
   ChevronLeft,
@@ -241,7 +242,7 @@ export default function RoundModal({
               </button>
             </div>
             <div className="space-y-2 pt-1">
-              {renderNarrative(narrativeContent)}
+              <MarkdownRenderer source={narrativeContent} />
             </div>
           </div>
 

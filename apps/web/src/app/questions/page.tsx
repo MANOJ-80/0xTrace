@@ -24,7 +24,7 @@ export default async function QuestionsPage() {
       <QuestionBankClient
         questions={questions}
         codingProblems={codingProblems}
-        companies={companies.map((c) => c.name)}
+        companies={companies.map((c) => c.name).sort((a, b) => a.localeCompare(b))}
       />
     </div>
   );

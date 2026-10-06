@@ -299,6 +299,7 @@ const EMP_TYPE_LABELS: Record<string, string> = {
   internship: "Internship",
   internship_and_full_time: "Internship + FTE",
   internship_plus_fte: "Internship + FTE",
+  internship_to_fulltime: "Internship to Fulltime",
   unknown: "Unknown",
 };
 

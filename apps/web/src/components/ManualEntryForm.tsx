@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import "@uiw/react-md-editor/markdown-editor.css";
+import "@uiw/react-markdown-preview/markdown.css";
+
+const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 import {
   ChevronRight,
   ChevronLeft,
@@ -283,7 +288,17 @@ export default function ManualEntryForm() {
       contacts: { linkedin: form.linkedin || null },
       additional_information: [],
       quality: { score: 100, issues: [] },
-      raw_text: "",
+      raw_text: [
+        `Company: ${form.companyName}`,
+        form.role && `Role: ${form.role}`,
+        form.candidateName && `Candidate: ${form.candidateName}`,
+        form.conclusion,
+        ...form.rounds.map((r, i) => `Round ${i + 1}: ${r.name}\n${r.description}`),
+        form.tips && `Tips:\n${form.tips}`,
+        form.mistakes && `Mistakes:\n${form.mistakes}`,
+      ]
+        .filter(Boolean)
+        .join("\n\n"),
     };
 
     try {
@@ -399,6 +414,7 @@ export default function ManualEntryForm() {
                     <option value="fte">Full Time</option>
                     <option value="internship">Internship</option>
                     <option value="internship_plus_fte">Internship + FTE</option>
+                    <option value="internship_to_fulltime">Internship to Fulltime</option>
                   </select>
                 </Field>
                 <Field label="Location">
@@ -516,12 +532,16 @@ export default function ManualEntryForm() {
 
                     {/* Description */}
                     <Field label="Your Experience / Walkthrough" required>
-                      <textarea
-                        className={textareaCls + " min-h-[140px]"}
-                        placeholder="Describe your experience in this round — what happened, what was asked, how you approached it..."
-                        value={round.description}
-                        onChange={(e) => updateRound(ri, { description: e.target.value })}
-                      />
+                      <div data-color-mode="dark" className="mt-1 w-full rounded-md border-2 border-ox-edge overflow-hidden focus-within:border-ox-accent transition-colors">
+                        <MDEditor
+                          value={round.description}
+                          onChange={(val) => updateRound(ri, { description: val || "" })}
+                          preview="edit"
+                          hideToolbar={false}
+                          height={200}
+                          style={{ backgroundColor: 'transparent' }}
+                        />
+                      </div>
                     </Field>
 
                     {/* Questions sub-section */}

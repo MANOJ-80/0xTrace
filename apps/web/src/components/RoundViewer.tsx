@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Round } from "@/lib/types";
+import MarkdownRenderer from "./MarkdownRenderer";
 import { getRoundTypeBadgeColor } from "@/lib/utils";
 import {
   Clock,
@@ -153,11 +154,9 @@ export default function RoundViewer({ rounds }: RoundViewerProps) {
                 <Lightbulb className="w-3.5 h-3.5" />
                 Round walkthrough
               </span>
-              <div className="space-y-2 text-sm text-ox-ink leading-relaxed">
+              <div className="space-y-2 text-sm text-ox-ink leading-relaxed prose prose-invert max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5">
                 {narrative ? (
-                  narrative.split("\n\n").map((para, pIdx) => (
-                    <p key={pIdx}>{para}</p>
-                  ))
+                  <MarkdownRenderer source={narrative} />
                 ) : (
                   <p className="text-ox-muted italic">No narrative recorded for this round.</p>
                 )}

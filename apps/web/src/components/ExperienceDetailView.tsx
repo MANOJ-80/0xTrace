@@ -61,7 +61,7 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
   const candidateName =
     experience.candidate?.name || `Candidate #${experience.id.replace("exp_", "")}`;
   const candidateCollege =
-    experience.candidate?.college || "PSG College of Technology";
+    experience.candidate?.college || "PSG iTech";
 
   // Common pitfalls / mistakes — sourced from experience data
   const mistakes = experience.mistakes || [];

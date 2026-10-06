@@ -25,7 +25,7 @@ export default async function ExperiencesPage() {
       <Suspense fallback={<div className="text-sm text-ox-muted py-8 text-center">Loading experiences directory...</div>}>
         <ExperienceDirectoryClient
           initialExperiences={experiences}
-          companies={companies.map((c) => c.name)}
+          companies={companies.map((c) => c.name).sort((a, b) => a.localeCompare(b))}
         />
       </Suspense>
     </div>
