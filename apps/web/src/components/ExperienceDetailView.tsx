@@ -200,7 +200,7 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>Full transcript</span>
+          <span>Original Writeup</span>
         </button>
       </div>
 

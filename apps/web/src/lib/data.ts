@@ -1,61 +1,30 @@
-import fs from "fs/promises";
-import path from "path";
 import {
-  CanonicalDataset,
   Experience,
   CompanyStats,
   InterviewQuestion,
   CodingProblem,
   ExtractionResponse,
 } from "./types";
+import { getCollection } from "./mongodb";
 
-let cachedDataset: CanonicalDataset | null = null;
+/* ------------------------------------------------------------------ */
+/*  Core Data Access (MongoDB)                                         */
+/* ------------------------------------------------------------------ */
 
 export function invalidateCache() {
-  cachedDataset = null;
-}
-
-export async function getCanonicalDataset(forceRefresh = false): Promise<CanonicalDataset> {
-  if (cachedDataset && !forceRefresh) {
-    return cachedDataset;
-  }
-
-  // Look in root data folder
-  const possiblePaths = [
-    path.join(process.cwd(), "..", "..", "data", "canonical", "interview_experiences_v1.3.json"),
-    path.join(process.cwd(), "data", "canonical", "interview_experiences_v1.3.json"),
-    path.join(__dirname, "..", "..", "..", "..", "data", "canonical", "interview_experiences_v1.3.json"),
-  ];
-
-  let filePath = "";
-  for (const p of possiblePaths) {
-    try {
-      await fs.access(p);
-      filePath = p;
-      break;
-    } catch {
-      // continue
-    }
-  }
-
-  if (!filePath) {
-    // Default fallback path
-    filePath = path.resolve(process.cwd(), "../../data/canonical/interview_experiences_v1.3.json");
-  }
-
-  const raw = await fs.readFile(filePath, "utf-8");
-  cachedDataset = JSON.parse(raw) as CanonicalDataset;
-  return cachedDataset;
+  // No-op — MongoDB handles caching at the driver level
 }
 
 export async function getAllExperiences(): Promise<Experience[]> {
-  const dataset = await getCanonicalDataset();
-  return dataset.experiences || [];
+  const col = await getCollection("experiences");
+  const docs = await col.find({}, { projection: { _id: 0 } }).toArray();
+  return docs as unknown as Experience[];
 }
 
 export async function getExperienceById(id: string): Promise<Experience | null> {
-  const experiences = await getAllExperiences();
-  return experiences.find((exp) => exp.id === id) || null;
+  const col = await getCollection("experiences");
+  const doc = await col.findOne({ id }, { projection: { _id: 0 } });
+  return doc as unknown as Experience | null;
 }
 
 export async function getCompanyStats(): Promise<CompanyStats[]> {
@@ -88,7 +57,7 @@ export async function getCompanyStats(): Promise<CompanyStats[]> {
       stat.selected += 1;
     }
     stat.rounds += (exp.rounds || []).length;
-    
+
     let totalQuestionsInExp = 0;
     const seq = (exp.rounds || []).map((r) => {
       totalQuestionsInExp += (r.questions || []).length;
@@ -100,7 +69,6 @@ export async function getCompanyStats(): Promise<CompanyStats[]> {
 
   const result: CompanyStats[] = [];
   for (const [name, stat] of companyMap.entries()) {
-    // Find most typical round sequence or sample
     const roundSequenceSample = stat.roundSequences.length > 0 ? stat.roundSequences[0] : [];
     result.push({
       name,
@@ -113,13 +81,11 @@ export async function getCompanyStats(): Promise<CompanyStats[]> {
     });
   }
 
-  // Sort by experience count descending
   return result.sort((a, b) => b.experienceCount - a.experienceCount);
 }
 
 export async function getDashboardMetrics() {
-  const dataset = await getCanonicalDataset();
-  const experiences = dataset.experiences || [];
+  const experiences = await getAllExperiences();
   const companies = await getCompanyStats();
 
   let totalRounds = 0;
@@ -137,8 +103,8 @@ export async function getDashboardMetrics() {
   return {
     totalExperiences: experiences.length,
     totalRounds,
-    totalQuestions: totalQuestions || dataset.dataset_metadata?.validation?.total_interview_questions || 493,
-    totalCodingProblems: totalCodingProblems || dataset.dataset_metadata?.validation?.total_coding_problems || 173,
+    totalQuestions: totalQuestions || 493,
+    totalCodingProblems: totalCodingProblems || 173,
     totalCompanies: companies.length,
     topCompanies: companies.slice(0, 8),
   };
@@ -207,31 +173,13 @@ export async function getQuestionBank() {
 }
 
 export async function getSampleExtraction(name: "walmart" | "phonepe" | "idfc"): Promise<ExtractionResponse | null> {
-  const map: Record<string, string> = {
-    walmart: "candidate-walmart-extracted.json",
-    phonepe: "phonepe-candidate-extracted.json",
-    idfc: "candidate-i-idfc-extracted.json",
-  };
-
-  const filename = map[name];
-  if (!filename) return null;
-
-  const possiblePaths = [
-    path.join(process.cwd(), "..", "..", filename),
-    path.join(process.cwd(), filename),
-    path.resolve(process.cwd(), "../../", filename),
-  ];
-
-  for (const p of possiblePaths) {
-    try {
-      const raw = await fs.readFile(p, "utf-8");
-      return JSON.parse(raw) as ExtractionResponse;
-    } catch {
-      // continue
-    }
-  }
+  // Samples are no longer stored as flat files — return null
   return null;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Ingestion (MongoDB)                                                */
+/* ------------------------------------------------------------------ */
 
 export async function ingestExperienceToCanonical(draftExperience: any): Promise<{
   success: boolean;
@@ -239,40 +187,19 @@ export async function ingestExperienceToCanonical(draftExperience: any): Promise
   experience_number: number;
   total_experiences: number;
 }> {
-  const possiblePaths = [
-    path.join(process.cwd(), "..", "..", "data", "canonical", "interview_experiences_v1.3.json"),
-    path.join(process.cwd(), "data", "canonical", "interview_experiences_v1.3.json"),
-    path.resolve(process.cwd(), "../../data/canonical/interview_experiences_v1.3.json"),
-  ];
-
-  let filePath = "";
-  for (const p of possiblePaths) {
-    try {
-      await fs.access(p);
-      filePath = p;
-      break;
-    } catch {
-      // continue
-    }
-  }
-
-  if (!filePath) {
-    filePath = path.resolve(process.cwd(), "../../data/canonical/interview_experiences_v1.3.json");
-  }
-
-  const raw = await fs.readFile(filePath, "utf-8");
-  const dataset = JSON.parse(raw) as CanonicalDataset;
-  const experiences = dataset.experiences || [];
+  const col = await getCollection("experiences");
+  const metaCol = await getCollection("metadata");
 
   // Find highest existing experience number
+  const latest = await col.find({ id: { $regex: /^exp_\d+$/ } })
+    .sort({ id: -1 })
+    .limit(1)
+    .toArray();
+
   let maxNum = 0;
-  for (const exp of experiences) {
-    if (exp.id && exp.id.startsWith("exp_")) {
-      const num = parseInt(exp.id.replace("exp_", ""), 10);
-      if (!isNaN(num) && num > maxNum) {
-        maxNum = num;
-      }
-    }
+  if (latest.length > 0 && latest[0].id) {
+    const num = parseInt(latest[0].id.replace("exp_", ""), 10);
+    if (!isNaN(num)) maxNum = num;
   }
 
   const nextNum = maxNum + 1;
@@ -289,53 +216,27 @@ export async function ingestExperienceToCanonical(draftExperience: any): Promise
     approved.rounds[i].sequence = i + 1;
   }
 
-  // Calculate metrics
-  const newRounds = (approved.rounds || []).length;
-  let newQuestions = 0;
-  let newCoding = 0;
-  for (const r of approved.rounds || []) {
-    newQuestions += (r.questions || []).length;
-    newCoding += (r.coding?.problems || []).length;
-  }
-
-  experiences.push(approved);
-  dataset.experiences = experiences;
+  // Insert into MongoDB
+  await col.insertOne(approved);
 
   // Update metadata
-  const meta = dataset.dataset_metadata || ({} as any);
-  meta.total_experiences = experiences.length;
-  meta.updated_at = new Date().toISOString();
-
-  if (meta.validation) {
-    meta.validation.output_experience_count = experiences.length;
-    meta.validation.source_experience_count = (meta.validation.source_experience_count || experiences.length - 1) + 1;
-    meta.validation.source_round_count = (meta.validation.source_round_count || 0) + newRounds;
-    meta.validation.v1_3_round_count = (meta.validation.v1_3_round_count || 0) + newRounds;
-    meta.validation.total_interview_questions = (meta.validation.total_interview_questions || 0) + newQuestions;
-    meta.validation.total_coding_problems = (meta.validation.total_coding_problems || 0) + newCoding;
-  }
-
-  // Backup file
-  const backupPath = `${filePath}.bak`;
-  try {
-    await fs.copyFile(filePath, backupPath);
-  } catch (err) {
-    // backup attempt
-  }
-
-  // Atomic write via temp file
-  const tmpPath = `${filePath}.tmp.${Date.now()}`;
-  await fs.writeFile(tmpPath, JSON.stringify(dataset, null, 2) + "\n", "utf-8");
-  await fs.rename(tmpPath, filePath);
-
-  // Invalidate cache
-  invalidateCache();
+  const totalCount = await col.countDocuments();
+  await metaCol.updateOne(
+    { _id: "dataset_metadata" } as any,
+    {
+      $set: {
+        total_experiences: totalCount,
+        updated_at: new Date().toISOString(),
+      },
+    },
+    { upsert: true }
+  );
 
   return {
     success: true,
     assigned_id: nextId,
     experience_number: nextNum,
-    total_experiences: experiences.length,
+    total_experiences: totalCount,
   };
 }
 
@@ -410,7 +311,6 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   const monthMap = new Map<string, number>();
 
   for (const exp of experiences) {
-    // Company
     const cName = exp.company?.name || exp.company?.normalized_name || "Unknown";
     if (!companyMap.has(cName)) companyMap.set(cName, { count: 0, selected: 0, rejected: 0 });
     const cs = companyMap.get(cName)!;
@@ -419,44 +319,35 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     if (status.includes("select") || status.includes("offer")) cs.selected++;
     if (status.includes("reject")) cs.rejected++;
 
-    // Outcome
     const oKey = status.includes("select") || status.includes("offer") ? "selected" : status.includes("reject") ? "rejected" : "other";
     outcomeMap.set(oKey, (outcomeMap.get(oKey) || 0) + 1);
 
-    // Employment type
     const empRaw = (exp.job?.employment_type || "unknown").toLowerCase();
     empMap.set(empRaw, (empMap.get(empRaw) || 0) + 1);
 
-    // Seasonality
     const month = exp.timeline?.month || null;
     if (month) monthMap.set(month, (monthMap.get(month) || 0) + 1);
 
-    // Tips
     totalTips += (exp.tips || []).length;
 
-    // Rounds
     for (const r of exp.rounds || []) {
       totalRounds++;
       const rType = (r.type || "unknown").toLowerCase();
       roundTypeMap.set(rType, (roundTypeMap.get(rType) || 0) + 1);
 
-      // Difficulty
       const diff = (r.difficulty || "unspecified").toLowerCase();
       diffMap.set(diff, (diffMap.get(diff) || 0) + 1);
 
-      // Questions
       for (const q of r.questions || []) {
         totalQuestions++;
         const topic = q.topic || q.category || "Untagged";
         topicMap.set(topic, (topicMap.get(topic) || 0) + 1);
       }
 
-      // Coding
       totalCodingProblems += (r.coding?.problems || []).length;
     }
   }
 
-  // Build sorted arrays
   const companyBreakdown = Array.from(companyMap.entries())
     .map(([name, v]) => ({ name, ...v }))
     .sort((a, b) => b.count - a.count);
@@ -474,7 +365,6 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     .map(([topic, count]) => ({ topic, count }))
     .sort((a, b) => b.count - a.count);
 
-  // Filter out 'unspecified' from difficulty for the chart, keep only meaningful ones
   const diffEntries = Array.from(diffMap.entries()).filter(([k]) => k !== "unspecified" && k !== "null");
   const diffTotal = diffEntries.reduce((s, [, c]) => s + c, 0);
   const difficulty = diffEntries
@@ -508,4 +398,3 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     seasonality,
   };
 }
-

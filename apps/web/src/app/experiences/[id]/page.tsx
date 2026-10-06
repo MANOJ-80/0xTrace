@@ -1,18 +1,14 @@
 import { notFound } from "next/navigation";
-import { getExperienceById, getAllExperiences } from "@/lib/data";
+import { getExperienceById } from "@/lib/data";
 import ExperienceDetailView from "@/components/ExperienceDetailView";
+
+// Dynamic rendering — data comes from MongoDB at request time
+export const dynamic = "force-dynamic";
 
 interface ExperienceDetailPageProps {
   params: {
     id: string;
   };
-}
-
-export async function generateStaticParams() {
-  const experiences = await getAllExperiences();
-  return experiences.map((exp) => ({
-    id: exp.id,
-  }));
 }
 
 export default async function ExperienceDetailPage({ params }: ExperienceDetailPageProps) {
