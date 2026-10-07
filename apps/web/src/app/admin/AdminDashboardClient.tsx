@@ -8,6 +8,7 @@ import { Experience } from "@/lib/types";
 export default function AdminDashboardClient() {
   const router = useRouter();
   const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [authKey, setAuthKey] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -110,6 +111,7 @@ export default function AdminDashboardClient() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-ox-ink">Admin Dashboard</h1>
+          <p className="text-ox-muted mt-2 text-sm">Secure management console for auditing, editing, and deleting candidate experiences.</p>
           <p className="text-ox-text mt-2">Manage {experiences.length} experiences</p>
         </div>
         <div className="flex gap-4">
@@ -134,6 +136,15 @@ export default function AdminDashboardClient() {
 
       {error && <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
 
+      <div className="mb-6 flex gap-4">
+        <input 
+          type="text" 
+          placeholder="Search by company or candidate..." 
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="flex-1 px-4 py-2 border-2 border-ox-edge rounded-lg bg-ox-surface text-ox-ink outline-none focus:border-ox-accent"
+        />
+      </div>
       <div className="bg-ox-surface border-2 border-ox-edge rounded-lg overflow-x-auto shadow-neo">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -146,7 +157,10 @@ export default function AdminDashboardClient() {
             </tr>
           </thead>
           <tbody>
-            {experiences.map((exp, i) => {
+            {experiences.filter(e => {
+              const q = search.toLowerCase();
+              return (e.company?.name || '').toLowerCase().includes(q) || (e.candidate?.name || '').toLowerCase().includes(q);
+            }).map((exp, i) => {
               const rowId = exp._id || exp.id;
               return (
                 <tr key={rowId} className={`border-b border-ox-edge/30 ${i % 2 === 0 ? "bg-ox-surface" : "bg-ox-window/50"} hover:bg-ox-accent/10 transition-colors`}>
@@ -175,6 +189,9 @@ export default function AdminDashboardClient() {
                     >
                       Delete
                     </button>
+                    <Link href={"/experiences/" + rowId} target="_blank" className="text-ox-text font-semibold hover:underline">
+                      View
+                    </Link>
                   </td>
                 </tr>
               );

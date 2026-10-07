@@ -9,11 +9,13 @@ import { Search } from "lucide-react";
 interface ExperienceDirectoryClientProps {
   initialExperiences: Experience[];
   companies: string[];
+  roles?: string[];
 }
 
 export default function ExperienceDirectoryClient({
   initialExperiences,
   companies,
+  roles = [],
 }: ExperienceDirectoryClientProps) {
   const searchParams = useSearchParams();
   const initialCompany = searchParams.get("company") || "";
@@ -21,6 +23,7 @@ export default function ExperienceDirectoryClient({
 
   const [search, setSearch] = useState("");
   const [selectedCompany, setSelectedCompany] = useState(initialCompany);
+  const [selectedRole, setSelectedRole] = useState("all");
   const [selectedOutcome, setSelectedOutcome] = useState("all");
   const [sortBy, setSortBy] = useState(initialSort);
 
@@ -59,6 +62,12 @@ export default function ExperienceDirectoryClient({
         }
       }
 
+      // Role filter
+      if (selectedRole !== "all") {
+        const rName = exp.job?.role || "";
+        if (rName !== selectedRole) return false;
+      }
+
       // Outcome filter
       if (selectedOutcome !== "all") {
         const status = (exp.outcome?.status || "").toLowerCase();
@@ -94,6 +103,7 @@ export default function ExperienceDirectoryClient({
   const resetFilters = () => {
     setSearch("");
     setSelectedCompany("");
+    setSelectedRole("all");
     setSelectedOutcome("all");
     setSortBy("recent");
   };
@@ -101,6 +111,7 @@ export default function ExperienceDirectoryClient({
   const isFiltered =
     search !== "" ||
     (selectedCompany !== "" && selectedCompany !== "all") ||
+    selectedRole !== "all" ||
     selectedOutcome !== "all" ||
     sortBy !== "recent";
 
@@ -135,6 +146,24 @@ export default function ExperienceDirectoryClient({
               ))}
             </select>
           </div>
+
+          {/* Role Dropdown */}
+          {roles.length > 0 && (
+            <div className="w-full md:w-48 shrink-0">
+              <select
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                className="w-full py-2 px-3 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink focus:outline-none focus:border-ox-accent appearance-none"
+              >
+                <option value="all">All Roles</option>
+                {roles.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Sort By Dropdown */}
           <div className="w-full md:w-44 shrink-0 flex items-center gap-1.5">

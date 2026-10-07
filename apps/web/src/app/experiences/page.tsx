@@ -26,6 +26,7 @@ export default async function ExperiencesPage() {
         <ExperienceDirectoryClient
           initialExperiences={experiences}
           companies={companies.map((c) => c.name).sort((a, b) => a.localeCompare(b))}
+          roles={Array.from(new Set(experiences.map(e => e.job?.role).filter(Boolean))).sort()}
         />
       </Suspense>
     </div>
