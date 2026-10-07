@@ -76,13 +76,13 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => signIn("google")}
+            <Link
+              href="/login"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold text-ox-ink bg-ox-accent border-2 border-ox-ink rounded-md shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all duration-100"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Login</span>
-            </button>
+            </Link>
           )}
 
           {/* Mobile menu toggle */}

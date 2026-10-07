@@ -10,7 +10,7 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
     pages: {
-      signIn: "/api/auth/signin", // Let next-auth handle the redirect to google directly if possible, or back to home
+      signIn: "/login", 
     },
   }
 );
