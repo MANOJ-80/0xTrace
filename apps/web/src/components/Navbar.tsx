@@ -15,6 +15,7 @@ export default function Navbar() {
     { href: "/questions", label: "Questions" },
     { href: "/analytics", label: "Analytics" },
     { href: "/contribute", label: "Contribute" },
+    { href: "/about", label: "About" },
     { href: "/admin", label: "Admin" },
   ];
 
