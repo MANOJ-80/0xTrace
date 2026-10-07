@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { getAllExperiences, getCompanyStats } from "@/lib/data";
 import ExperienceDirectoryClient from "./ExperienceDirectoryClient";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "All Experiences — 0xTrace Placement Intelligence",
   description: "Browse audited placement interview experiences across top companies.",
