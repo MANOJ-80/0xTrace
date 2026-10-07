@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getDashboardMetrics, getAllExperiences } from "@/lib/data";
 import ExperienceCard from "@/components/ExperienceCard";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function DashboardPage() {
   const metrics = await getDashboardMetrics();

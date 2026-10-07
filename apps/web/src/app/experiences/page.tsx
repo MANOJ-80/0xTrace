@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { getAllExperiences, getCompanyStats } from "@/lib/data";
 import ExperienceDirectoryClient from "./ExperienceDirectoryClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: "All Experiences — 0xTrace Placement Intelligence",
@@ -28,7 +28,7 @@ export default async function ExperiencesPage() {
         <ExperienceDirectoryClient
           initialExperiences={experiences}
           companies={companies.map((c) => c.name).sort((a, b) => a.localeCompare(b))}
-          roles={Array.from(new Set(experiences.map(e => e.job?.role).filter(Boolean))).sort()}
+          roles={Array.from(new Set(experiences.map(e => e.job?.role).filter(Boolean) as string[])).sort()}
         />
       </Suspense>
     </div>

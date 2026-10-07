@@ -2,7 +2,7 @@ import { getAnalyticsData } from "@/lib/data";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import { BarChart3 } from "lucide-react";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Analytics — 0xTrace",
