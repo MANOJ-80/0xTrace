@@ -21,5 +21,7 @@ export const config = {
     "/upload",
     "/admin/:path*",
     "/experiences/:id",
+    "/questions",
+    "/analytics",
   ],
 };
