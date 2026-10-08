@@ -21,7 +21,9 @@ export default function Navbar() {
 
   if (status === "authenticated") {
     navItems.push({ href: "/contribute", label: "Contribute" });
-    navItems.push({ href: "/admin", label: "Admin" });
+    if (session?.user?.isAdmin) {
+      navItems.push({ href: "/admin", label: "Admin" });
+    }
   }
 
   return (

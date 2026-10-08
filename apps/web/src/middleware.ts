@@ -3,6 +3,14 @@ import { NextResponse } from "next/server";
 
 export default withAuth(
   function middleware(req) {
+    const path = req.nextUrl.pathname;
+    const token = req.nextauth.token;
+
+    // Strict check for admin routes
+    if (path.startsWith("/admin") && !token?.isAdmin) {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
     return NextResponse.next();
   },
   {
@@ -10,7 +18,7 @@ export default withAuth(
       authorized: ({ token }) => !!token,
     },
     pages: {
-      signIn: "/login", 
+      signIn: "/login",
     },
   }
 );

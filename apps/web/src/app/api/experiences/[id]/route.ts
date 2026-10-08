@@ -27,8 +27,8 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || !session.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized: Admins Only" }, { status: 401 });
   }
 
   try {
@@ -59,8 +59,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || !session.user?.isAdmin) {
+    return NextResponse.json({ error: "Unauthorized: Admins Only" }, { status: 401 });
   }
 
   try {

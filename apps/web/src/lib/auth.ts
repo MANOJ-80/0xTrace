@@ -1,6 +1,8 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
+const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -14,6 +16,18 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
       return "/unauthorized";
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.isAdmin = user.email ? adminEmails.includes(user.email.toLowerCase()) : false;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.isAdmin = token.isAdmin;
+      }
+      return session;
     },
   },
   pages: {
