@@ -1,6 +1,6 @@
 import AdminDashboardClient from "./AdminDashboardClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default function AdminPage() {
   return <AdminDashboardClient />;

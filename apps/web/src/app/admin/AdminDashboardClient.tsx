@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Experience } from "@/lib/types";
@@ -10,26 +10,14 @@ export default function AdminDashboardClient() {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [authKey, setAuthKey] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const savedKey = localStorage.getItem("ox_admin_key");
-    if (savedKey) {
-      setAuthKey(savedKey);
-      setIsAuthenticated(true);
-      fetchExperiences();
-    } else {
-      setLoading(false);
-    }
+    fetchExperiences();
   }, []);
 
   const fetchExperiences = async () => {
     try {
-      // Just fetch page 1 for now, or maybe a dedicated admin route.
-      // We can use the existing /api/experiences but it paginates. 
-      // Let's fetch with a high limit.
       const res = await fetch("/api/experiences?limit=1000");
       const data = await res.json();
       if (res.ok) {
@@ -44,14 +32,6 @@ export default function AdminDashboardClient() {
     }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    localStorage.setItem("ox_admin_key", authKey);
-    setIsAuthenticated(true);
-    setLoading(true);
-    fetchExperiences();
-  };
-
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this experience? This action cannot be undone.")) {
       return;
@@ -60,9 +40,6 @@ export default function AdminDashboardClient() {
     try {
       const res = await fetch(`/api/experiences/${id}`, {
         method: "DELETE",
-        headers: {
-          "x-admin-key": authKey,
-        },
       });
 
       if (res.ok) {
@@ -80,32 +57,6 @@ export default function AdminDashboardClient() {
     return <div className="p-8 text-ox-ink">Loading...</div>;
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="max-w-md mx-auto mt-20 p-8 bg-ox-surface border-4 border-ox-edge rounded-xl shadow-neo">
-        <h1 className="text-2xl font-bold mb-6 text-ox-ink">Admin Access</h1>
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-ox-ink mb-1">Admin Key</label>
-            <input
-              type="password"
-              value={authKey}
-              onChange={(e) => setAuthKey(e.target.value)}
-              className="w-full px-4 py-2 border-2 border-ox-edge rounded bg-ox-window focus:border-ox-accent outline-none"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full py-2 bg-ox-accent border-2 border-ox-ink font-semibold rounded shadow-neo hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-ox-ink"
-          >
-            Login
-          </button>
-        </form>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex items-center justify-between mb-8">
@@ -115,16 +66,6 @@ export default function AdminDashboardClient() {
           <p className="text-ox-text mt-2">Manage {experiences.length} experiences</p>
         </div>
         <div className="flex gap-4">
-          <button
-            onClick={() => {
-              localStorage.removeItem("ox_admin_key");
-              setIsAuthenticated(false);
-              setAuthKey("");
-            }}
-            className="px-4 py-2 border-2 border-ox-edge bg-ox-window font-semibold rounded hover:bg-red-100 transition-colors text-ox-ink"
-          >
-            Logout
-          </button>
           <Link
             href="/contribute"
             className="px-4 py-2 bg-ox-accent border-2 border-ox-ink font-semibold rounded shadow-neo hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-ox-ink"
