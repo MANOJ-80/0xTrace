@@ -151,25 +151,25 @@ export default function RoundModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/80 backdrop-blur-sm">
       <div className="fixed inset-0" onClick={onClose} />
 
       <div
-        className="relative z-10 w-full max-w-3xl max-h-[90vh] bg-ox-surface border border-ox-edge rounded-xl flex flex-col overflow-hidden"
+        className="relative z-10 w-full max-w-3xl max-h-[92vh] sm:max-h-[90vh] bg-ox-surface border-t sm:border border-ox-edge rounded-t-2xl sm:rounded-xl flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-2 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-3 border-b border-ox-edge flex items-center justify-between bg-ox-void">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-md bg-ox-surface-raised flex items-center justify-center shrink-0">
+        <div className="px-4 sm:px-5 py-3 border-b border-ox-edge flex items-center justify-between bg-ox-void shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-ox-surface-raised flex items-center justify-center shrink-0">
               {getRoundIcon(currentRound.type)}
             </div>
             <div className="min-w-0">
-              <h2 className="font-semibold text-sm text-ox-ink truncate">
+              <h2 className="font-semibold text-xs sm:text-sm text-ox-ink truncate">
                 {roundTitle}
               </h2>
-              <span className="text-xs text-ox-muted font-mono">
-                {currentIndex + 1} of {totalRounds}
+              <span className="text-[11px] sm:text-xs text-ox-muted font-mono">
+                Round {currentIndex + 1} of {totalRounds}
               </span>
             </div>
           </div>
@@ -178,23 +178,26 @@ export default function RoundModal({
             <button
               onClick={handlePrev}
               disabled={currentIndex === 0}
-              className="p-1.5 rounded-md hover:bg-ox-surface-raised disabled:opacity-30 text-ox-muted transition-colors"
+              className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-ox-surface-raised active:bg-ox-surface-raised disabled:opacity-30 text-ox-muted hover:text-ox-ink transition-colors"
               title="Previous round"
+              aria-label="Previous round"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={handleNext}
               disabled={currentIndex === totalRounds - 1}
-              className="p-1.5 rounded-md hover:bg-ox-surface-raised disabled:opacity-30 text-ox-muted transition-colors"
+              className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-ox-surface-raised active:bg-ox-surface-raised disabled:opacity-30 text-ox-muted hover:text-ox-ink transition-colors"
               title="Next round"
+              aria-label="Next round"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 ml-2 rounded-md hover:bg-ox-surface-raised text-ox-muted hover:text-ox-ink transition-colors"
-              title="Close"
+              className="flex items-center justify-center w-9 h-9 ml-1 sm:ml-2 rounded-lg hover:bg-ox-surface-raised active:bg-ox-surface-raised text-ox-muted hover:text-ox-ink transition-colors"
+              title="Close modal"
+              aria-label="Close modal"
             >
               <X className="w-4 h-4" />
             </button>
@@ -368,20 +371,26 @@ export default function RoundModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-2.5 border-t border-ox-edge bg-ox-void flex items-center justify-between text-xs text-ox-muted">
-          <span>Arrow keys to navigate</span>
-          <div className="flex items-center gap-1.5">
+        <div className="px-4 sm:px-5 py-2.5 border-t border-ox-edge bg-ox-void flex items-center justify-between text-xs text-ox-muted shrink-0">
+          <span className="hidden sm:inline">Use arrow keys to navigate rounds</span>
+          <span className="sm:hidden font-mono text-[11px]">Round {currentIndex + 1}/{totalRounds}</span>
+          <div className="flex items-center gap-1">
             {rounds.map((_, i) => (
               <button
                 key={i}
                 onClick={() => onSelectIndex(i)}
-                className={`w-1.5 h-1.5 rounded-full transition-all ${
-                  i === currentIndex
-                    ? "bg-ox-accent w-3"
-                    : "bg-ox-edge hover:bg-ox-muted"
-                }`}
-                title={`Round ${i + 1}`}
-              />
+                className="p-1.5 focus:outline-none"
+                title={`Jump to Round ${i + 1}`}
+                aria-label={`Jump to Round ${i + 1}`}
+              >
+                <span
+                  className={`block h-1.5 rounded-full transition-all ${
+                    i === currentIndex
+                      ? "bg-ox-accent w-4"
+                      : "bg-ox-edge hover:bg-ox-muted w-1.5"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </div>

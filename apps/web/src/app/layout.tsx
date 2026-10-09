@@ -57,17 +57,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
-      <body className="font-geist bg-ox-void text-ox-ink flex flex-col min-h-screen antialiased">
+      <body className="font-geist bg-ox-void text-ox-ink flex flex-col min-h-screen antialiased overflow-x-hidden">
         <Providers>
           <Navbar />
-          <main className="flex-1 w-full max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main className="flex-1 w-full max-w-container mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8 min-w-0">
             {children}
           </main>
-        <footer className="border-t border-ox-edge py-5 text-center text-xs text-ox-muted">
-          <div className="max-w-container mx-auto px-4">
-            <span className="font-semibold text-ox-ink">0xTrace</span> &copy; {new Date().getFullYear()}
-          </div>
-        </footer>
+          <footer className="border-t border-ox-edge py-6 text-center text-xs text-ox-muted bg-ox-void">
+            <div className="max-w-container mx-auto px-4 space-y-1">
+              <div>
+                <span className="font-semibold text-ox-ink">0xTrace</span> &copy; {new Date().getFullYear()} · Campus Placement Intelligence
+              </div>
+              <p className="text-[11px] text-ox-muted/70">Built for PSG iTech & PSG Tech</p>
+            </div>
+          </footer>
         </Providers>
       </body>
     </html>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, Save, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function EditExperienceClient({ id }: { id: string }) {
   const router = useRouter();
@@ -35,13 +36,6 @@ export default function EditExperienceClient({ id }: { id: string }) {
     setSuccess(false);
     setSaving(true);
 
-    const authKey = localStorage.getItem("ox_admin_key");
-    if (!authKey) {
-      setError("Not authenticated. Please return to the dashboard and login.");
-      setSaving(false);
-      return;
-    }
-
     let parsedData;
     try {
       parsedData = JSON.parse(jsonStr);
@@ -56,7 +50,6 @@ export default function EditExperienceClient({ id }: { id: string }) {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-key": authKey,
         },
         body: JSON.stringify(parsedData),
       });
@@ -75,45 +68,62 @@ export default function EditExperienceClient({ id }: { id: string }) {
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) {
+    return <div className="p-8 text-center text-ox-muted">Loading experience record...</div>;
+  }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <Link href="/admin" className="text-ox-text hover:text-ox-ink mb-2 inline-block">
-            ← Back to Dashboard
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ox-edge pb-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin"
+            className="flex items-center gap-1.5 text-xs sm:text-sm text-ox-muted hover:text-ox-ink transition-colors min-h-[38px]"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Admin</span>
           </Link>
-          <h1 className="text-3xl font-bold text-ox-ink">Edit Experience</h1>
-          <p className="text-ox-text mt-1 text-sm">Directly edit the JSON representation of this experience.</p>
+          <span className="text-ox-edge">|</span>
+          <span className="text-xs font-mono text-ox-ink">Editing: {id}</span>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="px-6 py-2.5 bg-ox-accent border-2 border-ox-ink font-semibold rounded shadow-neo hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-ox-ink disabled:opacity-50"
-        >
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold text-ox-ink bg-ox-accent border-2 border-ox-ink rounded-lg shadow-neo active:shadow-none transition-all disabled:opacity-50 min-h-[40px]"
+          >
+            <Save className="w-4 h-4" />
+            <span>{saving ? "Saving..." : "Save Changes"}</span>
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 border-2 border-red-500 rounded text-red-800 font-medium">
-          {error}
-        </div>
-      )}
-      
-      {success && (
-        <div className="mb-6 p-4 bg-green-100 border-2 border-green-500 rounded text-green-800 font-medium">
-          Successfully saved!
+        <div className="p-3.5 bg-red-950/20 border border-red-900/50 text-red-400 rounded-xl text-xs sm:text-sm flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
-      <div className="bg-ox-surface border-2 border-ox-edge rounded-lg shadow-neo overflow-hidden">
+      {success && (
+        <div className="p-3.5 bg-green-950/20 border border-green-900/50 text-green-400 rounded-xl text-xs sm:text-sm flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>Experience updated successfully in MongoDB!</span>
+        </div>
+      )}
+
+      {/* Code Editor Container */}
+      <div className="bg-ox-surface border border-ox-edge rounded-xl p-3 sm:p-4 space-y-2 shadow-sm">
+        <label className="block text-xs font-mono text-ox-muted">
+          Structured Experience Schema (JSON)
+        </label>
         <textarea
           value={jsonStr}
           onChange={(e) => setJsonStr(e.target.value)}
-          className="w-full h-[600px] p-4 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-sm leading-relaxed focus:outline-none resize-y"
-          spellCheck={false}
+          rows={24}
+          className="w-full bg-ox-void border border-ox-edge rounded-lg p-3 sm:p-4 font-mono text-xs sm:text-sm text-ox-ink leading-relaxed focus:outline-none focus:border-ox-accent resize-y"
         />
       </div>
     </div>
