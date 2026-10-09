@@ -4,8 +4,21 @@ import QuestionBankClient from "./QuestionBankClient";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Question & Coding Problem Bank — 0xTrace",
-  description: "Browse 493+ real interview questions and 173+ coding problems asked in campus placement drives.",
+  title: "Question & Coding Problem Bank",
+  description:
+    "Browse 490+ real technical interview questions and coding challenges asked in campus placement drives across top companies.",
+  openGraph: {
+    title: "Question & Coding Problem Bank | 0xTrace",
+    description:
+      "Browse 490+ real technical interview questions and coding challenges asked in campus placement drives across top companies.",
+    siteName: "0xTrace",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Question & Coding Problem Bank | 0xTrace",
+    description:
+      "Browse 490+ real technical interview questions and coding challenges asked in campus placement drives across top companies.",
+  },
 };
 
 export default async function QuestionsPage() {

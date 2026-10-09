@@ -5,8 +5,21 @@ import ExperienceDirectoryClient from "./ExperienceDirectoryClient";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "All Experiences — 0xTrace Placement Intelligence",
-  description: "Browse audited placement interview experiences across top companies.",
+  title: "Interview Experiences Directory",
+  description:
+    "Explore 126 canonical campus placement experiences across top recruiters. Filter by company, outcome, and role with verbatim round breakdown.",
+  openGraph: {
+    title: "Interview Experiences Directory | 0xTrace",
+    description:
+      "Explore 126 canonical campus placement experiences across top recruiters. Filter by company, outcome, and role with verbatim round breakdown.",
+    siteName: "0xTrace",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Interview Experiences Directory | 0xTrace",
+    description:
+      "Explore 126 canonical campus placement experiences across top recruiters. Filter by company, outcome, and role with verbatim round breakdown.",
+  },
 };
 
 export default async function ExperiencesPage() {

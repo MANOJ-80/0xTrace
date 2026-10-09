@@ -4,10 +4,48 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
+const siteUrl = process.env.NEXTAUTH_URL || "https://0x-trace.vercel.app";
+
 export const metadata: Metadata = {
-  title: "0xTrace — Campus Interview Intelligence",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "0xTrace — Campus Interview Intelligence",
+    template: "%s | 0xTrace",
+  },
   description:
     "126 audited campus placement experiences with verbatim questions, round breakdowns, and lossless source preservation.",
+  applicationName: "0xTrace",
+  keywords: [
+    "PSG iTech",
+    "PSG Tech",
+    "Campus Placements",
+    "Interview Experiences",
+    "Technical Rounds",
+    "Coding Questions",
+    "Placement Intelligence",
+  ],
+  authors: [{ name: "0xTrace" }],
+  creator: "0xTrace",
+  publisher: "0xTrace",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "0xTrace",
+    title: "0xTrace — Campus Interview Intelligence",
+    description:
+      "126 audited campus placement experiences with verbatim questions, round breakdowns, and lossless source preservation.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "0xTrace — Campus Interview Intelligence",
+    description:
+      "126 audited campus placement experiences with verbatim questions, round breakdowns, and lossless source preservation.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 import { Providers } from "@/components/Providers";

@@ -2,8 +2,21 @@ import { Info, ShieldAlert, Sparkles, HelpCircle, BookOpen, Search, BarChart3, F
 import Link from "next/link";
 
 export const metadata = {
-  title: "About — 0xTrace",
-  description: "Learn about the 0xTrace platform, our features, guidelines, and FAQs.",
+  title: "About 0xTrace",
+  description:
+    "Learn about 0xTrace: A centralized campus interview intelligence archive preserving verified student experiences for PSG iTech.",
+  openGraph: {
+    title: "About 0xTrace | Campus Interview Intelligence",
+    description:
+      "Learn about 0xTrace: A centralized campus interview intelligence archive preserving verified student experiences for PSG iTech.",
+    siteName: "0xTrace",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About 0xTrace | Campus Interview Intelligence",
+    description:
+      "Learn about 0xTrace: A centralized campus interview intelligence archive preserving verified student experiences for PSG iTech.",
+  },
 };
 
 export default function AboutPage() {

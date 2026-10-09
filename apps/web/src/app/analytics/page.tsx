@@ -5,8 +5,21 @@ import { BarChart3 } from "lucide-react";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Analytics — 0xTrace",
-  description: "Visualize placement trends, company breakdowns, and question patterns.",
+  title: "Placement Analytics & Insights",
+  description:
+    "Visualize campus placement trends, company hiring breakdowns, compensation distributions, and interview round difficulty.",
+  openGraph: {
+    title: "Placement Analytics & Insights | 0xTrace",
+    description:
+      "Visualize campus placement trends, company hiring breakdowns, compensation distributions, and interview round difficulty.",
+    siteName: "0xTrace",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Placement Analytics & Insights | 0xTrace",
+    description:
+      "Visualize campus placement trends, company hiring breakdowns, compensation distributions, and interview round difficulty.",
+  },
 };
 
 export default async function AnalyticsPage() {
