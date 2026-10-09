@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getDashboardMetrics, getAllExperiences } from "@/lib/data";
 import ExperienceCard from "@/components/ExperienceCard";
-import { ArrowRight, Sparkles, Building2, BookOpen } from "lucide-react";
 
 export const revalidate = 3600;
 
@@ -11,89 +10,59 @@ export default async function DashboardPage() {
   const recentExperiences = allExperiences.slice(0, 6);
 
   return (
-    <div className="space-y-10 sm:space-y-14">
-      {/* Hero / Header banner for mobile */}
-      <div className="space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-ox-accent/10 border border-ox-accent/30 text-ox-accent text-xs font-semibold">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>PSG iTech & Tech Placement Archive</span>
+    <div className="space-y-16">
+      {/* Stats Strip */}
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-x-8 gap-y-6 border-b border-ox-edge pb-8">
+        <div>
+          <div className="font-mono tabular-nums text-3xl sm:text-4xl text-ox-ink leading-tight">{metrics.totalExperiences}</div>
+          <div className="text-sm text-ox-muted mt-1">Experiences</div>
         </div>
-        <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-ox-ink font-geist">
-          Campus Interview Intelligence
-        </h1>
-        <p className="text-sm sm:text-base text-ox-muted max-w-2xl leading-relaxed">
-          126 audited placement experiences with verbatim questions, round breakdowns, and lossless source preservation.
-        </p>
-      </div>
-
-      {/* Stats Strip — 2x2 grid on mobile, 4-col on sm/desktop */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 border-y border-ox-edge py-6 sm:py-8 bg-ox-surface/30 rounded-xl px-4 sm:px-6">
-        <div className="space-y-1">
-          <div className="font-mono tabular-nums text-2xl sm:text-4xl font-bold text-ox-ink leading-tight">
-            {metrics.totalExperiences}
-          </div>
-          <div className="text-xs sm:text-sm text-ox-muted font-medium">Experiences</div>
+        <div className="w-px h-12 bg-ox-edge hidden sm:block"></div>
+        <div>
+          <div className="font-mono tabular-nums text-3xl sm:text-4xl text-ox-ink leading-tight">{metrics.totalRounds}</div>
+          <div className="text-sm text-ox-muted mt-1">Rounds</div>
         </div>
-
-        <div className="space-y-1 border-l border-ox-edge/60 pl-3 sm:pl-6">
-          <div className="font-mono tabular-nums text-2xl sm:text-4xl font-bold text-ox-ink leading-tight">
-            {metrics.totalRounds}
-          </div>
-          <div className="text-xs sm:text-sm text-ox-muted font-medium">Rounds</div>
+        <div className="w-px h-12 bg-ox-edge hidden sm:block"></div>
+        <div>
+          <div className="font-mono tabular-nums text-3xl sm:text-4xl text-ox-ink leading-tight">{metrics.totalQuestions}</div>
+          <div className="text-sm text-ox-muted mt-1">Questions</div>
         </div>
-
-        <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-ox-edge/60 pt-3 sm:pt-0 sm:pl-6">
-          <div className="font-mono tabular-nums text-2xl sm:text-4xl font-bold text-ox-ink leading-tight">
-            {metrics.totalQuestions}
-          </div>
-          <div className="text-xs sm:text-sm text-ox-muted font-medium">Questions</div>
-        </div>
-
-        <div className="space-y-1 border-t sm:border-t-0 border-l border-ox-edge/60 pt-3 sm:pt-0 pl-3 sm:pl-6">
-          <div className="font-mono tabular-nums text-2xl sm:text-4xl font-bold text-ox-ink leading-tight">
-            {metrics.totalCodingProblems}
-          </div>
-          <div className="text-xs sm:text-sm text-ox-muted font-medium">Coding Problems</div>
+        <div className="w-px h-12 bg-ox-edge hidden sm:block"></div>
+        <div>
+          <div className="font-mono tabular-nums text-3xl sm:text-4xl text-ox-ink leading-tight">{metrics.totalCodingProblems}</div>
+          <div className="text-sm text-ox-muted mt-1">Coding Problems</div>
         </div>
       </div>
 
       {/* Company Intelligence Grid */}
-      <section className="space-y-4 sm:space-y-6">
+      <section className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-ox-accent shrink-0" />
-            <h2 className="text-lg sm:text-xl font-bold text-ox-ink font-geist">
-              Company Intelligence
-            </h2>
-          </div>
+          <h2 className="text-xl text-ox-ink font-geist">Company intelligence</h2>
           <Link
             href="/experiences"
-            className="text-xs sm:text-sm font-semibold text-ox-accent hover:underline flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-ox-accent/10 transition-colors min-h-[36px]"
+            className="text-sm text-ox-accent hover:underline flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ox-accent rounded-sm"
           >
-            <span>View all</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            View all
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {metrics.topCompanies.map((comp) => (
             <Link
               key={comp.name}
               href={`/experiences?company=${encodeURIComponent(comp.name)}`}
-              className="block p-4 sm:p-5 bg-ox-surface border border-ox-edge rounded-xl hover:border-ox-accent active:scale-[0.99] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ox-accent group"
+              className="block p-4 bg-ox-surface border border-ox-edge rounded-lg hover:border-ox-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ox-accent"
             >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="font-bold text-sm sm:text-base text-ox-ink group-hover:text-ox-accent transition-colors truncate">
-                  {comp.name}
-                </h3>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-ox-surface-raised border border-ox-edge text-ox-muted font-mono shrink-0">
+              <div className="flex items-start justify-between">
+                <h3 className="font-bold text-ox-ink">{comp.name}</h3>
+                <span className="text-xs text-ox-muted">
                   {comp.experienceCount} {comp.experienceCount === 1 ? "exp" : "exps"}
                 </span>
               </div>
               
               {comp.roundSequenceSample && comp.roundSequenceSample.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-ox-edge/50">
-                  <div className="text-[11px] sm:text-xs text-ox-muted font-mono truncate">
+                <div className="mt-4">
+                  <div className="text-xs text-ox-muted font-mono truncate">
                     {comp.roundSequenceSample.slice(0, 3).map((r, i) => (
                       <span key={i}>
                         {r.split("-")[0].trim()}
@@ -109,24 +78,18 @@ export default async function DashboardPage() {
       </section>
 
       {/* Recent Experiences */}
-      <section className="space-y-4 sm:space-y-6">
+      <section className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-ox-accent shrink-0" />
-            <h2 className="text-lg sm:text-xl font-bold text-ox-ink font-geist">
-              Recent Experiences
-            </h2>
-          </div>
+          <h2 className="text-xl text-ox-ink font-geist">Recent experiences</h2>
           <Link
             href="/experiences"
-            className="text-xs sm:text-sm font-semibold text-ox-accent hover:underline flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-ox-accent/10 transition-colors min-h-[36px]"
+            className="text-sm text-ox-accent hover:underline flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ox-accent rounded-sm"
           >
-            <span>All {allExperiences.length}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            All {allExperiences.length}
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {recentExperiences.map((exp) => (
             <ExperienceCard key={exp._id || exp.id} experience={exp} />
           ))}

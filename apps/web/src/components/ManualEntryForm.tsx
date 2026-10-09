@@ -372,7 +372,7 @@ export default function ManualEntryForm() {
               key={s.label}
               onClick={() => i < step && setStep(i)}
               disabled={i > step}
-              className={`flex-1 flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-2.5 rounded-lg border-2 text-xs font-semibold min-h-[44px] transition-all ${
+              className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-xs font-semibold transition-all ${
                 active
                   ? "border-ox-accent bg-ox-accent/10 text-ox-ink"
                   : done
@@ -382,7 +382,6 @@ export default function ManualEntryForm() {
             >
               <Icon className="w-4 h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{s.label}</span>
-              <span className="sm:hidden font-mono text-[11px] font-bold">Step {i + 1}</span>
             </button>
           );
         })}
@@ -743,11 +742,11 @@ export default function ManualEntryForm() {
       </div>
 
       {/* ---- Navigation Buttons ---- */}
-      <div className="flex items-center justify-between pb-8 gap-3">
+      <div className="flex items-center justify-between pb-8">
         <button
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
-          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-semibold text-ox-muted border-2 border-ox-edge rounded-lg hover:text-ox-ink hover:border-ox-ink disabled:opacity-30 disabled:cursor-not-allowed min-h-[44px] transition-all"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-ox-muted border-2 border-ox-edge rounded-lg hover:text-ox-ink hover:border-ox-ink disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           <ChevronLeft className="w-4 h-4" /> Back
         </button>
@@ -756,7 +755,7 @@ export default function ManualEntryForm() {
           <button
             onClick={() => setStep((s) => Math.min(3, s + 1))}
             disabled={!canProceed()}
-            className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-xs sm:text-sm font-semibold text-ox-ink bg-ox-accent border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:translate-x-0 disabled:hover:translate-y-0 min-h-[44px] transition-all"
+            className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-ox-ink bg-ox-accent border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:translate-x-0 disabled:hover:translate-y-0 transition-all"
           >
             Next <ChevronRight className="w-4 h-4" />
           </button>
@@ -764,7 +763,7 @@ export default function ManualEntryForm() {
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-xs sm:text-sm font-bold text-ox-void bg-green-500 border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] transition-all"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-ox-void bg-green-500 border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {submitting ? (
               <>Submitting...</>

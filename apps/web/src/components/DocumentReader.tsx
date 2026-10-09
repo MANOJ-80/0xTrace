@@ -21,30 +21,29 @@ export default function DocumentReader({ content, title, subtitle }: DocumentRea
   };
 
   return (
-    <div className="bg-ox-surface border border-ox-edge rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-ox-surface border border-ox-edge rounded-lg overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3.5 sm:px-5 py-3 border-b border-ox-edge gap-2 sm:gap-4 bg-ox-void/50">
-        <div className="min-w-0 flex-1">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-ox-edge">
+        <div className="min-w-0">
           {title && (
-            <h3 className="text-xs sm:text-sm font-semibold text-ox-ink truncate">{title}</h3>
+            <h3 className="text-sm font-semibold text-ox-ink truncate">{title}</h3>
           )}
           {subtitle && (
-            <p className="text-[11px] sm:text-xs text-ox-muted mt-0.5 truncate">{subtitle}</p>
+            <p className="text-xs text-ox-muted mt-0.5 truncate">{subtitle}</p>
           )}
         </div>
-        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-          <span className="text-[11px] sm:text-xs text-ox-muted font-mono tabular-nums">
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-xs text-ox-muted font-mono tabular-nums">
             {wordCount.toLocaleString()} words
           </span>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 text-xs text-ox-muted hover:text-ox-ink transition-colors px-2.5 py-1.5 rounded-lg border border-ox-edge hover:bg-ox-surface-raised min-h-[34px]"
-            aria-label="Copy transcript"
+            className="flex items-center gap-1 text-xs text-ox-muted hover:text-ox-ink transition-colors px-2 py-1 rounded-md hover:bg-ox-surface-raised"
           >
             {copied ? (
               <>
                 <Check className="w-3.5 h-3.5 text-ox-signal-pass" />
-                <span className="text-ox-signal-pass font-medium">Copied</span>
+                <span>Copied</span>
               </>
             ) : (
               <>
@@ -57,8 +56,8 @@ export default function DocumentReader({ content, title, subtitle }: DocumentRea
       </div>
 
       {/* Content */}
-      <div className="p-3.5 sm:p-5 overflow-auto max-h-[65vh] sm:max-h-[70vh]">
-        <pre className="font-mono text-xs sm:text-[13px] leading-relaxed text-ox-ink whitespace-pre-wrap break-words selection:bg-ox-accent selection:text-white">
+      <div className="p-4 overflow-auto max-h-[70vh]">
+        <pre className="font-mono text-[13px] leading-relaxed text-ox-ink whitespace-pre-wrap break-words">
           {content}
         </pre>
       </div>

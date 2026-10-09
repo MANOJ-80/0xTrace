@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Experience } from "@/lib/types";
 import ExperienceCard from "@/components/ExperienceCard";
-import { Search, X, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { Search } from "lucide-react";
 
 interface ExperienceDirectoryClientProps {
   initialExperiences: Experience[];
@@ -98,7 +98,7 @@ export default function ExperienceDirectoryClient({
     }
 
     return list;
-  }, [initialExperiences, search, selectedCompany, selectedRole, selectedOutcome, sortBy]);
+  }, [initialExperiences, search, selectedCompany, selectedOutcome, sortBy]);
 
   const resetFilters = () => {
     setSearch("");
@@ -116,38 +116,27 @@ export default function ExperienceDirectoryClient({
     sortBy !== "recent";
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      {/* Search & Filter Header */}
-      <div className="bg-ox-surface border border-ox-edge rounded-xl p-3.5 sm:p-4 space-y-3 shadow-sm">
-        {/* Search Input */}
-        <div className="relative w-full">
-          <Search className="w-4 h-4 text-ox-muted absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search company, role, candidate, topic..."
-            className="w-full pl-9 pr-9 py-2.5 rounded-lg border border-ox-edge bg-ox-void text-sm text-ox-ink placeholder:text-ox-muted focus:outline-none focus:ring-2 focus:ring-ox-accent/30 focus:border-ox-accent min-h-[42px] transition-colors"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-ox-muted hover:text-ox-ink rounded"
-              aria-label="Clear search"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="flex flex-col md:flex-row items-center gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 text-ox-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by company, role, candidate..."
+              className="w-full pl-9 pr-3 py-2 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink placeholder:text-ox-muted focus:outline-none focus:border-ox-accent"
+            />
+          </div>
 
-        {/* Filter Dropdowns Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
           {/* Company Dropdown */}
-          <div>
+          <div className="w-full md:w-56 shrink-0">
             <select
               value={selectedCompany}
               onChange={(e) => setSelectedCompany(e.target.value)}
-              className="w-full py-2 px-3 rounded-lg border border-ox-edge bg-ox-void text-xs sm:text-sm text-ox-ink focus:outline-none focus:ring-2 focus:ring-ox-accent/30 focus:border-ox-accent appearance-none min-h-[42px] font-medium"
+              className="w-full py-2 px-3 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink focus:outline-none focus:border-ox-accent appearance-none"
             >
               <option value="">All Companies ({companies.length})</option>
               {companies.map((c) => (
@@ -160,11 +149,11 @@ export default function ExperienceDirectoryClient({
 
           {/* Role Dropdown */}
           {roles.length > 0 && (
-            <div>
+            <div className="w-full md:w-48 shrink-0">
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="w-full py-2 px-3 rounded-lg border border-ox-edge bg-ox-void text-xs sm:text-sm text-ox-ink focus:outline-none focus:ring-2 focus:ring-ox-accent/30 focus:border-ox-accent appearance-none min-h-[42px] font-medium"
+                className="w-full py-2 px-3 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink focus:outline-none focus:border-ox-accent appearance-none"
               >
                 <option value="all">All Roles</option>
                 {roles.map((r) => (
@@ -177,11 +166,11 @@ export default function ExperienceDirectoryClient({
           )}
 
           {/* Sort By Dropdown */}
-          <div>
+          <div className="w-full md:w-44 shrink-0 flex items-center gap-1.5">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full py-2 px-3 rounded-lg border border-ox-edge bg-ox-void text-xs sm:text-sm text-ox-ink focus:outline-none focus:ring-2 focus:ring-ox-accent/30 focus:border-ox-accent appearance-none min-h-[42px] font-medium"
+              className="w-full py-2 px-3 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink focus:outline-none focus:border-ox-accent appearance-none"
             >
               <option value="recent">Sort: Most Recent</option>
               <option value="rounds">Sort: Most Rounds</option>
@@ -190,59 +179,71 @@ export default function ExperienceDirectoryClient({
           </div>
         </div>
 
-        {/* Outcome Filter Chips & Result Count */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-ox-edge/60 text-xs">
-          <div className="flex items-center gap-1 sm:gap-2">
-            {[
-              { id: "all", label: "All" },
-              { id: "selected", label: "Selected" },
-              { id: "rejected", label: "Rejected" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setSelectedOutcome(tab.id)}
-                className={`px-3 py-1.5 rounded-md font-semibold transition-all min-h-[34px] ${
-                  selectedOutcome === tab.id
-                    ? "bg-ox-accent text-white"
-                    : "text-ox-muted hover:text-ox-ink hover:bg-ox-surface-raised"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+        {/* Filters and Count */}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm border-b border-ox-edge">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedOutcome("all")}
+              className={`pb-2 -mb-[1px] transition-colors ${
+                selectedOutcome === "all"
+                  ? "text-ox-ink font-semibold border-b-2 border-ox-accent"
+                  : "text-ox-muted hover:text-ox-ink"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setSelectedOutcome("selected")}
+              className={`pb-2 -mb-[1px] transition-colors ${
+                selectedOutcome === "selected"
+                  ? "text-ox-ink font-semibold border-b-2 border-ox-accent"
+                  : "text-ox-muted hover:text-ox-ink"
+              }`}
+            >
+              Selected
+            </button>
+            <button
+              onClick={() => setSelectedOutcome("rejected")}
+              className={`pb-2 -mb-[1px] transition-colors ${
+                selectedOutcome === "rejected"
+                  ? "text-ox-ink font-semibold border-b-2 border-ox-accent"
+                  : "text-ox-muted hover:text-ox-ink"
+              }`}
+            >
+              Rejected
+            </button>
+          </div>
 
+          <div className="flex items-center gap-3 pb-2">
+            <span className="text-ox-muted">
+              Showing {filteredAndSorted.length} of {initialExperiences.length}
+            </span>
             {isFiltered && (
               <button
                 onClick={resetFilters}
-                className="inline-flex items-center gap-1 text-[11px] text-ox-muted hover:text-ox-accent ml-2 py-1 px-2 rounded hover:bg-ox-surface-raised transition-colors"
+                className="text-ox-accent hover:underline"
               >
-                <RotateCcw className="w-3 h-3" />
-                <span>Reset</span>
+                Reset
               </button>
             )}
           </div>
-
-          <span className="text-ox-muted font-mono text-[11px] sm:text-xs">
-            Showing <strong className="text-ox-ink">{filteredAndSorted.length}</strong> of {initialExperiences.length}
-          </span>
         </div>
       </div>
 
-      {/* Directory Grid */}
+      {/* Grid of Results */}
       {filteredAndSorted.length === 0 ? (
-        <div className="text-center py-16 bg-ox-surface/50 border border-ox-edge rounded-xl p-8 space-y-3">
-          <p className="text-sm text-ox-muted">
-            No interview experiences found matching your current filters.
-          </p>
+        <div className="flex items-center gap-2 py-8 text-sm">
+          <Search className="w-6 h-6 text-ox-muted" />
+          <span className="text-ox-muted">No interview experiences match your search.</span>
           <button
             onClick={resetFilters}
-            className="px-4 py-2 text-xs font-semibold text-ox-accent bg-ox-accent/10 border border-ox-accent/30 rounded-lg hover:bg-ox-accent/20 transition-colors"
+            className="text-ox-accent hover:underline"
           >
-            Clear all filters
+            Clear filters
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredAndSorted.map((exp) => (
             <ExperienceCard key={exp._id || exp.id} experience={exp} />
           ))}
