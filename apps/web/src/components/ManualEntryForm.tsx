@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { Experience } from "@/lib/types";
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
 
@@ -136,33 +137,105 @@ const textareaCls = inputCls + " min-h-[100px] resize-y";
 /*  Main Component                                                     */
 /* ------------------------------------------------------------------ */
 
-export default function ManualEntryForm() {
+interface ManualEntryFormProps {
+  initialExperience?: Experience;
+  experienceId?: string;
+  mode?: "create" | "edit";
+}
+
+export default function ManualEntryForm({
+  initialExperience,
+  experienceId,
+  mode = "create",
+}: ManualEntryFormProps = {}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<{ id: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [form, setForm] = useState<FormState>({
-    companyName: "",
-    role: "",
-    employmentType: "",
-    location: "",
-    candidateName: "",
-    department: "",
-    degree: "",
-    college: "",
-    cgpa: "",
-    month: "",
-    year: "",
-    driveType: "campus",
-    rounds: [{ ...EMPTY_ROUND }],
-    outcome: "unknown",
-    ctc: "",
-    tips: "",
-    mistakes: "",
-    conclusion: "",
-    linkedin: "",
+  const [form, setForm] = useState<FormState>(() => {
+    if (initialExperience) {
+      return {
+        companyName:
+          initialExperience.company?.name ||
+          initialExperience.company?.normalized_name ||
+          "",
+        role: initialExperience.job?.role || "",
+        employmentType: initialExperience.job?.employment_type || "",
+        location: initialExperience.job?.location || "",
+        candidateName: initialExperience.candidate?.name || "",
+        department: initialExperience.candidate?.department || "",
+        degree: initialExperience.candidate?.degree || "",
+        college: initialExperience.candidate?.college || "",
+        cgpa:
+          initialExperience.candidate?.cgpa != null
+            ? String(initialExperience.candidate.cgpa)
+            : "",
+        month: initialExperience.timeline?.month || "",
+        year:
+          initialExperience.timeline?.year != null
+            ? String(initialExperience.timeline.year)
+            : "",
+        driveType: initialExperience.timeline?.drive_type || "campus",
+        rounds:
+          initialExperience.rounds && initialExperience.rounds.length > 0
+            ? initialExperience.rounds.map((r) => ({
+                name: r.original_name || r.name.replace(/^Round \d+:\s*/, ""),
+                type: r.type || "technical_interview",
+                mode: r.mode || "offline",
+                duration: r.duration || "",
+                difficulty: r.difficulty || "",
+                description: r.description || r.raw_content || "",
+                questions: (r.questions || []).map((q: any) => ({
+                  question: typeof q === "string" ? q : q.question || "",
+                  topic: typeof q === "string" ? "" : q.topic || "",
+                  difficulty: typeof q === "string" ? "" : q.difficulty || "",
+                  category:
+                    typeof q === "string" ? "technical" : q.category || "technical",
+                })),
+                coding: (r.coding?.problems || []).map((c: any) => ({
+                  title: typeof c === "string" ? c : c.title || "",
+                  description: typeof c === "string" ? "" : c.description || "",
+                  difficulty: typeof c === "string" ? "" : c.difficulty || "",
+                  topics:
+                    typeof c === "string" ? "" : (c.topics || []).join(", "),
+                })),
+              }))
+            : [{ ...EMPTY_ROUND }],
+        outcome: initialExperience.outcome?.status || "unknown",
+        ctc:
+          initialExperience.compensation?.ctc != null
+            ? String(initialExperience.compensation.ctc)
+            : "",
+        tips: (initialExperience.tips || []).join("\n"),
+        mistakes: (initialExperience.mistakes || []).join("\n"),
+        conclusion: initialExperience.conclusion || "",
+        linkedin: initialExperience.contacts?.linkedin || "",
+      };
+    }
+
+    return {
+      companyName: "",
+      role: "",
+      employmentType: "",
+      location: "",
+      candidateName: "",
+      department: "",
+      degree: "",
+      college: "",
+      cgpa: "",
+      month: "",
+      year: "",
+      driveType: "campus",
+      rounds: [{ ...EMPTY_ROUND }],
+      outcome: "unknown",
+      ctc: "",
+      tips: "",
+      mistakes: "",
+      conclusion: "",
+      linkedin: "",
+    };
   });
 
   /* ---------- helpers ---------- */
@@ -302,14 +375,25 @@ export default function ManualEntryForm() {
     };
 
     try {
-      const res = await fetch("/api/canonical/ingest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ experience }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Submission failed");
-      setSuccess({ id: data.assigned_id });
+      if (mode === "edit" && experienceId) {
+        const res = await fetch(`/api/experiences/${experienceId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(experience),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Update failed");
+        setSuccess({ id: experienceId });
+      } else {
+        const res = await fetch("/api/canonical/ingest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ experience }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Submission failed");
+        setSuccess({ id: data.assigned_id });
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -327,9 +411,22 @@ export default function ManualEntryForm() {
         <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 border-2 border-green-500 flex items-center justify-center">
           <CheckCircle2 className="w-8 h-8 text-green-400" />
         </div>
-        <h2 className="text-2xl font-bold text-ox-ink">Experience Published!</h2>
+        <h2 className="text-2xl font-bold text-ox-ink">
+          {mode === "edit" ? "Experience Updated!" : "Experience Published!"}
+        </h2>
         <p className="text-ox-muted">
-          Your interview experience has been saved as <code className="text-ox-accent font-mono">{success.id}</code>.
+          {mode === "edit" ? (
+            <>
+              Your changes to{" "}
+              <code className="text-ox-accent font-mono">{success.id}</code> have
+              been saved.
+            </>
+          ) : (
+            <>
+              Your interview experience has been saved as{" "}
+              <code className="text-ox-accent font-mono">{success.id}</code>.
+            </>
+          )}
         </p>
         <div className="flex items-center justify-center gap-3 pt-2">
           <button
@@ -338,22 +435,45 @@ export default function ManualEntryForm() {
           >
             View Experience →
           </button>
-          <button
-            onClick={() => {
-              setSuccess(null);
-              setStep(0);
-              setForm({
-                companyName: "", role: "", employmentType: "", location: "",
-                candidateName: "", department: "", degree: "", college: "", cgpa: "",
-                month: "", year: "", driveType: "campus",
-                rounds: [{ ...EMPTY_ROUND }],
-                outcome: "unknown", ctc: "", tips: "", mistakes: "", conclusion: "", linkedin: "",
-              });
-            }}
-            className="px-5 py-2.5 text-sm font-semibold text-ox-muted border-2 border-ox-edge rounded-lg hover:text-ox-ink hover:border-ox-ink transition-colors"
-          >
-            Submit Another
-          </button>
+          {mode === "edit" ? (
+            <button
+              onClick={() => router.push("/my-experiences")}
+              className="px-5 py-2.5 text-sm font-semibold text-ox-muted border-2 border-ox-edge rounded-lg hover:text-ox-ink hover:border-ox-ink transition-colors"
+            >
+              My Experiences
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setSuccess(null);
+                setStep(0);
+                setForm({
+                  companyName: "",
+                  role: "",
+                  employmentType: "",
+                  location: "",
+                  candidateName: "",
+                  department: "",
+                  degree: "",
+                  college: "",
+                  cgpa: "",
+                  month: "",
+                  year: "",
+                  driveType: "campus",
+                  rounds: [{ ...EMPTY_ROUND }],
+                  outcome: "unknown",
+                  ctc: "",
+                  tips: "",
+                  mistakes: "",
+                  conclusion: "",
+                  linkedin: "",
+                });
+              }}
+              className="px-5 py-2.5 text-sm font-semibold text-ox-muted border-2 border-ox-edge rounded-lg hover:text-ox-ink hover:border-ox-ink transition-colors"
+            >
+              Submit Another
+            </button>
+          )}
         </div>
       </div>
     );
@@ -766,10 +886,11 @@ export default function ManualEntryForm() {
             className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-ox-void bg-green-500 border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             {submitting ? (
-              <>Submitting...</>
+              <>{mode === "edit" ? "Saving..." : "Submitting..."}</>
             ) : (
               <>
-                <Send className="w-4 h-4" /> Submit Experience
+                <Send className="w-4 h-4" />{" "}
+                {mode === "edit" ? "Save Changes" : "Submit Experience"}
               </>
             )}
           </button>

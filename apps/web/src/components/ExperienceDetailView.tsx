@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Experience, Round } from "@/lib/types";
 import RoundModal from "./RoundModal";
 import { formatCTC, getOutcomeBadgeColor } from "@/lib/utils";
@@ -21,6 +23,8 @@ import {
   Building2,
   Calendar,
   Banknote,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import DocumentReader from "./DocumentReader";
 
@@ -29,15 +33,45 @@ interface ExperienceDetailViewProps {
 }
 
 export default function ExperienceDetailView({ experience }: ExperienceDetailViewProps) {
+  const router = useRouter();
+  const { data: session } = useSession();
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRoundIndex, setSelectedRoundIndex] = useState(0);
   const [mainTab, setMainTab] = useState<"rounds" | "transcript">("rounds");
+  const [deleting, setDeleting] = useState(false);
 
   const rounds = experience.rounds || [];
   const companyName =
     experience.company?.name || experience.company?.normalized_name || "Unknown Company";
   const roleName = experience.job?.role || "Software Engineer";
   const outcomeStatus = experience.outcome?.status || "Selected";
+
+  const userEmail = session?.user?.email?.toLowerCase();
+  const isAuthor =
+    experience.author?.email &&
+    experience.author.email.toLowerCase() === userEmail;
+  const isAdmin = !!session?.user?.isAdmin;
+  const canManage = isAuthor || isAdmin;
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this experience? This action cannot be undone.")) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/experiences/${experience._id || experience.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to delete");
+      }
+      router.push("/my-experiences");
+    } catch (err: any) {
+      alert(`Error deleting experience: ${err.message}`);
+      setDeleting(false);
+    }
+  };
 
   const handleOpenRound = (index: number) => {
     setSelectedRoundIndex(index);
@@ -78,9 +112,30 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
           <span>Back to experiences</span>
         </Link>
 
-        <span className="text-xs text-ox-muted font-mono">
-          {experience.id}
-        </span>
+        <div className="flex items-center gap-3">
+          {canManage && (
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/experiences/${experience._id || experience.id}/edit`}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-ox-ink bg-ox-surface border border-ox-edge hover:border-ox-accent rounded transition-colors"
+              >
+                <Edit className="w-3.5 h-3.5 text-ox-accent" />
+                <span>Edit</span>
+              </Link>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-red-400 bg-ox-surface border border-ox-edge hover:border-red-500 rounded transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{deleting ? "Deleting..." : "Delete"}</span>
+              </button>
+            </div>
+          )}
+          <span className="text-xs text-ox-muted font-mono">
+            {experience.id}
+          </span>
+        </div>
       </div>
 
       {/* Unified Comprehensive Header Card */}

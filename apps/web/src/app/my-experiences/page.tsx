@@ -1,0 +1,30 @@
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { getUserExperiences } from "@/lib/data";
+import MyExperiencesClient from "./MyExperiencesClient";
+
+export const metadata = {
+  title: "My Experiences — 0xTrace",
+  description: "View and manage interview experiences you have shared.",
+};
+
+export const revalidate = 0;
+
+export default async function MyExperiencesPage() {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user?.email) {
+    redirect("/login?callbackUrl=/my-experiences");
+  }
+
+  const experiences = await getUserExperiences(session.user.email);
+
+  return (
+    <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <MyExperiencesClient
+        initialExperiences={experiences}
+        userEmail={session.user.email}
+      />
+    </div>
+  );
+}

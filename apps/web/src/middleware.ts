@@ -62,6 +62,7 @@ export const config = {
   matcher: [
     "/contribute",
     "/upload",
+    "/my-experiences",
     "/admin/:path*",
     "/experiences/:path+",
     "/questions",

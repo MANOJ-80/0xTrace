@@ -4,6 +4,7 @@ import {
   InterviewQuestion,
   CodingProblem,
   ExtractionResponse,
+  AuthorInfo,
 } from "./types";
 import { getCollection } from "./mongodb";
 import { ObjectId } from "mongodb";
@@ -191,7 +192,10 @@ export async function getSampleExtraction(name: "walmart" | "phonepe" | "idfc"):
 /*  Ingestion (MongoDB)                                                */
 /* ------------------------------------------------------------------ */
 
-export async function ingestExperienceToCanonical(draftExperience: any): Promise<{
+export async function ingestExperienceToCanonical(
+  draftExperience: any,
+  author?: AuthorInfo
+): Promise<{
   success: boolean;
   assigned_id: string;
   experience_number: number;
@@ -214,9 +218,19 @@ export async function ingestExperienceToCanonical(draftExperience: any): Promise
 
   const nextNum = maxNum + 1;
   const nextId = `exp_${String(nextNum).padStart(3, "0")}`;
+  const now = new Date().toISOString();
 
   const approved = { ...draftExperience };
   approved.id = nextId;
+  if (author) {
+    approved.author = {
+      email: author.email.toLowerCase(),
+      name: author.name || null,
+      image: author.image || null,
+    };
+  }
+  approved.created_at = now;
+  approved.updated_at = now;
   approved.source = {
     ...(approved.source || {}),
     experience_number: nextNum,
@@ -236,7 +250,7 @@ export async function ingestExperienceToCanonical(draftExperience: any): Promise
     {
       $set: {
         total_experiences: totalCount,
-        updated_at: new Date().toISOString(),
+        updated_at: now,
       },
     },
     { upsert: true }
@@ -248,6 +262,15 @@ export async function ingestExperienceToCanonical(draftExperience: any): Promise
     experience_number: nextNum,
     total_experiences: totalCount,
   };
+}
+
+export async function getUserExperiences(email: string): Promise<Experience[]> {
+  const col = await getCollection("experiences");
+  const docs = await col
+    .find({ "author.email": email.toLowerCase() })
+    .sort({ created_at: -1, id: -1 })
+    .toArray();
+  return docs.map((doc) => ({ ...doc, _id: doc._id.toString() })) as unknown as Experience[];
 }
 
 /* ------------------------------------------------------------------ */

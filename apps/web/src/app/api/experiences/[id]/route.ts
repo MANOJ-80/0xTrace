@@ -27,16 +27,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user?.isAdmin) {
-    return NextResponse.json({ error: "Unauthorized: Admins Only" }, { status: 401 });
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const body = await req.json();
     const col = await getCollection("experiences");
-
-    // Remove _id from body before update to avoid immutable field error
-    const { _id, ...updateData } = body;
 
     let query: any = {};
     if (ObjectId.isValid(params.id)) {
@@ -45,11 +41,40 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       query = { id: params.id };
     }
 
-    const result = await col.updateOne(query, { $set: updateData });
-
-    if (result.matchedCount === 0) {
+    const existingDoc = await col.findOne(query);
+    if (!existingDoc) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+
+    const userEmail = session.user.email.toLowerCase();
+    const isAuthor =
+      existingDoc.author?.email &&
+      existingDoc.author.email.toLowerCase() === userEmail;
+    const isAdmin = !!session.user.isAdmin;
+
+    if (!isAuthor && !isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden: You do not have permission to edit this experience" },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+
+    // Prevent overwriting immutable or security fields
+    const { _id, id, author, created_at, ...updateData } = body;
+
+    const finalUpdate: any = {
+      ...updateData,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Only admins can deliberately alter the author field
+    if (isAdmin && author !== undefined) {
+      finalUpdate.author = author;
+    }
+
+    const result = await col.updateOne(query, { $set: finalUpdate });
 
     return NextResponse.json({ success: true, modifiedCount: result.modifiedCount });
   } catch (err: any) {
@@ -59,8 +84,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user?.isAdmin) {
-    return NextResponse.json({ error: "Unauthorized: Admins Only" }, { status: 401 });
+  if (!session || !session.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -73,11 +98,25 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       query = { id: params.id };
     }
 
-    const result = await col.deleteOne(query);
-
-    if (result.deletedCount === 0) {
+    const existingDoc = await col.findOne(query);
+    if (!existingDoc) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+
+    const userEmail = session.user.email.toLowerCase();
+    const isAuthor =
+      existingDoc.author?.email &&
+      existingDoc.author.email.toLowerCase() === userEmail;
+    const isAdmin = !!session.user.isAdmin;
+
+    if (!isAuthor && !isAdmin) {
+      return NextResponse.json(
+        { error: "Forbidden: You do not have permission to delete this experience" },
+        { status: 403 }
+      );
+    }
+
+    const result = await col.deleteOne(query);
 
     // Update metadata count
     const metaCol = await getCollection("metadata");

@@ -97,9 +97,18 @@ export interface Quality {
   issues?: string[];
 }
 
+export interface AuthorInfo {
+  email: string;
+  name?: string | null;
+  image?: string | null;
+}
+
 export interface Experience {
   _id?: string;
   id: string;
+  author?: AuthorInfo;
+  created_at?: string;
+  updated_at?: string;
   source: {
     experience_number?: number;
     file_name?: string;

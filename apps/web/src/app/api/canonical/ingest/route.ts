@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (!session || !session.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -34,7 +34,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await ingestExperienceToCanonical(draft);
+    const author = {
+      email: session.user.email,
+      name: session.user.name || null,
+      image: session.user.image || null,
+    };
+
+    const result = await ingestExperienceToCanonical(draft, author);
     return NextResponse.json(result);
   } catch (err: any) {
     return NextResponse.json(
