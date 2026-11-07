@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
@@ -89,6 +89,22 @@ export default function AboutPage() {
             </details>
           ))}
         </div>
+      </section>
+
+      <section className="about-feedback" aria-labelledby="feedback-title">
+        <div>
+          <div className="page-kicker">Help improve 0xTrace</div>
+          <h2 id="feedback-title">Found a bug or have an idea?</h2>
+          <p>Report a problem, suggest a feature, or share another improvement on GitHub.</p>
+        </div>
+        <a
+          href="https://github.com/MANOJ-80/0xTrace/issues/new/choose"
+          target="_blank"
+          rel="noreferrer"
+          className="ui-action-secondary"
+        >
+          Create a GitHub issue <ArrowUpRight size={16} aria-hidden="true" />
+        </a>
       </section>
 
       <section className="about-cta">
