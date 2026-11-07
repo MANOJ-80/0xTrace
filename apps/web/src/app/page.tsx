@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDown, ArrowRight, BookOpen, Building2, Check, Code2, Search, ShieldCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { getAllExperiences } from "@/lib/data";
 
 export const revalidate = 3600;
@@ -19,101 +19,94 @@ export default async function HomePage() {
     <div className="landing-page">
       <section className="landing-hero" aria-labelledby="hero-title">
         <div className="hero-copy">
-          <div className="eyebrow"><span className="eyebrow-dot" /> Campus interview intelligence</div>
-          <h1 id="hero-title">Know what the interview is <span>really like.</span></h1>
+          <p className="eyebrow">Campus placement interview archive</p>
+          <h1 id="hero-title">See how campus interviews unfold, <span>round by round.</span></h1>
           <p className="hero-description">
-            Prepare with real campus placement experiences, round-by-round questions, and candidate insights collected in one searchable library.
+            Browse candidate accounts by company and role. Follow the reported questions through each round, with the original writeup kept alongside.
           </p>
           <div className="hero-actions">
-            <Link href="/experiences" className="primary-cta">Browse interview experiences <ArrowRight size={17} /></Link>
+            <Link href="/experiences" className="primary-cta">Browse interview experiences <ArrowRight size={16} /></Link>
           </div>
-          <div className="hero-note"><ShieldCheck size={15} /> Questions preserved from candidate accounts</div>
+          <p className="hero-note">Accounts are candidate-reported and may not reflect every interview.</p>
         </div>
 
-        <div className="hero-visual" aria-label="Preview of a 0xTrace interview experience">
-          <div className="visual-grid" />
-          <div className="preview-window">
-            <div className="preview-topbar">
-              <div className="window-dots"><i /><i /><i /></div>
-              <span>EXPERIENCE / {featured?.id ?? "EXPLORE"}</span>
-              <Search size={14} />
-            </div>
-            <div className="preview-content">
-              <div className="preview-kicker">CAMPUS PLACEMENT · INTERVIEW RECORD</div>
-              <div className="preview-heading-row">
-                <div>
-                  <h2>{featured?.company?.name ?? "Company experience"}</h2>
-                  <p>{featured?.job?.role || "Software role"} <span>·</span> {featured?.timeline?.year ?? "Candidate account"}</p>
-                </div>
-                <span className="record-badge"><span /> CANONICAL RECORD</span>
+        {featured && (
+          <figure className="hero-visual" aria-label={`Example interview record for ${featured.company?.name ?? "a campus placement"}`}>
+            <div className="record-preview">
+              <div className="record-topline">
+                <span>Candidate account · {featured.timeline?.year ?? "Campus placement"}</span>
+                <span className="font-mono">{featured.id}</span>
               </div>
-              <div className="round-list">
-                {featuredRounds.length > 0 ? featuredRounds.map((round, index) => (
-                  <div className="round-row" key={`${round.sequence}-${round.name}`}>
-                    <div className="round-index">0{index + 1}</div>
-                    <div className="round-main"><strong>{round.name}</strong><span>{round.type || "Interview"}</span></div>
-                    <div className="round-count">{round.questions?.length ?? 0}<span> questions</span></div>
-                    <ArrowRight size={15} className="round-arrow" />
+              <div className="preview-content">
+                <p className="preview-kicker">Interview record</p>
+                <div className="preview-heading-row">
+                  <div>
+                    <h2>{featured.company?.name ?? "Company experience"}</h2>
+                    <p>{featured.job?.role || "Role not specified"}</p>
                   </div>
-                )) : (
-                  <div className="round-row"><div className="round-index">01</div><div className="round-main"><strong>Technical interview</strong><span>Interview round</span></div><div className="round-count">Open<span> the library</span></div><ArrowRight size={15} className="round-arrow" /></div>
-                )}
+                  <span className="record-badge">Candidate-reported</span>
+                </div>
+                <div className="round-list">
+                  {featuredRounds.map((round, index) => (
+                    <div className="round-row" key={`${round.sequence}-${round.name}`}>
+                      <span className="round-index">{String(index + 1).padStart(2, "0")}</span>
+                      <span className="round-main">
+                        <strong>{round.name}</strong>
+                        <span>{(round.type || "Interview").replace(/_/g, " ")}</span>
+                      </span>
+                      <span className="round-count">{round.questions?.length ?? 0}<span> questions</span></span>
+                    </div>
+                  ))}
+                </div>
+                <p className="preview-footer">Original writeup available with the full record</p>
               </div>
-              <div className="preview-footer"><span><Check size={14} /> Original account preserved</span><span>0xTRACE LIBRARY</span></div>
             </div>
-          </div>
-          <div className="visual-caption"><span className="caption-line" /> Real accounts. Structured for your next interview.</div>
-        </div>
+          </figure>
+        )}
       </section>
 
-      <section className="proof-strip" aria-label="Library size">
-        <div className="proof-intro">A clearer picture of the process</div>
-        <div className="proof-stat"><strong>{experiences.length.toLocaleString()}</strong><span>interview experiences</span></div>
+      <section className="proof-strip" aria-label="Archive contents">
+        <div className="proof-intro">In the archive</div>
+        <div className="proof-stat"><strong>{experiences.length.toLocaleString()}</strong><span>candidate accounts</span></div>
         <div className="proof-stat"><strong>{companies.size.toLocaleString()}</strong><span>companies</span></div>
         <div className="proof-stat"><strong>{rounds.toLocaleString()}</strong><span>interview rounds</span></div>
-        <div className="proof-stat"><strong>{questions.toLocaleString()}</strong><span>interview questions</span></div>
+        <div className="proof-stat"><strong>{questions.toLocaleString()}</strong><span>reported questions</span></div>
       </section>
 
       <section className="value-section" aria-labelledby="value-title">
         <div className="section-heading">
-          <div className="eyebrow">Preparation with context</div>
-          <h2 id="value-title">Go in knowing what to expect.</h2>
-          <p>Job descriptions tell you the role. Candidate experiences show you how the process unfolds.</p>
+          <p className="eyebrow">Browse by what you need</p>
+          <h2 id="value-title">Start with the company, the question, or the process.</h2>
+          <p>Each part of the archive answers a different preparation question.</p>
         </div>
-        <div className="value-grid">
-          <article className="value-card">
-            <div className="value-icon"><Building2 size={19} /></div>
-            <div className="value-label">01 / COMPANY</div>
-            <h3>See the process by company</h3>
-            <p>Compare interview journeys, roles, and outcomes from campus placement drives.</p>
-            <Link href="/experiences" className="text-link">Explore the directory <ArrowRight size={15} /></Link>
-          </article>
-          <article className="value-card">
-            <div className="value-icon"><BookOpen size={19} /></div>
-            <div className="value-label">02 / QUESTIONS</div>
-            <h3>Practice questions from real rounds</h3>
-            <p>Review technical and behavioral questions gathered from candidate accounts.</p>
-            <Link href="/questions" className="text-link">Browse the question bank <ArrowRight size={15} /></Link>
-          </article>
-          <article className="value-card">
-            <div className="value-icon"><Code2 size={19} /></div>
-            <div className="value-label">03 / ROUND BY ROUND</div>
-            <h3>Understand the full interview</h3>
-            <p>Follow each experience through its rounds, coding problems, and candidate notes.</p>
-            <Link href="/analytics" className="text-link">View hiring analytics <ArrowRight size={15} /></Link>
-          </article>
+        <div className="feature-list">
+          <Link href="/experiences" className="feature-row">
+            <h3>Interview experiences</h3>
+            <p>Compare candidate accounts by company, role, outcome, and interview round.</p>
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+          <Link href="/questions" className="feature-row">
+            <h3>Questions from real rounds</h3>
+            <p>Find technical and behavioral questions candidates reported after interviews.</p>
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+          <Link href="/analytics" className="feature-row">
+            <h3>Placement patterns</h3>
+            <p>Review company activity, round types, outcomes, and question topics in the archive.</p>
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
         </div>
       </section>
 
-      <section className="closing-cta">
+      <section className="closing-cta" aria-labelledby="contribute-title">
         <div>
-          <div className="eyebrow">Your next interview starts here</div>
-          <h2>Prepare with the experience of others.</h2>
-          <p>Find the company, role, and questions you want to understand.</p>
+          <p className="eyebrow">Add to the archive</p>
+          <h2 id="contribute-title">Share what your interview was like.</h2>
+          <p>Your account can give the next candidate a clearer view of the process.</p>
         </div>
-        <Link href="/experiences" className="primary-cta">Explore experiences <ArrowRight size={17} /></Link>
+        <Link href="/contribute" className="ui-action-secondary">Share your experience <ArrowRight size={16} /></Link>
       </section>
-      <div className="landing-bottom"><span>Built for candidates navigating campus placements.</span><a href="#hero-title" aria-label="Back to top">Back to top <ArrowDown size={14} /></a></div>
+      <div className="landing-bottom"><span>For candidates preparing for campus placements.</span><a href="#hero-title" aria-label="Back to top">Back to top <ArrowRight size={14} /></a></div>
     </div>
   );
 }

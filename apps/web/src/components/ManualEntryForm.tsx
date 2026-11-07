@@ -601,7 +601,7 @@ export default function ManualEntryForm({
               </div>
               <button
                 onClick={addRound}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-ox-ink border-2 border-ox-ink rounded-md shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] transition-all"
+                className="ui-action-secondary inline-flex items-center gap-1.5 px-3 py-1.5 text-xs"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Round
               </button>
@@ -815,7 +815,7 @@ export default function ManualEntryForm({
                 {form.rounds.map((r, i) => (
                   <div key={i} className="bg-ox-void border border-ox-edge rounded-lg p-4 space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-ox-accent/20 border border-ox-accent text-ox-accent text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                      <span className="w-6 h-6 rounded-sm bg-ox-accent/10 border border-ox-accent/30 text-ox-accent text-xs font-bold flex items-center justify-center">{i + 1}</span>
                       <span className="font-semibold text-sm text-ox-ink">{r.name || "Untitled"}</span>
                       <span className="text-xs text-ox-muted px-1.5 py-0.5 border border-ox-edge rounded">{ROUND_TYPES.find((t) => t.value === r.type)?.label || r.type}</span>
                     </div>

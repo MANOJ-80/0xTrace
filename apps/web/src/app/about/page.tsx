@@ -1,4 +1,4 @@
-import { Info, ShieldAlert, BookOpen, Search, BarChart3, FileText, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
@@ -17,10 +17,10 @@ export const metadata = {
 };
 
 const features = [
-  { icon: BookOpen, title: "Interview directory", text: "Browse candidate accounts by company and role." },
-  { icon: Search, title: "Question bank", text: "Search questions and coding problems gathered from interview experiences." },
-  { icon: FileText, title: "Original writeups", text: "Compare structured round summaries with the source account." },
-  { icon: BarChart3, title: "Placement analytics", text: "Review company activity, round patterns, and question topics." },
+  { title: "Interview directory", text: "Browse candidate accounts by company, role, outcome, and round." },
+  { title: "Question bank", text: "Search questions and coding problems gathered from interview experiences." },
+  { title: "Original writeups", text: "Compare structured round summaries with the candidate's source account." },
+  { title: "Placement analytics", text: "Review company activity, round patterns, and question topics in the archive." },
 ];
 
 const faqs = [
@@ -42,7 +42,6 @@ export default function AboutPage() {
   return (
     <div className="about-page">
       <header className="about-hero">
-        <div className="about-hero-mark"><Info className="w-5 h-5 text-ox-accent" /></div>
         <div>
           <div className="page-kicker">About the archive</div>
           <h1 className="page-title">Interview knowledge, passed forward.</h1>
@@ -51,7 +50,6 @@ export default function AboutPage() {
       </header>
 
       <section className="about-disclaimer" aria-labelledby="disclaimer-title">
-        <div className="disclaimer-icon"><ShieldAlert className="w-5 h-5" /></div>
         <div className="disclaimer-content">
           <div className="page-kicker">Before you use the archive</div>
           <h2 id="disclaimer-title">Candidate accounts are useful context, not guarantees.</h2>
@@ -69,9 +67,8 @@ export default function AboutPage() {
           <h2 id="features-title">A practical guide to past interviews.</h2>
         </div>
         <div className="about-feature-grid">
-          {features.map(({ icon: Icon, title, text }, index) => (
+          {features.map(({ title, text }) => (
             <article className="about-feature" key={title}>
-              <div className="about-feature-top"><span>0{index + 1}</span><Icon className="w-4 h-4" /></div>
               <h3>{title}</h3>
               <p>{text}</p>
             </article>

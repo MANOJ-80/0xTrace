@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Experience } from "@/lib/types";
 import { cn, getOutcomeBadgeColor } from "@/lib/utils";
 import { useSession } from "next-auth/react";
-import { ArrowUpRight, Building2, Layers } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -18,7 +18,7 @@ export default function ExperienceCard({ experience }: ExperienceCardProps) {
   const companyName =
     experience.company?.name || experience.company?.normalized_name || "Unknown Company";
   const roleName = experience.job?.role || "Software Engineer";
-  const outcomeStatus = experience.outcome?.status || "Selected";
+  const outcomeStatus = experience.outcome?.status || "Not reported";
   const rounds = experience.rounds || [];
 
   const candidateName =
@@ -37,39 +37,21 @@ export default function ExperienceCard({ experience }: ExperienceCardProps) {
     <Link
       href={href}
       onClick={handleClick}
-      className="experience-card group block outline-none focus-visible:ring-2 focus-visible:ring-ox-accent"
+      className="experience-card group outline-none focus-visible:ring-2 focus-visible:ring-ox-accent"
     >
-      <div className="experience-card-heading">
-        <div className="flex flex-col min-w-0">
-          <div className="experience-company-line"><Building2 className="w-4 h-4" /><span>Candidate account</span></div>
-          <h3 className="font-semibold text-[15px] text-ox-ink break-words">
-            {companyName}
-          </h3>
-          <p className="text-sm font-normal text-ox-text break-words">
-            {roleName}
-          </p>
-        </div>
-
-        <div className="flex items-center shrink-0">
-          <span
-            className={cn(
-              "px-2.5 py-1 text-[10px] font-semibold capitalize",
-              getOutcomeBadgeColor(outcomeStatus)
-            )}
-          >
-            {outcomeStatus}
-          </span>
-        </div>
+      <div className="experience-company-role">
+        <h3>{companyName}</h3>
+        <p>{roleName}</p>
       </div>
-
-      <div className="experience-card-footer">
-        <span className="experience-candidate">{candidateName}</span>
-        <div className="experience-card-meta">
-          <span><Layers className="w-3.5 h-3.5" />{rounds.length} {rounds.length === 1 ? "round" : "rounds"}</span>
-          <span className="font-mono">{experience.id}</span>
-          <ArrowUpRight className="experience-card-arrow w-4 h-4" />
-        </div>
-      </div>
+      <span className="experience-candidate">{candidateName}</span>
+      <span className={cn("ui-status experience-outcome", getOutcomeBadgeColor(outcomeStatus))}>
+        {outcomeStatus}
+      </span>
+      <span className="experience-card-meta">
+        {rounds.length} {rounds.length === 1 ? "round" : "rounds"}
+        <span className="font-mono">{experience.id}</span>
+        <ArrowUpRight className="experience-card-arrow w-4 h-4" aria-hidden="true" />
+      </span>
     </Link>
   );
 }

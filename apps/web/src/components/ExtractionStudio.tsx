@@ -145,7 +145,7 @@ export default function ExtractionStudio({ initialSample }: ExtractionStudioProp
           <button
             type="submit"
             disabled={!file || isLoading}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-semibold text-ox-ink bg-ox-surface border-2 border-ox-ink shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+            className="ui-action-secondary w-full justify-center gap-2 disabled:opacity-40"
           >
             {isLoading ? (
               <>
@@ -198,8 +198,8 @@ export default function ExtractionStudio({ initialSample }: ExtractionStudioProp
                 disabled={isIngesting || ingestSuccess}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
                   ingestSuccess
-                    ? "bg-ox-signal-pass text-[#052e16] cursor-default"
-                    : "bg-ox-signal-pass text-[#052e16] border-2 border-[#052e16] shadow-[3px_3px_0_#052e16] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#052e16] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+                    ? "bg-ox-signal-pass/10 text-ox-signal-pass cursor-default"
+                    : "ui-action-primary disabled:opacity-50"
                 }`}
               >
                 {isIngesting ? (

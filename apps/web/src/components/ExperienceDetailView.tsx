@@ -81,13 +81,13 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
   const getRoundIcon = (type: string) => {
     const t = (type || "").toLowerCase();
     if (t.includes("online") || t.includes("oa") || t.includes("assessment")) {
-      return <Code className="w-4 h-4 text-blue-400" />;
+      return <Code className="w-4 h-4 text-ox-accent" />;
     }
     if (t.includes("hr") || t.includes("behavioral") || t.includes("fit")) {
-      return <UserCheck className="w-4 h-4 text-purple-400" />;
+      return <UserCheck className="w-4 h-4 text-ox-accent" />;
     }
     if (t.includes("manager")) {
-      return <Briefcase className="w-4 h-4 text-amber-400" />;
+      return <Briefcase className="w-4 h-4 text-ox-accent" />;
     }
     return <Zap className="w-4 h-4 text-ox-accent" />;
   };
@@ -328,7 +328,7 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
           {((experience.tips && experience.tips.length > 0) || mistakes.length > 0) && (
             <div className="bg-ox-surface border border-ox-edge rounded-lg p-5 sm:p-6 space-y-4">
               <div className="flex items-center gap-2 pb-3 border-b border-ox-edge">
-                <Lightbulb className="w-4 h-4 text-amber-400" />
+                <Lightbulb className="w-4 h-4 text-ox-accent" />
                 <h2 className="text-base font-bold text-ox-ink">Candidate advice</h2>
               </div>
 

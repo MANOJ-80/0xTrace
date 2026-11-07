@@ -78,13 +78,13 @@ export default function RoundModal({
   const getRoundIcon = (type: string) => {
     const t = (type || "").toLowerCase();
     if (t.includes("online") || t.includes("oa") || t.includes("assessment") || t.includes("coding")) {
-      return <Code className="w-4 h-4 text-blue-400" />;
+      return <Code className="w-4 h-4 text-ox-accent" />;
     }
     if (t.includes("hr") || t.includes("behavioral") || t.includes("fit")) {
-      return <UserCheck className="w-4 h-4 text-purple-400" />;
+      return <UserCheck className="w-4 h-4 text-ox-accent" />;
     }
     if (t.includes("manager")) {
-      return <Briefcase className="w-4 h-4 text-amber-400" />;
+      return <Briefcase className="w-4 h-4 text-ox-accent" />;
     }
     return <Zap className="w-4 h-4 text-ox-accent" />;
   };

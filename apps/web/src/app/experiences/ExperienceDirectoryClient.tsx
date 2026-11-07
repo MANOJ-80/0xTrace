@@ -251,7 +251,7 @@ export default function ExperienceDirectoryClient({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="experience-list">
           {filteredAndSorted.map((exp) => (
             <ExperienceCard key={exp._id || exp.id} experience={exp} />
           ))}

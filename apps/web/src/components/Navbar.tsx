@@ -31,9 +31,8 @@ export default function Navbar() {
     <header className="site-header sticky top-0 z-40 border-b border-ox-edge bg-ox-void/90 backdrop-blur-md supports-[not(backdrop-filter:blur(1px))]:bg-ox-void">
       <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 h-[60px] flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/" className="site-brand flex items-center gap-2.5 group">
-            <span className="brand-mark" aria-hidden="true"><span /></span>
-            <span className="font-geist font-bold text-[15px] tracking-tight text-ox-ink">
+          <Link href="/" className="site-brand flex items-center group">
+            <span className="font-geist font-semibold text-[16px] text-ox-ink">
               0xTrace
             </span>
           </Link>
@@ -83,7 +82,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="ui-action-secondary px-3"
+              className="nav-login-link"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Log in</span>
