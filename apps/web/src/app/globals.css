@@ -167,6 +167,9 @@ select[class*="appearance-none"] {
 .segment-button[aria-pressed="true"], .difficulty-filter[aria-pressed="true"] { background: #E7E4DC; color: var(--ox-ink); }
 
 .question-filters { box-shadow: none; }
+.markdown-preview .wmde-markdown { color: var(--ox-ink); background: transparent; }
+.markdown-preview .wmde-markdown p, .markdown-preview .wmde-markdown li { color: var(--ox-ink); }
+.markdown-preview .wmde-markdown a { color: var(--ox-accent); }
 .question-card { padding: 16px; border: 1px solid var(--ox-edge); border-radius: var(--radius-md); background: var(--ox-surface); transition: border-color .16s var(--ease-out), background-color .16s var(--ease-out); }
 .question-card:hover { border-color: #BEB8AC; background: #FCFBF8; }
 .problem-card { display: flex; flex-direction: column; justify-content: space-between; }

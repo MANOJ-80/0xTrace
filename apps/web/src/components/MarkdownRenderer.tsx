@@ -11,7 +11,7 @@ const MDPreview = dynamic(
 export default function MarkdownRenderer({ source }: { source: string }) {
   if (!source) return null;
   return (
-    <div data-color-mode="dark" className="w-full">
+    <div data-color-mode="light" className="markdown-preview w-full">
       <MDPreview source={source} style={{ backgroundColor: 'transparent' }} />
     </div>
   );
