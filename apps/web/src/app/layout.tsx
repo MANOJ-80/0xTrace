@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
     template: "%s | 0xTrace",
   },
   description:
-    "126 audited campus placement experiences with verbatim questions, round breakdowns, and lossless source preservation.",
+    "Explore campus placement interview experiences with round-by-round questions, company filters, and original candidate accounts preserved.",
   applicationName: "0xTrace",
   keywords: [
     "PSG iTech",
@@ -34,13 +35,13 @@ export const metadata: Metadata = {
     siteName: "0xTrace",
     title: "0xTrace — Campus Interview Intelligence",
     description:
-      "126 audited campus placement experiences with verbatim questions, round breakdowns, and lossless source preservation.",
+      "Explore campus placement interview experiences with round-by-round questions, company filters, and original candidate accounts preserved.",
   },
   twitter: {
     card: "summary_large_image",
     title: "0xTrace — Campus Interview Intelligence",
     description:
-      "126 audited campus placement experiences with verbatim questions, round breakdowns, and lossless source preservation.",
+      "Explore campus placement interview experiences with round-by-round questions, company filters, and original candidate accounts preserved.",
   },
   robots: {
     index: true,
@@ -59,13 +60,23 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="font-geist bg-ox-void text-ox-ink flex flex-col min-h-screen antialiased overflow-x-hidden">
         <Providers>
+          <a className="skip-link" href="#main-content">Skip to content</a>
           <Navbar />
-          <main className="flex-1 w-full max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <main id="main-content" tabIndex={-1} className="flex-1 w-full max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </main>
-        <footer className="border-t border-ox-edge py-5 text-center text-xs text-ox-muted">
-          <div className="max-w-container mx-auto px-4">
-            <span className="font-semibold text-ox-ink">0xTrace</span> &copy; {new Date().getFullYear()}
+        <footer className="site-footer border-t border-ox-edge">
+          <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+            <div>
+              <span className="font-semibold text-ox-ink">0xTrace</span>
+              <p className="mt-1 text-xs text-ox-muted">Campus interview experiences, organized for the next candidate.</p>
+            </div>
+            <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-ox-muted">
+              <Link href="/experiences" className="hover:text-ox-ink transition-colors">Experiences</Link>
+              <Link href="/questions" className="hover:text-ox-ink transition-colors">Questions</Link>
+              <Link href="/about" className="hover:text-ox-ink transition-colors">About</Link>
+            </nav>
+            <span className="text-xs text-ox-muted">&copy; {new Date().getFullYear()}</span>
           </div>
         </footer>
         </Providers>

@@ -19,12 +19,5 @@ export default async function MyExperiencesPage() {
 
   const experiences = await getUserExperiences(session.user.email);
 
-  return (
-    <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <MyExperiencesClient
-        initialExperiences={experiences}
-        userEmail={session.user.email}
-      />
-    </div>
-  );
+  return <MyExperiencesClient initialExperiences={experiences} userEmail={session.user.email} />;
 }

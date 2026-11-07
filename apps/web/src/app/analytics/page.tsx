@@ -26,21 +26,24 @@ export default async function AnalyticsPage() {
   const data = await getAnalyticsData();
 
   return (
-    <main className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Header */}
-      <div className="text-center space-y-3 mb-10">
-        <div className="mx-auto w-12 h-12 rounded-full bg-ox-accent/10 border-2 border-ox-accent flex items-center justify-center">
-          <BarChart3 className="w-5 h-5 text-ox-accent" />
+    <div className="space-y-7">
+      <header className="page-heading">
+        <div className="page-heading-copy">
+          <div className="page-kicker">Placement data</div>
+          <h1 className="page-title">Hiring patterns at a glance</h1>
+          <p className="page-description">
+            Company activity, interview rounds, and question topics across {data.totals.experiences} experiences.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-ox-ink">
-          Analytics Dashboard
-        </h1>
-        <p className="text-sm text-ox-muted max-w-lg mx-auto">
-          Visualize placement trends, company breakdowns, round patterns, and question distributions across {data.totals.experiences} experiences.
-        </p>
+        <div className="page-heading-icon"><BarChart3 className="w-5 h-5 text-ox-accent" /></div>
+      </header>
+
+      <div className="analytics-intro-note">
+        <span className="analytics-note-dot" />
+        <span>Use these summaries to spot patterns. Candidate accounts remain the source for individual interview details.</span>
       </div>
 
       <AnalyticsDashboard data={data} />
-    </main>
+    </div>
   );
 }

@@ -39,7 +39,7 @@ export default async function EditExperiencePage({ params }: EditExperiencePageP
     experience.company?.name || experience.company?.normalized_name || "Company";
 
   return (
-    <main className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="space-y-8">
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-ox-edge pb-4">
         <Link
@@ -70,6 +70,6 @@ export default async function EditExperiencePage({ params }: EditExperiencePageP
         experienceId={params.id}
         mode="edit"
       />
-    </main>
+    </div>
   );
 }

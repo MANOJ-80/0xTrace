@@ -82,23 +82,25 @@ export default function QuestionBankClient({
   return (
     <div className="space-y-5">
       {/* Tab switcher — text tabs with bottom border */}
-      <div className="flex items-center gap-0 border-b border-ox-edge">
+      <div className="segmented-control" role="group" aria-label="Question type">
         <button
           onClick={() => setActiveTab("questions")}
-          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+          aria-pressed={activeTab === "questions"}
+          className={`segment-button flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors ${
             activeTab === "questions"
-              ? "border-ox-accent text-ox-ink"
-              : "border-transparent text-ox-muted hover:text-ox-ink"
+              ? "text-ox-ink"
+              : "text-ox-muted hover:text-ox-ink"
           }`}
         >
           <span>Interview questions ({questions.length})</span>
         </button>
         <button
           onClick={() => setActiveTab("coding")}
-          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+          aria-pressed={activeTab === "coding"}
+          className={`segment-button flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors ${
             activeTab === "coding"
-              ? "border-ox-accent text-ox-ink"
-              : "border-transparent text-ox-muted hover:text-ox-ink"
+              ? "text-ox-ink"
+              : "text-ox-muted hover:text-ox-ink"
           }`}
         >
           <Code2 className="w-4 h-4" />
@@ -107,7 +109,7 @@ export default function QuestionBankClient({
       </div>
 
       {/* Filter bar */}
-      <div className="bg-ox-surface border border-ox-edge rounded-lg p-4 space-y-3">
+      <div className="question-filters ui-panel p-4 space-y-3">
         <div className="flex flex-col md:flex-row items-center gap-3">
           <div className="relative flex-1 w-full">
             <Search className="w-4 h-4 text-ox-muted absolute left-3 top-1/2 -translate-y-1/2" />
@@ -120,7 +122,8 @@ export default function QuestionBankClient({
                   ? "Search questions by topic, keyword, or company..."
                   : "Search coding problems by title, topic, or company..."
               }
-              className="w-full pl-9 pr-8 py-2 rounded-md border border-ox-edge bg-ox-void text-sm text-ox-ink placeholder:text-ox-muted focus:outline-none focus:ring-2 focus:ring-ox-accent/30 focus:border-ox-accent transition-colors"
+              aria-label={activeTab === "questions" ? "Search interview questions" : "Search coding problems"}
+              className="w-full pl-9 pr-8 py-2.5 rounded-md border border-ox-edge bg-ox-void text-sm text-ox-ink placeholder:text-ox-muted focus:outline-none focus:ring-2 focus:ring-ox-accent/30 focus:border-ox-accent transition-colors"
             />
             {search && (
               <button
@@ -135,7 +138,8 @@ export default function QuestionBankClient({
           <select
             value={selectedCompany}
             onChange={(e) => setSelectedCompany(e.target.value)}
-            className="w-full md:w-52 shrink-0 py-2 px-3 rounded-md border border-ox-edge bg-ox-void text-sm text-ox-ink font-medium focus:outline-none focus:ring-2 focus:ring-ox-accent/30"
+            aria-label="Filter by company"
+            className="w-full md:w-52 shrink-0 py-2.5 px-3 rounded-md border border-ox-edge bg-ox-void text-sm text-ox-ink font-medium focus:outline-none focus:ring-2 focus:ring-ox-accent/30"
           >
             <option value="">All companies ({companies.length})</option>
             {companies.map((c) => (
@@ -151,9 +155,10 @@ export default function QuestionBankClient({
               <button
                 key={diff}
                 onClick={() => setSelectedDifficulty(diff)}
-                className={`px-2.5 py-1 rounded-md font-medium capitalize transition-colors ${
+                  aria-pressed={selectedDifficulty === diff}
+                  className={`difficulty-filter px-2.5 py-1 rounded-md font-medium capitalize transition-colors ${
                   selectedDifficulty === diff
-                    ? "text-ox-ink font-semibold border-b-2 border-ox-accent"
+                      ? "text-ox-ink font-semibold"
                     : "text-ox-muted hover:text-ox-ink"
                 }`}
               >
@@ -183,7 +188,7 @@ export default function QuestionBankClient({
             filteredQuestions.map((q, idx) => (
               <div
                 key={idx}
-                className="bg-ox-surface border border-ox-edge rounded-lg p-4 hover:border-ox-accent transition-colors"
+                className="question-card"
               >
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
                   <div className="space-y-1 flex-1">
@@ -236,7 +241,7 @@ export default function QuestionBankClient({
             filteredProblems.map((p, idx) => (
               <div
                 key={idx}
-                className="bg-ox-surface border border-ox-edge rounded-lg p-4 hover:border-ox-signal-pass/50 transition-colors flex flex-col justify-between"
+                className="question-card problem-card"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">

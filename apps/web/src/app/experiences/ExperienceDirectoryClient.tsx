@@ -98,7 +98,7 @@ export default function ExperienceDirectoryClient({
     }
 
     return list;
-  }, [initialExperiences, search, selectedCompany, selectedOutcome, sortBy]);
+  }, [initialExperiences, search, selectedCompany, selectedRole, selectedOutcome, sortBy]);
 
   const resetFilters = () => {
     setSearch("");
@@ -117,17 +117,18 @@ export default function ExperienceDirectoryClient({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
+      <div className="directory-toolbar space-y-4">
         <div className="flex flex-col md:flex-row items-center gap-3">
           {/* Search Input */}
           <div className="relative flex-1 w-full">
             <Search className="w-4 h-4 text-ox-muted absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              aria-label="Search interview experiences"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by company, role, candidate..."
-              className="w-full pl-9 pr-3 py-2 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink placeholder:text-ox-muted focus:outline-none focus:border-ox-accent"
+              className="w-full pl-9 pr-3 py-2.5 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink placeholder:text-ox-muted focus:outline-none focus:ring-2 focus:ring-ox-accent/25 focus:border-ox-accent"
             />
           </div>
 
@@ -135,6 +136,7 @@ export default function ExperienceDirectoryClient({
           <div className="w-full md:w-56 shrink-0">
             <select
               value={selectedCompany}
+              aria-label="Filter by company"
               onChange={(e) => setSelectedCompany(e.target.value)}
               className="w-full py-2 px-3 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink focus:outline-none focus:border-ox-accent appearance-none"
             >
@@ -152,6 +154,7 @@ export default function ExperienceDirectoryClient({
             <div className="w-full md:w-48 shrink-0">
               <select
                 value={selectedRole}
+              aria-label="Filter by role"
                 onChange={(e) => setSelectedRole(e.target.value)}
                 className="w-full py-2 px-3 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink focus:outline-none focus:border-ox-accent appearance-none"
               >
@@ -169,6 +172,7 @@ export default function ExperienceDirectoryClient({
           <div className="w-full md:w-44 shrink-0 flex items-center gap-1.5">
             <select
               value={sortBy}
+              aria-label="Sort interview experiences"
               onChange={(e) => setSortBy(e.target.value)}
               className="w-full py-2 px-3 rounded-md border border-ox-edge bg-ox-surface text-sm text-ox-ink focus:outline-none focus:border-ox-accent appearance-none"
             >
@@ -180,13 +184,14 @@ export default function ExperienceDirectoryClient({
         </div>
 
         {/* Filters and Count */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm border-b border-ox-edge">
-          <div className="flex items-center gap-4">
+        <div className="directory-filter-row flex flex-wrap items-center justify-between gap-3 text-sm">
+          <div className="segmented-control" role="group" aria-label="Filter by outcome">
             <button
               onClick={() => setSelectedOutcome("all")}
-              className={`pb-2 -mb-[1px] transition-colors ${
+              aria-pressed={selectedOutcome === "all"}
+              className={`segment-button transition-colors ${
                 selectedOutcome === "all"
-                  ? "text-ox-ink font-semibold border-b-2 border-ox-accent"
+                  ? "text-ox-ink font-semibold"
                   : "text-ox-muted hover:text-ox-ink"
               }`}
             >
@@ -194,9 +199,10 @@ export default function ExperienceDirectoryClient({
             </button>
             <button
               onClick={() => setSelectedOutcome("selected")}
-              className={`pb-2 -mb-[1px] transition-colors ${
+              aria-pressed={selectedOutcome === "selected"}
+              className={`segment-button transition-colors ${
                 selectedOutcome === "selected"
-                  ? "text-ox-ink font-semibold border-b-2 border-ox-accent"
+                  ? "text-ox-ink font-semibold"
                   : "text-ox-muted hover:text-ox-ink"
               }`}
             >
@@ -204,9 +210,10 @@ export default function ExperienceDirectoryClient({
             </button>
             <button
               onClick={() => setSelectedOutcome("rejected")}
-              className={`pb-2 -mb-[1px] transition-colors ${
+              aria-pressed={selectedOutcome === "rejected"}
+              className={`segment-button transition-colors ${
                 selectedOutcome === "rejected"
-                  ? "text-ox-ink font-semibold border-b-2 border-ox-accent"
+                  ? "text-ox-ink font-semibold"
                   : "text-ox-muted hover:text-ox-ink"
               }`}
             >
@@ -214,12 +221,13 @@ export default function ExperienceDirectoryClient({
             </button>
           </div>
 
-          <div className="flex items-center gap-3 pb-2">
+          <div className="flex items-center gap-3 text-xs">
             <span className="text-ox-muted">
               Showing {filteredAndSorted.length} of {initialExperiences.length}
             </span>
             {isFiltered && (
-              <button
+            <button
+              aria-label="Clear all filters"
                 onClick={resetFilters}
                 className="text-ox-accent hover:underline"
               >
@@ -243,7 +251,7 @@ export default function ExperienceDirectoryClient({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filteredAndSorted.map((exp) => (
             <ExperienceCard key={exp._id || exp.id} experience={exp} />
           ))}

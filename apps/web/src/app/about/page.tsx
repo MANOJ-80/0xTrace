@@ -1,127 +1,107 @@
-import { Info, ShieldAlert, Sparkles, HelpCircle, BookOpen, Search, BarChart3, FileText } from "lucide-react";
+import { Info, ShieldAlert, BookOpen, Search, BarChart3, FileText, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
   title: "About 0xTrace",
-  description:
-    "Learn about 0xTrace: A centralized campus interview intelligence archive preserving verified student experiences for PSG iTech.",
+  description: "Learn how 0xTrace organizes campus interview experiences and preserves the candidate's original account.",
   openGraph: {
     title: "About 0xTrace | Campus Interview Intelligence",
-    description:
-      "Learn about 0xTrace: A centralized campus interview intelligence archive preserving verified student experiences for PSG iTech.",
+    description: "Learn how 0xTrace organizes campus interview experiences and preserves the candidate's original account.",
     siteName: "0xTrace",
   },
   twitter: {
     card: "summary_large_image",
     title: "About 0xTrace | Campus Interview Intelligence",
-    description:
-      "Learn about 0xTrace: A centralized campus interview intelligence archive preserving verified student experiences for PSG iTech.",
+    description: "Learn how 0xTrace organizes campus interview experiences and preserves the candidate's original account.",
   },
 };
 
+const features = [
+  { icon: BookOpen, title: "Interview directory", text: "Browse candidate accounts by company and role." },
+  { icon: Search, title: "Question bank", text: "Search questions and coding problems gathered from interview experiences." },
+  { icon: FileText, title: "Original writeups", text: "Compare structured round summaries with the source account." },
+  { icon: BarChart3, title: "Placement analytics", text: "Review company activity, round patterns, and question topics." },
+];
+
+const faqs = [
+  {
+    question: "Who can contribute to this platform?",
+    answer: "Any student or senior who has gone through the campus placement process can share an experience. Contributions require a PSG iTech account.",
+  },
+  {
+    question: "Are questions word-for-word transcripts?",
+    answer: "Candidates often recall and write questions from memory after interviews. They may describe the concepts discussed without matching the interviewer's exact wording.",
+  },
+  {
+    question: "What should I do if a structured round contains a mistake?",
+    answer: "Use the Original Writeup tab to compare it with the candidate's source account. Structured summaries can contain errors.",
+  },
+];
+
 export default function AboutPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-12">
-      {/* Header */}
-      <section className="text-center space-y-4">
-        <div className="mx-auto w-16 h-16 bg-ox-surface-raised border-2 border-ox-edge rounded-2xl flex items-center justify-center shadow-neo">
-          <Info className="w-8 h-8 text-ox-accent" />
+    <div className="about-page">
+      <header className="about-hero">
+        <div className="about-hero-mark"><Info className="w-5 h-5 text-ox-accent" /></div>
+        <div>
+          <div className="page-kicker">About the archive</div>
+          <h1 className="page-title">Interview knowledge, passed forward.</h1>
+          <p className="page-description">0xTrace brings campus placement experiences together so candidates can learn how interviews unfold across companies and roles.</p>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-ox-ink font-geist tracking-tight">
-          About 0xTrace
-        </h1>
-        <p className="text-lg text-ox-muted max-w-2xl mx-auto leading-relaxed">
-          A single, unified platform designed to centralize interview experiences shared by seniors across different companies and departments.
-        </p>
-      </section>
+      </header>
 
-      {/* Guidelines & Disclaimers (Crucial) */}
-      <section className="bg-ox-accent/10 border-2 border-ox-accent rounded-xl p-6 sm:p-8 space-y-4">
-        <div className="flex items-center gap-3 mb-4">
-          <ShieldAlert className="w-6 h-6 text-ox-accent" />
-          <h2 className="text-xl font-bold text-ox-ink">Important Guidelines & Disclaimer</h2>
-        </div>
-        <ul className="space-y-4 text-ox-ink/90 leading-relaxed list-disc list-inside">
-          <li>
-            <strong>Educational Purpose Only:</strong> This platform is built strictly for educational purposes to help students prepare for their placements.
-          </li>
-          <li>
-            <strong>AI Summarization & The Source of Truth:</strong> We use Artificial Intelligence to parse and summarize some of the content into structured rounds and questions. Because AI is not perfect, the <span className="font-semibold text-ox-accent">Original Writeup</span> tab is always preserved and remains the ultimate source of truth for every single experience.
-          </li>
-          <li>
-            <strong>No Guarantee of Accuracy:</strong> The author does not guarantee the 100% truthfulness or accuracy of the experiences shared. This platform was simply built by the author to act as a unified interface to access and read the interview experiences shared by our seniors.
-          </li>
-        </ul>
-      </section>
-
-      {/* Features */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-ox-ink flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-ox-muted" />
-          Platform Features
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-5 bg-ox-surface border border-ox-edge rounded-lg space-y-2">
-            <BookOpen className="w-5 h-5 text-ox-accent mb-3" />
-            <h3 className="font-semibold text-ox-ink">Centralized Directory</h3>
-            <p className="text-sm text-ox-muted">Browse hundreds of experiences across various departments and companies in one place.</p>
-          </div>
-          <div className="p-5 bg-ox-surface border border-ox-edge rounded-lg space-y-2">
-            <Search className="w-5 h-5 text-ox-accent mb-3" />
-            <h3 className="font-semibold text-ox-ink">Question Bank</h3>
-            <p className="text-sm text-ox-muted">Quickly search through a massive, automatically aggregated list of real technical and HR questions.</p>
-          </div>
-          <div className="p-5 bg-ox-surface border border-ox-edge rounded-lg space-y-2">
-            <FileText className="w-5 h-5 text-ox-accent mb-3" />
-            <h3 className="font-semibold text-ox-ink">Lossless Source</h3>
-            <p className="text-sm text-ox-muted">We never throw away the original submissions. Read the exact words written by the candidates.</p>
-          </div>
-          <div className="p-5 bg-ox-surface border border-ox-edge rounded-lg space-y-2">
-            <BarChart3 className="w-5 h-5 text-ox-accent mb-3" />
-            <h3 className="font-semibold text-ox-ink">Analytics & Insights</h3>
-            <p className="text-sm text-ox-muted">Visualize hiring trends, round structures, and acceptance rates to study smarter.</p>
-          </div>
+      <section className="about-disclaimer" aria-labelledby="disclaimer-title">
+        <div className="disclaimer-icon"><ShieldAlert className="w-5 h-5" /></div>
+        <div className="disclaimer-content">
+          <div className="page-kicker">Before you use the archive</div>
+          <h2 id="disclaimer-title">Candidate accounts are useful context, not guarantees.</h2>
+          <ul>
+            <li><strong>Educational use.</strong> The archive helps students prepare for campus placements.</li>
+            <li><strong>Summaries can contain mistakes.</strong> AI helps structure some accounts into rounds and questions. The Original Writeup remains the source for each experience.</li>
+            <li><strong>Experiences are self-reported.</strong> 0xTrace does not guarantee the accuracy or completeness of candidate submissions.</li>
+          </ul>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-ox-ink flex items-center gap-2">
-          <HelpCircle className="w-5 h-5 text-ox-muted" />
-          Frequently Asked Questions
-        </h2>
-        <div className="space-y-4">
-          <div className="bg-ox-surface border border-ox-edge rounded-lg p-5">
-            <h3 className="font-semibold text-ox-ink mb-2">Who can contribute to this platform?</h3>
-            <p className="text-sm text-ox-muted leading-relaxed">
-              Any student or senior who has gone through the campus placement process can share their experience to help the next batch. You can manually type your experience by clicking the Contribute button.
-            </p>
-          </div>
-          <div className="bg-ox-surface border border-ox-edge rounded-lg p-5">
-            <h3 className="font-semibold text-ox-ink mb-2">Are the questions exact matches of the real interview?</h3>
-            <p className="text-sm text-ox-muted leading-relaxed">
-              The questions are recalled and written from memory by the candidates after their interviews. While they cover the exact concepts discussed, they may not be word-for-word identical to what the interviewer asked.
-            </p>
-          </div>
-          <div className="bg-ox-surface border border-ox-edge rounded-lg p-5">
-            <h3 className="font-semibold text-ox-ink mb-2">I noticed a mistake in an AI summarized round. What should I do?</h3>
-            <p className="text-sm text-ox-muted leading-relaxed">
-              Because we use AI to structure the data, occasional mistakes can happen. You should always refer to the <strong>Original Writeup</strong> section to read exactly what the candidate originally wrote.
-            </p>
-          </div>
+      <section className="about-section" aria-labelledby="features-title">
+        <div className="about-section-heading">
+          <div className="page-kicker">What you can do</div>
+          <h2 id="features-title">A practical guide to past interviews.</h2>
+        </div>
+        <div className="about-feature-grid">
+          {features.map(({ icon: Icon, title, text }, index) => (
+            <article className="about-feature" key={title}>
+              <div className="about-feature-top"><span>0{index + 1}</span><Icon className="w-4 h-4" /></div>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
         </div>
       </section>
-      
-      {/* Call to action */}
-      <div className="pt-8 text-center border-t border-ox-edge">
-        <p className="text-ox-muted mb-6">Ready to help future candidates?</p>
-        <Link
-          href="/contribute"
-          className="inline-flex justify-center items-center px-6 py-3 text-sm font-semibold text-ox-ink bg-ox-accent border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all"
-        >
-          Share Your Experience
-        </Link>
-      </div>
+
+      <section className="about-section about-faq" aria-labelledby="faq-title">
+        <div className="about-section-heading">
+          <div className="page-kicker">Common questions</div>
+          <h2 id="faq-title">Using the archive</h2>
+        </div>
+        <div className="faq-list">
+          {faqs.map((faq, index) => (
+            <details className="faq-item" key={faq.question} open={index === 0}>
+              <summary>{faq.question}<span aria-hidden="true">+</span></summary>
+              <p>{faq.answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="about-cta">
+        <div>
+          <div className="page-kicker">Pass it forward</div>
+          <h2>Share what you learned.</h2>
+          <p>Your interview account can help another candidate prepare.</p>
+        </div>
+        <Link href="/contribute" className="ui-action-primary">Share your experience <ArrowRight size={16} /></Link>
+      </section>
     </div>
   );
 }

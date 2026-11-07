@@ -70,38 +70,40 @@ export default function EditExperienceClient({ id }: { id: string }) {
   if (loading) return <div className="p-8">Loading...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div className="admin-edit-page space-y-6">
+      <header className="page-heading">
         <div>
-          <Link href="/admin" className="text-ox-text hover:text-ox-ink mb-2 inline-block">
-            ← Back to Dashboard
+          <Link href="/admin" className="back-link mb-3 inline-flex items-center gap-2">
+            <span aria-hidden="true">←</span> Back to experience manager
           </Link>
-          <h1 className="text-3xl font-bold text-ox-ink">Edit Experience</h1>
-          <p className="text-ox-text mt-1 text-sm">Directly edit the JSON representation of this experience.</p>
+          <div className="page-kicker">Record editor</div>
+          <h1 className="page-title">Edit experience</h1>
+          <p className="page-description">Update the source data for this interview record.</p>
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2.5 bg-ox-accent border-2 border-ox-ink font-semibold rounded shadow-neo hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-ox-ink disabled:opacity-50"
+          className="ui-action-primary disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
-      </div>
+      </header>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 border-2 border-red-500 rounded text-red-800 font-medium">
+        <div className="feedback-error" role="alert">
           {error}
         </div>
       )}
       
       {success && (
-        <div className="mb-6 p-4 bg-green-100 border-2 border-green-500 rounded text-green-800 font-medium">
-          Successfully saved!
+        <div className="feedback-success" role="status">
+          Experience saved.
         </div>
       )}
 
-      <div className="bg-ox-surface border-2 border-ox-edge rounded-lg shadow-neo overflow-hidden">
+      <div className="json-editor-wrap overflow-hidden">
         <textarea
+          aria-label="Experience JSON source"
           value={jsonStr}
           onChange={(e) => setJsonStr(e.target.value)}
           className="w-full h-[600px] p-4 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-sm leading-relaxed focus:outline-none resize-y"

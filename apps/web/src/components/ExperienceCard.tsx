@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Experience } from "@/lib/types";
 import { cn, getOutcomeBadgeColor } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { ArrowUpRight, Building2, Layers } from "lucide-react";
 
 interface ExperienceCardProps {
   experience: Experience;
@@ -36,25 +37,23 @@ export default function ExperienceCard({ experience }: ExperienceCardProps) {
     <Link
       href={href}
       onClick={handleClick}
-      className="block bg-ox-surface border border-ox-edge hover:border-ox-accent rounded-lg p-4 outline-none focus-visible:ring-2 focus-visible:ring-ox-accent focus-visible:border-ox-accent transition-colors"
+      className="experience-card group block outline-none focus-visible:ring-2 focus-visible:ring-ox-accent"
     >
-      <div className="flex items-start justify-between gap-4 mb-4">
+      <div className="experience-card-heading">
         <div className="flex flex-col min-w-0">
-          <h3 className="font-bold text-base text-ox-ink break-words">
+          <div className="experience-company-line"><Building2 className="w-4 h-4" /><span>Candidate account</span></div>
+          <h3 className="font-semibold text-[15px] text-ox-ink break-words">
             {companyName}
           </h3>
-          <p className="text-sm font-normal text-ox-muted break-words">
+          <p className="text-sm font-normal text-ox-text break-words">
             {roleName}
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="font-mono text-sm text-ox-muted">
-            {rounds.length} {rounds.length === 1 ? 'round' : 'rounds'}
-          </span>
+        <div className="flex items-center shrink-0">
           <span
             className={cn(
-              "px-2 py-0.5 text-xs font-semibold rounded-sm capitalize",
+              "px-2.5 py-1 text-[10px] font-semibold capitalize",
               getOutcomeBadgeColor(outcomeStatus)
             )}
           >
@@ -63,13 +62,13 @@ export default function ExperienceCard({ experience }: ExperienceCardProps) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-ox-muted">
-          {candidateName}
-        </span>
-        <span className="text-xs text-ox-muted font-mono">
-          {experience.id}
-        </span>
+      <div className="experience-card-footer">
+        <span className="experience-candidate">{candidateName}</span>
+        <div className="experience-card-meta">
+          <span><Layers className="w-3.5 h-3.5" />{rounds.length} {rounds.length === 1 ? "round" : "rounds"}</span>
+          <span className="font-mono">{experience.id}</span>
+          <ArrowUpRight className="experience-card-arrow w-4 h-4" />
+        </div>
       </div>
     </Link>
   );

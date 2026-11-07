@@ -14,21 +14,16 @@ export function formatCTC(val?: string | number | null): string {
   return `₹${str} LPA`;
 }
 
-/**
- * Returns neobrutalist badge classes for outcome status.
- * "Selected" → flat green with hard shadow.
- * "Rejected" → flat red with hard shadow.
- * Everything else → amber.
- */
+/** Return a consistent semantic badge treatment for candidate outcomes. */
 export function getOutcomeBadgeColor(status?: string | null) {
   const s = (status || "").toLowerCase();
   if (s.includes("select") || s.includes("offer")) {
-    return "bg-ox-signal-pass text-black border-0 rounded-none shadow-[2px_2px_0px_#052e16]";
+    return "bg-ox-signal-pass/10 text-emerald-300 border border-ox-signal-pass/30 shadow-none rounded-full";
   }
   if (s.includes("reject")) {
-    return "bg-ox-signal-fail text-white border-2 border-white shadow-[2px_2px_0px_rgba(0,0,0,0.5)]";
+    return "bg-ox-signal-fail/10 text-red-300 border border-ox-signal-fail/30 shadow-none rounded-full";
   }
-  return "bg-ox-signal-warn text-black shadow-[2px_2px_0px_#451a03]";
+  return "bg-ox-signal-warn/10 text-amber-200 border border-ox-signal-warn/30 shadow-none rounded-full";
 }
 
 export function getRoundTypeBadgeColor(type: string) {

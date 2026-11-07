@@ -6,18 +6,18 @@ export const revalidate = 3600;
 export const metadata = {
   title: "Question & Coding Problem Bank",
   description:
-    "Browse 490+ real technical interview questions and coding challenges asked in campus placement drives across top companies.",
+    "Search interview questions and coding problems from campus placement experiences by topic, difficulty, and company.",
   openGraph: {
     title: "Question & Coding Problem Bank | 0xTrace",
     description:
-      "Browse 490+ real technical interview questions and coding challenges asked in campus placement drives across top companies.",
+      "Search interview questions and coding problems from campus placement experiences by topic, difficulty, and company.",
     siteName: "0xTrace",
   },
   twitter: {
     card: "summary_large_image",
     title: "Question & Coding Problem Bank | 0xTrace",
     description:
-      "Browse 490+ real technical interview questions and coding challenges asked in campus placement drives across top companies.",
+      "Search interview questions and coding problems from campus placement experiences by topic, difficulty, and company.",
   },
 };
 
@@ -27,14 +27,15 @@ export default async function QuestionsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="space-y-1">
-        <h1 className="text-xl font-bold text-ox-ink">
-          Question & coding problem bank
-        </h1>
-        <p className="text-sm text-ox-muted">
-          Real interview questions and coding challenges extracted verbatim from campus placement drives.
-        </p>
-      </div>
+      <header className="page-heading">
+        <div className="page-heading-copy">
+          <div className="page-kicker">Practice library</div>
+          <h1 className="page-title">Questions from real interview rounds</h1>
+          <p className="page-description">
+            Search technical questions and coding problems from campus placement experiences by topic, difficulty, or company.
+          </p>
+        </div>
+      </header>
 
       <QuestionBankClient
         questions={questions}

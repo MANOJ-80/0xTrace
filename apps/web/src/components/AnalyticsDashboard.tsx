@@ -75,7 +75,7 @@ function SectionHeader({ icon: Icon, title, subtitle }: { icon: React.ElementTyp
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: number | string; icon: React.ElementType }) {
   return (
-    <div className="flex flex-col items-center p-3 sm:p-4 bg-ox-surface border border-ox-edge rounded-lg hover:border-ox-accent/40 transition-colors">
+    <div className="analytics-stat flex flex-col items-center p-3 sm:p-4 rounded-lg">
       <Icon className="w-4 h-4 text-ox-muted mb-1.5" />
       <span className="font-mono tabular-nums text-xl sm:text-2xl lg:text-3xl text-ox-ink leading-tight">{value}</span>
       <span className="text-[10px] sm:text-xs text-ox-muted mt-1 text-center">{label}</span>
@@ -144,7 +144,7 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
       </div>
 
       {/* ---- Company Leaderboard (full width) ---- */}
-      <div className="bg-ox-surface border border-ox-edge rounded-xl p-4 sm:p-6">
+      <div className="analytics-panel p-4 sm:p-6">
         <SectionHeader icon={Building2} title="Company Leaderboard" subtitle={`Top ${Math.min(15, companyBreakdown.length)} companies by experience count`} />
         <div className="space-y-2">
           {companyBreakdown.slice(0, 15).map((c) => (
@@ -190,7 +190,7 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
       {/* ---- Two-Column: Round Types + Question Topics ---- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Round Type Distribution */}
-        <div className="bg-ox-surface border border-ox-edge rounded-xl p-4 sm:p-6">
+        <div className="analytics-panel p-4 sm:p-6">
           <SectionHeader icon={ListChecks} title="Round Types" subtitle={`${totals.rounds} rounds across ${roundTypes.length} types`} />
           <div className="space-y-2">
             {roundTypes.slice(0, 12).map((r) => (
@@ -216,7 +216,7 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
         </div>
 
         {/* Question Topics */}
-        <div className="bg-ox-surface border border-ox-edge rounded-xl p-4 sm:p-6">
+        <div className="analytics-panel p-4 sm:p-6">
           <SectionHeader icon={MessageSquare} title="Question Topics" subtitle={`Top ${Math.min(12, questionTopics.length)} most asked topics`} />
           <div className="space-y-2">
             {questionTopics.slice(0, 12).map((t) => (
@@ -229,7 +229,7 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
       {/* ---- Two-Column: Difficulty + Employment ---- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Difficulty */}
-        <div className="bg-ox-surface border border-ox-edge rounded-xl p-4 sm:p-6">
+        <div className="analytics-panel p-4 sm:p-6">
           <SectionHeader icon={Zap} title="Round Difficulty" subtitle="Distribution of explicitly tagged rounds" />
           {difficulty.length > 0 ? (
             <div className="space-y-4">
@@ -261,7 +261,7 @@ export default function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
         </div>
 
         {/* Employment Types */}
-        <div className="bg-ox-surface border border-ox-edge rounded-xl p-4 sm:p-6">
+        <div className="analytics-panel p-4 sm:p-6">
           <SectionHeader icon={Briefcase} title="Employment Types" subtitle="Offer type distribution" />
           <div className="grid grid-cols-2 gap-3">
             {employmentTypes.map((e) => (

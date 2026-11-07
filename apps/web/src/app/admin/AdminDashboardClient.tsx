@@ -58,38 +58,41 @@ export default function AdminDashboardClient() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="admin-page space-y-6">
+      <header className="page-heading">
         <div>
-          <h1 className="text-3xl font-bold text-ox-ink">Admin Dashboard</h1>
-          <p className="text-ox-muted mt-2 text-sm">Secure management console for auditing, editing, and deleting candidate experiences.</p>
-          <p className="text-ox-text mt-2">Manage {experiences.length} experiences</p>
+          <div className="page-kicker">Administration</div>
+          <h1 className="page-title">Experience manager</h1>
+          <p className="page-description">Review and maintain candidate-submitted interview records.</p>
         </div>
-        <div className="flex gap-4">
+        <div className="admin-page-actions">
           <Link
             href="/contribute"
-            className="px-4 py-2 bg-ox-accent border-2 border-ox-ink font-semibold rounded shadow-neo hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-ox-ink"
+            className="ui-action-primary"
           >
-            + Add New
+            Add experience
           </Link>
         </div>
-      </div>
+      </header>
 
-      {error && <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
+      <div className="admin-count"><span>{experiences.length}</span> experiences in the library</div>
 
-      <div className="mb-6 flex gap-4">
+      {error && <div className="feedback-error" role="alert">{error}</div>}
+
+      <div className="admin-search-row">
         <input 
           type="text" 
           placeholder="Search by company or candidate..." 
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="flex-1 px-4 py-2 border-2 border-ox-edge rounded-lg bg-ox-surface text-ox-ink outline-none focus:border-ox-accent"
+          aria-label="Search experiences by company or candidate"
+          className="flex-1 px-4 py-2.5 border border-ox-edge rounded-lg bg-ox-surface text-ox-ink outline-none focus:ring-2 focus:ring-ox-accent/25 focus:border-ox-accent"
         />
       </div>
-      <div className="bg-ox-surface border-2 border-ox-edge rounded-lg overflow-x-auto shadow-neo">
-        <table className="w-full text-left border-collapse">
+      <div className="admin-table-wrap overflow-x-auto">
+        <table className="admin-table w-full text-left border-collapse">
           <thead>
-            <tr className="border-b-2 border-ox-edge bg-ox-window text-ox-ink">
+            <tr className="border-b border-ox-edge bg-ox-window text-ox-ink">
               <th className="p-4 font-semibold">Company</th>
               <th className="p-4 font-semibold">Candidate</th>
               <th className="p-4 font-semibold">Role</th>
@@ -110,9 +113,9 @@ export default function AdminDashboardClient() {
                   <td className="p-4 text-ox-text">{exp.job?.role || "Not specified"}</td>
                   <td className="p-4">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full border border-ox-edge ${
-                      exp.outcome?.status?.toLowerCase() === "selected" ? "bg-green-100 text-green-800" :
-                      exp.outcome?.status?.toLowerCase() === "rejected" ? "bg-red-100 text-red-800" :
-                      "bg-gray-100 text-gray-800"
+                      exp.outcome?.status?.toLowerCase() === "selected" ? "bg-ox-signal-pass/10 text-emerald-300 border-ox-signal-pass/30" :
+                      exp.outcome?.status?.toLowerCase() === "rejected" ? "bg-ox-signal-fail/10 text-red-300 border-ox-signal-fail/30" :
+                      "bg-ox-signal-warn/10 text-amber-200 border-ox-signal-warn/30"
                     }`}>
                       {exp.outcome?.status || "Unknown"}
                     </span>

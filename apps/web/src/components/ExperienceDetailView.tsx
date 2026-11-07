@@ -139,7 +139,7 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
       </div>
 
       {/* Unified Comprehensive Header Card */}
-      <div className="bg-ox-surface border border-ox-edge rounded-lg p-5 sm:p-6 space-y-5">
+      <div className="experience-detail-header ui-panel p-5 sm:p-6 space-y-5">
         {/* Row 1: Company, Role, Outcome */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="space-y-1">
@@ -162,7 +162,7 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
           </div>
 
           <span
-            className={`inline-flex items-center px-3 py-1 rounded-sm text-xs font-bold capitalize shrink-0 ${getOutcomeBadgeColor(
+            className={`inline-flex items-center px-3 py-1 text-[10px] font-semibold capitalize shrink-0 ${getOutcomeBadgeColor(
               outcomeStatus
             )}`}
           >
@@ -234,13 +234,14 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
       </div>
 
       {/* Tab switcher: Rounds vs Full Transcript */}
-      <div className="flex items-center gap-0 border-b border-ox-edge">
+      <div className="segmented-control" role="group" aria-label="Experience content">
         <button
           onClick={() => setMainTab("rounds")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+          aria-pressed={mainTab === "rounds"}
+          className={`segment-button flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors ${
             mainTab === "rounds"
-              ? "border-ox-accent text-ox-ink font-semibold"
-              : "border-transparent text-ox-muted hover:text-ox-ink"
+              ? "text-ox-ink font-semibold"
+              : "text-ox-muted hover:text-ox-ink"
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -248,10 +249,11 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
         </button>
         <button
           onClick={() => setMainTab("transcript")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+          aria-pressed={mainTab === "transcript"}
+          className={`segment-button flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors ${
             mainTab === "transcript"
-              ? "border-ox-accent text-ox-ink font-semibold"
-              : "border-transparent text-ox-muted hover:text-ox-ink"
+              ? "text-ox-ink font-semibold"
+              : "text-ox-muted hover:text-ox-ink"
           }`}
         >
           <FileText className="w-4 h-4" />
@@ -270,10 +272,11 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
                 : `Round ${round.sequence}: ${round.name}`;
 
               return (
-                <div
+                <button
+                  type="button"
                   key={idx}
                   onClick={() => handleOpenRound(idx)}
-                  className="group bg-ox-surface border border-ox-edge rounded-lg p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-ox-accent transition-all"
+                  className="round-list-item group flex items-center justify-between gap-4 text-left w-full"
                 >
                   <div className="flex items-center gap-4 min-w-0">
                     <div className="w-10 h-10 rounded-md bg-ox-surface-raised flex items-center justify-center shrink-0">
@@ -316,7 +319,7 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
                     </span>
                     <ChevronRight className="w-4 h-4 text-ox-muted group-hover:text-ox-accent transition-colors" />
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

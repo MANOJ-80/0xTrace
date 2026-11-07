@@ -47,31 +47,28 @@ export default function MyExperiencesClient({
   return (
     <div className="space-y-8">
       {/* Header Strip */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-ox-edge pb-6">
+      <header className="page-heading">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-ox-ink tracking-tight font-geist">
-            My Experiences
-          </h1>
-          <p className="text-sm text-ox-muted mt-1">
-            Logged in as <span className="text-ox-ink font-mono">{userEmail}</span> ·{" "}
+          <div className="page-kicker">Your contributions</div>
+          <h1 className="page-title">My experiences</h1>
+          <p className="page-description">
+            Signed in as <span className="text-ox-ink font-mono">{userEmail}</span> ·{" "}
             {experiences.length} {experiences.length === 1 ? "submission" : "submissions"}
           </p>
         </div>
 
-        <div>
           <Link
             href="/contribute"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-ox-ink bg-ox-accent border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            className="ui-action-primary"
           >
             <PenLine className="w-4 h-4" />
             <span>Share New</span>
           </Link>
-        </div>
-      </div>
+      </header>
 
       {/* Empty State */}
       {experiences.length === 0 ? (
-        <div className="bg-ox-surface border border-ox-edge rounded-xl p-12 text-center space-y-4 max-w-lg mx-auto my-8">
+        <div className="empty-state max-w-lg mx-auto my-8">
           <div className="mx-auto w-12 h-12 rounded-full bg-ox-surface-raised border border-ox-edge flex items-center justify-center">
             <PenLine className="w-6 h-6 text-ox-muted" />
           </div>
@@ -83,7 +80,7 @@ export default function MyExperiencesClient({
           <div className="pt-2">
             <Link
               href="/contribute"
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-ox-ink bg-ox-accent border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+                className="ui-action-primary"
             >
               <PenLine className="w-4 h-4" />
               <span>Share Your Experience</span>
@@ -105,7 +102,7 @@ export default function MyExperiencesClient({
             return (
               <div
                 key={expId}
-                className="bg-ox-surface border border-ox-edge hover:border-ox-accent/50 rounded-lg p-4 flex flex-col justify-between transition-colors space-y-4"
+                className="experience-manage-card flex flex-col justify-between space-y-4"
               >
                 {/* Card Top */}
                 <div className="space-y-3">
@@ -121,7 +118,7 @@ export default function MyExperiencesClient({
 
                     <span
                       className={cn(
-                        "px-2 py-0.5 text-xs font-semibold rounded-sm capitalize shrink-0",
+                        "px-2.5 py-1 text-[10px] font-semibold capitalize shrink-0",
                         getOutcomeBadgeColor(outcomeStatus)
                       )}
                     >

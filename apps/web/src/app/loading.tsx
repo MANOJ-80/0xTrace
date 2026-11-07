@@ -1,35 +1,22 @@
 export default function Loading() {
   return (
-    <div className="space-y-16 animate-pulse">
-      {/* Stats Strip Skeleton */}
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-6 border-b border-ox-edge pb-8">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i}>
-            <div className="h-9 w-20 bg-ox-surface-raised rounded mb-2" />
-            <div className="h-4 w-16 bg-ox-surface-raised rounded" />
-          </div>
-        ))}
+    <div className="home-skeleton animate-pulse" aria-busy="true" aria-label="Loading the 0xTrace landing page">
+      <div className="home-skeleton-hero">
+        <div className="space-y-5">
+          <div className="skeleton-block h-3 w-40" />
+          <div className="skeleton-block h-12 sm:h-16 w-full max-w-xl" />
+          <div className="skeleton-block h-4 w-full max-w-md" />
+          <div className="skeleton-block h-4 w-4/5 max-w-sm" />
+          <div className="skeleton-block h-11 w-56 rounded-md" />
+        </div>
+        <div className="skeleton-block home-skeleton-preview" />
       </div>
-
-      {/* Company Grid Skeleton */}
-      <section className="space-y-6">
-        <div className="h-6 w-48 bg-ox-surface-raised rounded" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 bg-ox-surface border border-ox-edge rounded-lg h-24" />
-          ))}
-        </div>
-      </section>
-
-      {/* Recent Experiences Skeleton */}
-      <section className="space-y-6">
-        <div className="h-6 w-40 bg-ox-surface-raised rounded" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-5 bg-ox-surface border border-ox-edge rounded-lg h-32" />
-          ))}
-        </div>
-      </section>
+      <div className="home-skeleton-stats">
+        {[1, 2, 3, 4].map((item) => <div className="skeleton-block h-12" key={item} />)}
+      </div>
+      <div className="home-skeleton-cards">
+        {[1, 2, 3].map((item) => <div className="skeleton-block h-48" key={item} />)}
+      </div>
     </div>
   );
 }

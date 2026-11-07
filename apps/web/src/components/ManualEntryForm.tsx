@@ -129,7 +129,7 @@ function Field({ label, children, required }: { label: string; children: React.R
 }
 
 const inputCls =
-  "w-full bg-ox-void border-2 border-ox-edge rounded-lg px-3 py-2 text-sm text-ox-ink placeholder:text-ox-muted/50 focus:outline-none focus:border-ox-accent transition-colors";
+  "w-full bg-ox-void border border-ox-edge rounded-md px-3 py-2.5 text-sm text-ox-ink placeholder:text-ox-muted focus:outline-none focus:ring-2 focus:ring-ox-accent/25 focus:border-ox-accent transition-colors";
 const selectCls = inputCls + " appearance-none";
 const textareaCls = inputCls + " min-h-[100px] resize-y";
 
@@ -407,12 +407,12 @@ export default function ManualEntryForm({
 
   if (success) {
     return (
-      <div className="max-w-2xl mx-auto py-20 text-center space-y-6">
-        <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 border-2 border-green-500 flex items-center justify-center">
+      <div className="form-success max-w-2xl mx-auto py-16 text-center space-y-5">
+        <div className="mx-auto w-14 h-14 rounded-full bg-green-500/10 border border-green-500/40 flex items-center justify-center">
           <CheckCircle2 className="w-8 h-8 text-green-400" />
         </div>
-        <h2 className="text-2xl font-bold text-ox-ink">
-          {mode === "edit" ? "Experience Updated!" : "Experience Published!"}
+        <h2 className="text-2xl font-semibold text-ox-ink">
+          {mode === "edit" ? "Experience updated" : "Experience published"}
         </h2>
         <p className="text-ox-muted">
           {mode === "edit" ? (
@@ -431,14 +431,14 @@ export default function ManualEntryForm({
         <div className="flex items-center justify-center gap-3 pt-2">
           <button
             onClick={() => router.push(`/experiences/${success.id}`)}
-            className="px-5 py-2.5 text-sm font-semibold text-ox-ink bg-ox-accent border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            className="ui-action-primary"
           >
             View Experience →
           </button>
           {mode === "edit" ? (
             <button
               onClick={() => router.push("/my-experiences")}
-              className="px-5 py-2.5 text-sm font-semibold text-ox-muted border-2 border-ox-edge rounded-lg hover:text-ox-ink hover:border-ox-ink transition-colors"
+              className="ui-action-secondary"
             >
               My Experiences
             </button>
@@ -469,7 +469,7 @@ export default function ManualEntryForm({
                   linkedin: "",
                 });
               }}
-              className="px-5 py-2.5 text-sm font-semibold text-ox-muted border-2 border-ox-edge rounded-lg hover:text-ox-ink hover:border-ox-ink transition-colors"
+              className="ui-action-secondary"
             >
               Submit Another
             </button>
@@ -492,11 +492,12 @@ export default function ManualEntryForm({
               key={s.label}
               onClick={() => i < step && setStep(i)}
               disabled={i > step}
-              className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-xs font-semibold transition-all ${
+              aria-current={active ? "step" : undefined}
+              className={`form-step-indicator flex-1 flex items-center gap-2 px-3 py-2.5 rounded-md border text-xs font-semibold transition-all ${
                 active
-                  ? "border-ox-accent bg-ox-accent/10 text-ox-ink"
+                  ? "border-ox-accent/50 bg-ox-accent/10 text-ox-ink"
                   : done
-                  ? "border-green-600 bg-green-900/20 text-green-400 cursor-pointer"
+                  ? "border-green-600/40 bg-green-900/15 text-green-300 cursor-pointer"
                   : "border-ox-edge text-ox-muted cursor-not-allowed"
               }`}
             >
@@ -508,7 +509,7 @@ export default function ManualEntryForm({
       </div>
 
       {/* ---- Step Content ---- */}
-      <div className="bg-ox-surface border-2 border-ox-edge rounded-xl p-6 sm:p-8 shadow-neo space-y-6">
+      <div className="form-step-panel space-y-6">
 
         {/* ============ STEP 0: Basic Info ============ */}
         {step === 0 && (
@@ -608,7 +609,7 @@ export default function ManualEntryForm({
 
             <div className="space-y-6">
               {form.rounds.map((round, ri) => (
-                <div key={ri} className="border-2 border-ox-edge rounded-lg overflow-hidden">
+                <div key={ri} className="form-round-card overflow-hidden">
                   {/* Round header */}
                   <div className="bg-ox-surface-raised px-4 py-3 flex items-center justify-between border-b border-ox-edge">
                     <span className="text-sm font-bold text-ox-ink">Round {ri + 1}</span>
@@ -652,7 +653,7 @@ export default function ManualEntryForm({
 
                     {/* Description */}
                     <Field label="Your Experience / Walkthrough" required>
-                      <div data-color-mode="dark" className="mt-1 w-full rounded-md border-2 border-ox-edge overflow-hidden focus-within:border-ox-accent transition-colors">
+                      <div data-color-mode="dark" className="form-markdown-editor mt-1 w-full rounded-md border border-ox-edge overflow-hidden focus-within:border-ox-accent transition-colors">
                         <MDEditor
                           value={round.description}
                           onChange={(val) => updateRound(ri, { description: val || "" })}
@@ -866,7 +867,7 @@ export default function ManualEntryForm({
         <button
           onClick={() => setStep((s) => Math.max(0, s - 1))}
           disabled={step === 0}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-ox-muted border-2 border-ox-edge rounded-lg hover:text-ox-ink hover:border-ox-ink disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="ui-action-secondary disabled:opacity-30"
         >
           <ChevronLeft className="w-4 h-4" /> Back
         </button>
@@ -875,7 +876,7 @@ export default function ManualEntryForm({
           <button
             onClick={() => setStep((s) => Math.min(3, s + 1))}
             disabled={!canProceed()}
-            className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-ox-ink bg-ox-accent border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:translate-x-0 disabled:hover:translate-y-0 transition-all"
+            className="ui-action-primary disabled:opacity-40 disabled:shadow-none"
           >
             Next <ChevronRight className="w-4 h-4" />
           </button>
@@ -883,7 +884,7 @@ export default function ManualEntryForm({
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold text-ox-void bg-green-500 border-2 border-ox-ink rounded-lg shadow-neo hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_currentColor] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="ui-action-primary submit-action disabled:opacity-50"
           >
             {submitting ? (
               <>{mode === "edit" ? "Saving..." : "Submitting..."}</>
