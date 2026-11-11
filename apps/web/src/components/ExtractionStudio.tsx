@@ -272,17 +272,6 @@ export default function ExtractionStudio({ initialSample }: ExtractionStudioProp
                 {experience.job?.role || "Role not set"} · {experience.rounds?.length || 0}{" "}
                 rounds · {experience.candidate?.name || "Candidate not set"}
               </p>
-              {pipeline && (
-                <p className="text-[11px] text-ox-muted mt-1 font-mono">
-                  {pipeline.providers?.length
-                    ? `LLM: ${pipeline.providers.join(" → ")}`
-                    : "LLM: not called (regex only)"}
-                  {pipeline.method ? ` · PDF: ${pipeline.method}` : ""}
-                  {typeof pipeline.duration_ms === "number"
-                    ? ` · ${(pipeline.duration_ms / 1000).toFixed(1)}s`
-                    : ""}
-                </p>
-              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
