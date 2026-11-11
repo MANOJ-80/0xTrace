@@ -293,6 +293,33 @@ function fallbackRound(chunk: RoundChunk) {
 /*  Stage 3c: Tips & conclusion                                        */
 /* ------------------------------------------------------------------ */
 
+/**
+ * If the model returns nothing for a section the deterministic pass already
+ * identified as advice, keep the source lines rather than dropping them.
+ */
+function fallbackTips(text: string): string[] {
+  const tips: string[] = [];
+  const seen = new Set<string>();
+
+  for (const rawLine of text.split(/\n/)) {
+    const line = rawLine
+      .replace(/^[\s\u2022\u25cf\u25cb\u25aa\u2023\u2043\u2219\u27a2\uf0b7*-]+/, "")
+      .trim();
+    if (!line || line.length < 12 || line.length > 300) continue;
+    if (line.split(/\s+/).length < 2) continue;
+    // Section headings such as "Resources :" carry no advice on their own.
+    if (/^[A-Za-z][A-Za-z &/]+:$/.test(line)) continue;
+
+    const key = line.toLowerCase().replace(/\s+/g, " ");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    tips.push(line);
+    if (tips.length >= 15) break;
+  }
+
+  return tips;
+}
+
 async function extractTips(
   tipsChunk: string | null,
   resultChunk: string | null,
@@ -306,6 +333,7 @@ async function extractTips(
 
   const { data, provider } = await llmExtractJSON<Record<string, any>>(
     `Extract tips/advice and any concluding remarks from this text.
+Preparation resources and action items count as tips.
 Each tip should be a SEPARATE string in the array.
 Return JSON: { "tips": ["tip 1", "tip 2", ...], "conclusion": "concluding remark or null" }`,
     text,
@@ -313,8 +341,13 @@ Return JSON: { "tips": ["tip 1", "tip 2", ...], "conclusion": "concluding remark
     { deadline }
   );
 
+  let tips = Array.isArray(data.tips) ? data.tips.filter(Boolean) : [];
+  if (tips.length === 0 && tipsChunk) {
+    tips = fallbackTips(tipsChunk);
+  }
+
   return {
-    tips: Array.isArray(data.tips) ? data.tips.filter(Boolean) : [],
+    tips,
     conclusion: typeof data.conclusion === "string" && data.conclusion.trim() ? data.conclusion : null,
     provider,
   };
