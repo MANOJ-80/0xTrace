@@ -17,11 +17,11 @@
     "mongodb": "^7.7.0",
     "next": "^14.2.15",
     "next-auth": "^4.24.15",
-    "pdfjs-dist": "^4.10.38",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-quill": "^2.0.0",
     "tailwind-merge": "^2.5.4",
+    "unpdf": "^1.7.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {

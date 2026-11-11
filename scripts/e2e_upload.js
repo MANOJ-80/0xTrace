@@ -249,7 +249,7 @@ async function main() {
     check("company present", Boolean(exp.company?.name), exp.company?.name);
     check("candidate present", Boolean(exp.candidate?.name), exp.candidate?.name);
     check("rounds present", (exp.rounds?.length || 0) > 0, `${exp.rounds?.length || 0} rounds`);
-    check("text method is layout", pipeline.method === "layout", pipeline.method);
+    check("text method is recognized", pipeline.method === "layout" || pipeline.method === "unpdf", pipeline.method);
     check("no pipeline warnings", !pipeline.warnings?.length, JSON.stringify(pipeline.warnings || []));
 
     console.log("\n[2/6] Review editor");

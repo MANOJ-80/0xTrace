@@ -17,21 +17,21 @@ const PDF_TEXT_TIMEOUT_MS = 30_000;
 interface PdfTextResult {
   text: string;
   pageCount: number;
-  method: "layout" | "native" | "ocr" | "pdftotext" | "pdfjs";
+  method: "layout" | "native" | "ocr" | "pdftotext" | "unpdf";
 }
 
 /* ------------------------------------------------------------------ */
-/*  JS extraction (pdfjs-dist) — works everywhere, no native deps      */
+/*  JS extraction (unpdf) — runs natively on Vercel serverless         */
 /* ------------------------------------------------------------------ */
 
 async function extractWithJs(pdfBuffer: Buffer): Promise<PdfTextResult | null> {
   try {
     const result = await extractPdfWithJs(pdfBuffer);
     if (result.text.trim().length > 0) {
-      return { text: result.text, pageCount: result.pageCount, method: "pdfjs" };
+      return { text: result.text, pageCount: result.pageCount, method: "unpdf" };
     }
   } catch (error: any) {
-    console.warn(`[PDF] pdfjs-dist extraction failed: ${error.message?.slice(0, 200)}`);
+    console.warn(`[PDF] unpdf extraction failed:`, error);
   }
   return null;
 }
@@ -215,33 +215,27 @@ async function extractWithPdftotext(pdfBuffer: Buffer): Promise<PdfTextResult | 
 
 /**
  * Extraction priority:
- *   1. Python (best layout fidelity, local dev only)
- *   2. pdftotext binary (good layout, local dev only)
- *   3. pdfjs-dist (pure JS, always available — works on Vercel)
- *
- * Steps 1 and 2 will silently fail on Vercel because neither Python
- * nor poppler-utils are installed there.  Step 3 catches the fallthrough.
+ *   1. unpdf (pure JS, fast, zero external dependencies — works on Vercel & local)
+ *   2. Python (OCR fallback for image-based PDFs, local dev only)
+ *   3. pdftotext binary (layout fallback, local dev only)
  */
 async function extractPdfText(pdfBuffer: Buffer): Promise<PdfTextResult> {
-  // Try Python first (best quality, local-dev only)
-  const python = await extractWithPython(pdfBuffer);
-  if (python.result) return python.result;
-
-  // Try pdftotext binary (good layout, local-dev only)
-  const pdftotext = await extractWithPdftotext(pdfBuffer);
-  if (pdftotext) {
-    console.warn("[PDF] Python text layer unavailable; used pdftotext fallback.");
-    return pdftotext;
-  }
-
-  // Pure JS fallback — always works, including on Vercel
+  // Pure JS first — works identically in local dev and on Vercel serverless
   const jsResult = await extractWithJs(pdfBuffer);
   if (jsResult) {
-    console.log("[PDF] Used pdfjs-dist (pure JS) text extraction.");
     return jsResult;
   }
 
-  // If Python ran successfully but reported a PDF-level problem, surface that.
+  // Fall back to Python if available (e.g. for OCR)
+  const python = await extractWithPython(pdfBuffer);
+  if (python.result) return python.result;
+
+  // Fall back to pdftotext binary if available
+  const pdftotext = await extractWithPdftotext(pdfBuffer);
+  if (pdftotext) {
+    return pdftotext;
+  }
+
   if (python.inputError) {
     throw new Error(python.inputError);
   }
