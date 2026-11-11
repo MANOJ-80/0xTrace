@@ -1,5 +1,8 @@
 import ExtractionStudio from "@/components/ExtractionStudio";
 import { FileUp } from "lucide-react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { getUserExperienceCount } from "@/lib/data";
 
 export const metadata = {
   title: "Upload PDF — 0xTrace",
@@ -7,7 +10,17 @@ export const metadata = {
     "Upload a campus interview PDF, review the extracted rounds and questions, then publish it.",
 };
 
-export default function UploadPage() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function UploadPage() {
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email || "";
+  const isAdmin = Boolean(session?.user?.isAdmin);
+
+  const publishedCount = email ? await getUserExperienceCount(email) : 0;
+  const hasPublished = publishedCount >= 1;
+
   return (
     <div className="space-y-7">
       <header className="page-heading">
@@ -24,7 +37,7 @@ export default function UploadPage() {
         </div>
       </header>
 
-      <ExtractionStudio />
+      <ExtractionStudio hasPublished={hasPublished} isAdmin={isAdmin} />
     </div>
   );
 }

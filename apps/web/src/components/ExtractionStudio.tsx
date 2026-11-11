@@ -21,11 +21,17 @@ import {
 
 interface ExtractionStudioProps {
   initialSample?: ExtractionResponse | null;
+  hasPublished?: boolean;
+  isAdmin?: boolean;
 }
 
 const OUTCOME_OPTIONS = ["selected", "rejected", "unknown"] as const;
 
-export default function ExtractionStudio({ initialSample }: ExtractionStudioProps) {
+export default function ExtractionStudio({
+  initialSample,
+  hasPublished = false,
+  isAdmin = false,
+}: ExtractionStudioProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -187,17 +193,52 @@ export default function ExtractionStudio({ initialSample }: ExtractionStudioProp
 
   return (
     <div className="space-y-6">
-      {/* Upload */}
-      <div className="bg-ox-surface border border-ox-edge rounded-lg p-6 sm:p-8">
-        <div className="max-w-2xl mx-auto space-y-2 text-center">
-          <h2 className="text-xl font-bold text-ox-ink">Upload an interview PDF</h2>
-          <p className="text-sm text-ox-muted">
-            The PDF is parsed into rounds, questions, and coding problems. Nothing is
-            published until you review and confirm it.
-          </p>
+      {/* Upload Zone or Locked Banner */}
+      {hasPublished && !isAdmin ? (
+        <div className="bg-ox-surface border border-ox-edge rounded-lg p-6 sm:p-8">
+          <div className="max-w-xl mx-auto space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-ox-signal-warn/10 border border-ox-signal-warn/30 text-ox-signal-warn flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div className="space-y-1.5">
+              <h2 className="text-lg font-bold text-ox-ink">You have already published an experience</h2>
+              <p className="text-sm text-ox-muted">
+                Student accounts are limited to one published interview experience. You can review or edit your submission anytime from My Experiences.
+              </p>
+            </div>
+            <div className="pt-2">
+              <a
+                href="/my-experiences"
+                className="ui-action-primary inline-flex items-center gap-2"
+              >
+                <span>Go to My Experiences</span>
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
         </div>
+      ) : (
+        <div className="bg-ox-surface border border-ox-edge rounded-lg p-6 sm:p-8">
+          <div className="max-w-2xl mx-auto space-y-2 text-center">
+            <h2 className="text-xl font-bold text-ox-ink">Upload an interview PDF</h2>
+            <p className="text-sm text-ox-muted">
+              The PDF is parsed into rounds, questions, and coding problems. Nothing is
+              published until you review and confirm it.
+            </p>
+            {isAdmin ? (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-ox-accent/10 border border-ox-accent/30 text-xs text-ox-accent">
+                <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+                <span>Admin account: Unlimited uploads enabled</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-ox-void border border-ox-edge text-xs text-ox-muted">
+                <ShieldCheck className="w-4 h-4 text-ox-accent flex-shrink-0" />
+                <span>Notice: Student accounts can publish one interview experience. You can edit your submission anytime after publishing.</span>
+              </div>
+            )}
+          </div>
 
-        <form onSubmit={handleFileUpload} className="mt-6 max-w-xl mx-auto space-y-4">
+          <form onSubmit={handleFileUpload} className="mt-6 max-w-xl mx-auto space-y-4">
           <div className="border-2 border-dashed border-ox-edge hover:border-ox-accent rounded-lg p-6 text-center cursor-pointer transition-colors bg-ox-void">
             <input
               type="file"
@@ -256,6 +297,7 @@ export default function ExtractionStudio({ initialSample }: ExtractionStudioProp
           </div>
         )}
       </div>
+      )}
 
       {/* Results */}
       {result && experience && (

@@ -1,12 +1,25 @@
 import ManualEntryForm from "@/components/ManualEntryForm";
 import { PenLine } from "lucide-react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { getUserExperienceCount } from "@/lib/data";
 
 export const metadata = {
   title: "Contribute — 0xTrace",
   description: "Share your interview experience to help future candidates.",
 };
 
-export default function ContributePage() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function ContributePage() {
+  const session = await getServerSession(authOptions);
+  const email = session?.user?.email || "";
+  const isAdmin = Boolean(session?.user?.isAdmin);
+
+  const publishedCount = email ? await getUserExperienceCount(email) : 0;
+  const hasPublished = publishedCount >= 1;
+
   return (
     <div className="space-y-7">
       <header className="page-heading">
@@ -20,7 +33,7 @@ export default function ContributePage() {
         <div className="page-heading-icon"><PenLine className="w-5 h-5 text-ox-accent" /></div>
       </header>
 
-      <ManualEntryForm />
+      <ManualEntryForm hasPublished={hasPublished} isAdmin={isAdmin} />
     </div>
   );
 }

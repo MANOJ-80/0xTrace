@@ -141,12 +141,16 @@ interface ManualEntryFormProps {
   initialExperience?: Experience;
   experienceId?: string;
   mode?: "create" | "edit";
+  hasPublished?: boolean;
+  isAdmin?: boolean;
 }
 
 export default function ManualEntryForm({
   initialExperience,
   experienceId,
   mode = "create",
+  hasPublished = false,
+  isAdmin = false,
 }: ManualEntryFormProps = {}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -405,6 +409,33 @@ export default function ManualEntryForm({
   /*  RENDER                                                           */
   /* ================================================================ */
 
+  if (mode === "create" && hasPublished && !isAdmin) {
+    return (
+      <div className="bg-ox-surface border border-ox-edge rounded-lg p-6 sm:p-8">
+        <div className="max-w-xl mx-auto space-y-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-ox-signal-warn/10 border border-ox-signal-warn/30 text-ox-signal-warn flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div className="space-y-1.5">
+            <h2 className="text-lg font-bold text-ox-ink">You have already published an experience</h2>
+            <p className="text-sm text-ox-muted">
+              Student accounts are limited to one published interview experience. You can review or edit your submission anytime from My Experiences.
+            </p>
+          </div>
+          <div className="pt-2">
+            <a
+              href="/my-experiences"
+              className="ui-action-primary inline-flex items-center gap-2"
+            >
+              <span>Go to My Experiences</span>
+              <ChevronRight className="w-4 h-4" />
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className="form-success max-w-2xl mx-auto py-16 text-center space-y-5">
@@ -481,6 +512,20 @@ export default function ManualEntryForm({
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
+      {mode === "create" && (
+        isAdmin ? (
+          <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-ox-accent/10 border border-ox-accent/30 text-xs text-ox-accent">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>Admin account: Unlimited submissions enabled</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-ox-surface border border-ox-edge text-xs text-ox-muted">
+            <AlertTriangle className="w-4 h-4 text-ox-accent flex-shrink-0" />
+            <span>Notice: Student accounts can publish one interview experience. You can edit your submission anytime after publishing.</span>
+          </div>
+        )
+      )}
+
       {/* ---- Step Indicator ---- */}
       <div className="flex items-center justify-between gap-1">
         {STEPS.map((s, i) => {

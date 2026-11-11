@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { ingestExperienceToCanonical } from "@/lib/data";
+import { ingestExperienceToCanonical, getUserExperienceCount } from "@/lib/data";
 import { ExperienceExtractionSchema } from "@/lib/extraction-schema";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -58,6 +58,21 @@ export async function POST(req: NextRequest) {
       name: session.user.name || null,
       image: session.user.image || null,
     };
+
+    // Non-admin accounts are limited to one published submission
+    if (!session.user.isAdmin) {
+      const existingCount = await getUserExperienceCount(session.user.email);
+      if (existingCount >= 1) {
+        return NextResponse.json(
+          {
+            error: "Submission limit reached",
+            detail:
+              "Student accounts are limited to one published interview experience. You can review or edit your submission from My Experiences.",
+          },
+          { status: 403 }
+        );
+      }
+    }
 
     const result = await ingestExperienceToCanonical(draft, author);
 

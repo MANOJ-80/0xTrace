@@ -6,6 +6,7 @@ import { extractExperience } from "./groq-extractor";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { extractPdfWithJs } from "@/lib/pdf-extract";
+import { getUserExperienceCount } from "@/lib/data";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -253,6 +254,21 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Non-admin accounts are limited to one published submission
+  if (!session.user.isAdmin) {
+    const existingCount = await getUserExperienceCount(session.user.email);
+    if (existingCount >= 1) {
+      return NextResponse.json(
+        {
+          error: "Upload limit reached",
+          detail:
+            "Student accounts are limited to one published interview experience. You can review or edit your submission from My Experiences.",
+        },
+        { status: 403 }
+      );
+    }
   }
 
   try {

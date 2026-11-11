@@ -355,10 +355,19 @@ export async function ingestExperienceToCanonical(
   };
 }
 
+export async function getUserExperienceCount(email: string): Promise<number> {
+  const col = await getCollection("experiences");
+  const escaped = email.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return await col.countDocuments({
+    "author.email": { $regex: new RegExp(`^${escaped}$`, "i") },
+  });
+}
+
 export async function getUserExperiences(email: string): Promise<Experience[]> {
   const col = await getCollection("experiences");
+  const escaped = email.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const docs = await col
-    .find({ "author.email": email.toLowerCase() })
+    .find({ "author.email": { $regex: new RegExp(`^${escaped}$`, "i") } })
     .sort({ created_at: -1, id: -1 })
     .toArray();
   return docs.map((doc) => ({ ...doc, _id: doc._id.toString() })) as unknown as Experience[];
