@@ -179,6 +179,18 @@ export interface ExtractionResponse {
   dataset_metadata?: any;
   experiences: Experience[];
   ui_document: UiDocument;
+  pipeline?: ExtractPipelineMeta;
+}
+
+export interface ExtractPipelineMeta {
+  providers: string[];
+  warnings: string[];
+  rounds_detected: number;
+  page_count: number;
+  text_characters: number;
+  duration_ms: number;
+  /** Extraction backend used for the PDF text layer. */
+  method?: "pypdf" | "pdftotext" | string;
 }
 
 export interface CompanyStats {

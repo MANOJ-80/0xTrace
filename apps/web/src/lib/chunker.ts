@@ -1,8 +1,21 @@
 /**
- * Deterministic regex/heuristic chunker for campus placement interview PDFs.
- * Splits raw text into semantic sections and extracts metadata programmatically.
- * Zero LLM cost — this runs entirely on regex patterns.
+ * Deterministic document chunker.
+ *
+ * The extractor preserves layout, so everything here works on lines: round
+ * headings, labelled fields, sections, and result text. There are no
+ * document-specific rules; ambiguous fields are marked low confidence and are
+ * repaired by the LLM stage or the preview editor.
  */
+
+import { collapse, joinLines, toLines, type DocLine } from "./extraction/text-lines";
+import { parseHeader, type FieldConfidence, type ParsedHeader } from "./extraction/fields";
+import {
+  detectRoundType,
+  extractDate,
+  extractRoundMeta,
+  matchRoundHeading,
+} from "./extraction/rounds";
+import { extractOutcome, isAdviceHeading, isResultHeading } from "./extraction/outcome";
 
 export interface RoundChunk {
   raw: string;
@@ -26,256 +39,192 @@ export interface ChunkedDocument {
     candidate_name: string | null;
     department: string | null;
     college: string | null;
+    role: string | null;
     ctc: string | null;
     outcome_status: string | null;
     selected_count: number | null;
     total_candidates: number | null;
     round_count: number;
+    confidence: Record<string, FieldConfidence>;
   };
 }
 
-/* ------------------------------------------------------------------ */
-/*  Round Type Detection                                               */
-/* ------------------------------------------------------------------ */
-
-const ROUND_TYPE_PATTERNS: [RegExp, string][] = [
-  [/online\s*(test|assessment|round|coding)/i, "online_assessment"],
-  [/aptitude/i, "aptitude"],
-  [/coding\s*(test|round|challenge)/i, "coding_test"],
-  [/technical\s*(interview|round|discussion)/i, "technical_interview"],
-  [/managerial\s*(interview|round)/i, "managerial_interview"],
-  [/\bhr\b/i, "hr_interview"],
-  [/behavioral/i, "behavioral_interview"],
-  [/group\s*discussion/i, "group_discussion"],
-  [/mcq/i, "mcq"],
-  [/final\s*(interview|round)/i, "final_interview"],
-  [/system\s*design/i, "system_design"],
-  [/hackathon/i, "hackathon"],
-];
-
-function detectRoundType(text: string): string {
-  const lower = text.toLowerCase();
-  for (const [pattern, type] of ROUND_TYPE_PATTERNS) {
-    if (pattern.test(lower)) return type;
-  }
-  // Fallback heuristics based on content
-  if (/interview/i.test(lower)) return "technical_interview";
-  if (/test|exam/i.test(lower)) return "online_assessment";
-  return "unknown";
+interface Heading {
+  index: number;
+  number: number;
+  title: string;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Metadata Extraction Patterns                                       */
-/* ------------------------------------------------------------------ */
+function findHeadings(lines: DocLine[]): Heading[] {
+  const found: Heading[] = [];
+  let lastNumber = 0;
 
-function extractDate(text: string): string | null {
-  // Patterns: (22.07.2025), 22/07/2025, 22-07-2025, July 22 2025
-  const patterns = [
-    /\((\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})\)/,
-    /(\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4})/,
-    /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s+\d{1,2},?\s+\d{4})/i,
-  ];
-  for (const p of patterns) {
-    const m = text.match(p);
-    if (m) return m[1];
-  }
-  return null;
-}
-
-function extractMetaField(text: string, field: string): string | null {
-  const re = new RegExp(`${field}\\s*[:–-]\\s*(.+)`, "im");
-  const m = text.match(re);
-  return m ? m[1].trim() : null;
-}
-
-function extractCTC(text: string): string | null {
-  const patterns = [
-    /(?:CTC|Package|Salary|Stipend)\s*[:–-]?\s*([\d.,]+\s*(?:LPA|lpa|Lakhs?|L))/i,
-    /([\d.,]+\s*(?:LPA|lpa))/i,
-  ];
-  for (const p of patterns) {
-    const m = text.match(p);
-    if (m) return m[1].trim();
-  }
-  return null;
-}
-
-function extractOutcome(text: string): { status: string | null; selected: number | null; total: number | null } {
-  const result = { status: null as string | null, selected: null as number | null, total: null as number | null };
-
-  // "11 students were selected", "selected 11 students"
-  const selMatch = text.match(/(\d+)\s*(?:students?|people|candidates?)\s*(?:were|got)?\s*selected/i)
-    || text.match(/selected\s*(?:were|:)?\s*(\d+)/i);
-  if (selMatch) {
-    result.selected = parseInt(selMatch[1], 10);
-    result.status = "selected";
-  }
-
-  // "I got selected", "I was selected"
-  if (/(?:I|i)\s*(?:got|was|am)\s*selected/i.test(text)) {
-    result.status = "selected";
-  }
-  if (/(?:I|i)\s*(?:got|was)\s*(?:not\s+)?rejected/i.test(text)) {
-    result.status = "rejected";
-  }
-
-  // "out of 24", "from 24 students"
-  const totalMatch = text.match(/(?:out\s+of|from)\s+(\d+)\s*(?:students?|people|candidates?)/i);
-  if (totalMatch) {
-    result.total = parseInt(totalMatch[1], 10);
-  }
-
-  return result;
-}
-
-function extractCompanyName(headerText: string): string | null {
-  // Usually the first non-empty line is the company name
-  const lines = headerText.split(/(?:\n|\s\s\s+)/).map((l) => l.trim()).filter(Boolean);
-  if (lines.length === 0) return null;
-
-  // Skip common prefixes
   for (const line of lines) {
-    if (/interview\s*experience/i.test(line)) continue;
-    if (/placement\s*experience/i.test(line)) continue;
-    if (/^[-–—]/.test(line)) continue; // candidate name line like "-Candidate K"
-    if (line.length < 2) continue;
-    
-    // This is likely the company name
-    const company = line.replace(/^[^a-zA-Z]+/, "").trim();
-    if (company.length > 60) return null; // Too long, PyPDF flattened string, let LLM handle it
-    return company;
+    const heading = matchRoundHeading(line.text);
+    if (!heading) continue;
+    // Ignore backward references such as a later "Round 1" summary.
+    if (heading.number <= lastNumber) continue;
+    lastNumber = heading.number;
+    found.push({ index: line.index, number: heading.number, title: heading.title });
   }
-  
-  if (lines[0].length > 60) return null;
-  return lines[0];
+
+  return found;
 }
 
-function extractCandidateName(headerText: string): string | null {
-  const lines = headerText.split(/(?:\n|\s\s\s+)/).map((l) => l.trim()).filter(Boolean);
+function headerConfidence(fields: ParsedHeader): Record<string, FieldConfidence> {
+  return {
+    company: fields.company.confidence,
+    candidate: fields.name.confidence,
+    role: fields.role.confidence,
+    department: fields.department.confidence,
+    college: fields.college.confidence,
+    ctc: fields.ctc.confidence,
+  };
+}
 
-  // Look for patterns: "-Name", "– Name", "Name (Roll No)", "By: Name", "Name : Kalyan"
-  for (const line of lines) {
-    // "-Candidate K"
-    const dashMatch = line.match(/^[-–—]\s*(.+)/);
-    if (dashMatch && dashMatch[1].length > 2 && !/round|interview|experience/i.test(dashMatch[1])) {
-      const candidate = dashMatch[1].trim();
-      if (candidate.length <= 60) return candidate;
-    }
-    // "By: Name" or "Author: Name" or "Name : Name"
-    const byMatch = line.match(/(?:by|author|name)\s*[:–-]\s*(.+)/i);
-    if (byMatch) {
-      const candidate = byMatch[1].trim();
-      if (candidate.length <= 60) return candidate;
+function peekTitle(lines: DocLine[], start: number, end: number): string {
+  for (let index = start + 1; index < Math.min(end, start + 4); index++) {
+    const text = lines[index]?.text.trim();
+    if (!text) continue;
+    if (text.length > 60) return "";
+    if (/^[a-z]/.test(text)) return "";
+    if (/[:：]/.test(text) && /\s{2,}/.test(text)) return "";
+    return collapse(text);
+  }
+  return "";
+}
+
+function findResultLine(lines: DocLine[], start: number, end: number): number {
+  for (let index = start; index < end; index++) {
+    if (isResultHeading(lines[index].text)) return index;
+  }
+  // No explicit heading: use the first line that states a result.
+  for (let index = start; index < end; index++) {
+    if (/\b(?:result|selected|rejected|offer|verdict)\b/i.test(lines[index].text)) {
+      return index;
     }
   }
-  return null;
+  return -1;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Main Chunker                                                       */
-/* ------------------------------------------------------------------ */
+function firstSentence(raw: string): string {
+  const text = raw.replace(/\s+/g, " ").trim();
+  const cut = text.search(/[.!?]\s/);
+  return (cut > 0 ? text.slice(0, cut) : text).slice(0, 240);
+}
 
-/**
- * Split raw interview text into semantic chunks.
- * Returns structured chunks + programmatically extracted metadata.
- */
 export function chunkDocument(rawText: string): ChunkedDocument {
-  const text = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const lines = toLines(rawText);
+  const headings = findHeadings(lines);
 
-  // 1. Find round boundaries
-  // Handle both well-formatted newlines and flattened strings from PyPDF
-  const roundPattern = /(?:^|\n|\s\s+)(Round\s*(\d+)\s*[:–\-]\s*(.*?))(?=\n|$|\s\s+Round)/gi;
-  const roundMatches: { index: number; number: number; title: string }[] = [];
-
-  let match: RegExpExecArray | null;
-  while ((match = roundPattern.exec(text)) !== null) {
-    if (match.index === roundPattern.lastIndex) {
-      roundPattern.lastIndex++;
-    }
-    const offset = match[0].indexOf(match[1]);
-    roundMatches.push({
-      index: match.index + offset,
-      number: parseInt(match[2], 10),
-      title: match[1].trim(),
-    });
-  }
-
-  // 2. Split into header + rounds + tail
-  let headerEnd = roundMatches.length > 0 ? roundMatches[0].index : text.length;
-  const headerChunk = text.substring(0, headerEnd).trim();
+  const headerEnd = headings.length > 0 ? headings[0].index : Math.min(lines.length, 80);
+  const headerLines = lines.slice(0, headerEnd);
+  const fields = parseHeader(headerLines);
 
   const roundChunks: RoundChunk[] = [];
-  for (let i = 0; i < roundMatches.length; i++) {
-    const start = roundMatches[i].index;
-    const end = i + 1 < roundMatches.length ? roundMatches[i + 1].index : text.length;
-    const raw = text.substring(start, end).trim();
 
+  if (headings.length === 0) {
+    const raw = joinLines(lines);
     roundChunks.push({
       raw,
-      detected_name: roundMatches[i].title,
-      detected_type: detectRoundType(roundMatches[i].title + "\n" + raw.substring(0, 200)),
-      detected_date: extractDate(roundMatches[i].title),
-      detected_mode: extractMetaField(raw, "Mode"),
-      detected_platform: extractMetaField(raw, "Platform"),
-      detected_duration: extractMetaField(raw, "Duration"),
-      detected_difficulty: extractMetaField(raw, "Difficulty(?:\\s*level)?"),
-      sequence: i + 1,
+      detected_name: "Round 1",
+      detected_type: detectRoundType("", firstSentence(raw)),
+      detected_date: extractDate(raw.slice(0, 400)),
+      detected_mode: null,
+      detected_platform: null,
+      detected_duration: null,
+      detected_difficulty: null,
+      sequence: 1,
+    });
+  } else {
+    headings.forEach((heading, index) => {
+      const start = heading.index;
+      const end = index + 1 < headings.length ? headings[index + 1].index : lines.length;
+      const roundLines = lines.slice(start, end);
+      const raw = joinLines(roundLines);
+
+      const title = heading.title || peekTitle(lines, start, end);
+      const display = title ? `Round ${index + 1}: ${title}` : `Round ${index + 1}`;
+      const meta = extractRoundMeta(roundLines);
+
+      roundChunks.push({
+        raw,
+        detected_name: display,
+        detected_type: detectRoundType(title, raw.slice(0, 400)),
+        detected_date: extractDate(title) || meta.date,
+        detected_mode: meta.mode,
+        detected_platform: meta.platform,
+        detected_duration: meta.duration,
+        detected_difficulty: meta.difficulty,
+        sequence: index + 1,
+      });
     });
   }
 
-  // 3. Find tips/takeaway section (usually at the very end)
+  // Sections at the end of the document: result verdict and preparation advice.
   let tipsChunk: string | null = null;
   let resultChunk: string | null = null;
+  let adviceStart = -1;
 
-  // Check the tail after the last round
-  if (roundChunks.length > 0) {
-    const lastRound = roundChunks[roundChunks.length - 1];
-    const tipsPatterns = [
-      /(?:^|\n)((?:Takeaway|Tips|Note|Advice|Suggestions|Key\s*Points?|Things?\s*to\s*(?:remember|keep|note))s?\s*[:–\-]?\s*\n[\s\S]+)/im,
-    ];
+  if (headings.length > 0) {
+    const lastStart = headings[headings.length - 1].index;
+    const lastEnd = lines.length;
 
-    for (const tp of tipsPatterns) {
-      const tipsMatch = lastRound.raw.match(tp);
-      if (tipsMatch) {
-        tipsChunk = tipsMatch[1].trim();
-        // Remove tips from the last round's raw content
-        lastRound.raw = lastRound.raw.replace(tipsMatch[0], "").trim();
-        break;
-      }
+    const adviceIndices: number[] = [];
+    const resultIndices: number[] = [];
+    let contentLines = 0;
+    for (let index = lastStart + 1; index < lastEnd; index++) {
+      const text = lines[index].text;
+      if (!text.trim()) continue;
+      if (isResultHeading(text)) resultIndices.push(index);
+      else if (isAdviceHeading(text) && contentLines >= 2) adviceIndices.push(index);
+      contentLines++;
     }
 
-    // Extract result info from last round
-    const resultPatterns = [
-      /((?:The\s+)?results?\s+(?:was|were|is|came|announced)[\s\S]{10,200})/i,
-      /(\d+\s+(?:students?|people|candidates?)\s+(?:were|got)\s+selected[\s\S]{0,200})/i,
-    ];
-    for (const rp of resultPatterns) {
-      const resultMatch = lastRound.raw.match(rp);
-      if (resultMatch) {
-        resultChunk = resultMatch[1].trim();
-        break;
-      }
+    adviceStart = adviceIndices.length > 0 ? adviceIndices[0] : -1;
+    const resultStart =
+      resultIndices.length > 0
+        ? resultIndices[0]
+        : findResultLine(lines, lastStart, lastEnd);
+
+    // The last round ends where its trailing result/tips sections begin.
+    const cut = [adviceStart, resultStart]
+      .filter((index) => index >= 0)
+      .reduce((lowest, index) => Math.min(lowest, index), lastEnd);
+    if (cut < lastEnd && roundChunks.length > 0) {
+      const last = roundChunks[roundChunks.length - 1];
+      last.raw = joinLines(lines.slice(lastStart, cut));
+    }
+
+    if (resultStart >= 0) {
+      const stop = adviceIndices.find((index) => index > resultStart) ?? lastEnd;
+      resultChunk = joinLines(lines.slice(resultStart, stop));
+    }
+
+    if (adviceStart >= 0) {
+      const stop = resultIndices.find((index) => index > adviceStart) ?? lastEnd;
+      tipsChunk = joinLines(lines.slice(adviceStart, stop));
     }
   }
 
-  // 4. Programmatic metadata extraction
-  const fullText = text;
-  const outcome = extractOutcome(fullText);
+  const outcome = extractOutcome(lines, adviceStart);
 
   const programmatic = {
-    company_name: extractCompanyName(headerChunk),
-    candidate_name: extractCandidateName(headerChunk),
-    department: extractMetaField(headerChunk, "Department|Dept|Branch"),
-    college: extractMetaField(headerChunk, "College|University|Institute"),
-    ctc: extractCTC(fullText),
+    company_name: fields.company.value,
+    candidate_name: fields.name.value,
+    department: fields.department.value,
+    college: fields.college.value,
+    role: fields.role.value,
+    ctc: fields.ctc.value,
     outcome_status: outcome.status,
     selected_count: outcome.selected,
     total_candidates: outcome.total,
     round_count: roundChunks.length,
+    confidence: headerConfidence(fields),
   };
 
   return {
-    header_chunk: headerChunk,
+    header_chunk: joinLines(headerLines),
     round_chunks: roundChunks,
     result_chunk: resultChunk,
     tips_chunk: tipsChunk,

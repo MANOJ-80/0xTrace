@@ -1,7 +1,8 @@
 import { MongoClient, Db } from "mongodb";
 
 const MONGODB_URI = process.env.MONGODB_URI!;
-const DB_NAME = "0xtrace";
+// Allow a separate database for tests/local runs without touching production data.
+const DB_NAME = process.env.MONGODB_DB || "0xtrace";
 
 if (!MONGODB_URI) {
   throw new Error("MONGODB_URI environment variable is not set");

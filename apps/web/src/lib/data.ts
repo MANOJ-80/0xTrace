@@ -8,6 +8,7 @@ import {
 } from "./types";
 import { getCollection } from "./mongodb";
 import { ObjectId } from "mongodb";
+import crypto from "crypto";
 
 /* ------------------------------------------------------------------ */
 /*  Core Data Access (MongoDB)                                         */
@@ -200,28 +201,96 @@ export async function ingestExperienceToCanonical(
   assigned_id: string;
   experience_number: number;
   total_experiences: number;
+  duplicate?: boolean;
 }> {
   const col = await getCollection("experiences");
   const metaCol = await getCollection("metadata");
 
-  // Find highest existing experience number
-  const latest = await col.find({ id: { $regex: /^exp_\d+$/ } })
-    .sort({ id: -1 })
-    .limit(1)
-    .toArray();
+  // Never trust server-managed fields from the client.
+  const {
+    _id,
+    author: _clientAuthor,
+    created_at: _createdAt,
+    updated_at: _updatedAt,
+    ...incoming
+  } = draftExperience || {};
 
-  let maxNum = 0;
-  if (latest.length > 0 && latest[0].id) {
-    const num = parseInt(latest[0].id.replace("exp_", ""), 10);
-    if (!isNaN(num)) maxNum = num;
+  // Prefer the hash computed during extraction; recompute from raw text if the
+  // client dropped it. This is what makes re-uploading the same PDF idempotent.
+  const sha256 =
+    typeof incoming.source?.sha256 === "string" && incoming.source.sha256.length === 64
+      ? incoming.source.sha256
+      : typeof incoming.raw_text === "string" && incoming.raw_text.trim()
+        ? crypto.createHash("sha256").update(incoming.raw_text).digest("hex")
+        : null;
+
+  if (sha256) {
+    const existing = await col.findOne(
+      { "source.sha256": sha256 },
+      { projection: { id: 1, source: 1 } }
+    );
+    if (existing) {
+      return {
+        success: true,
+        duplicate: true,
+        assigned_id: existing._id.toString(),
+        experience_number: existing.source?.experience_number ?? 0,
+        total_experiences: await col.countDocuments(),
+      };
+    }
   }
 
-  const nextNum = maxNum + 1;
+  // Seed the counter from existing rows on first use. `$inc` is atomic, so two
+  // uploads can never receive the same experience number.
+  const counter = await metaCol.findOne({ _id: "experience_counter" } as any);
+  if (!counter) {
+    const latest = await col
+      .find({ id: { $regex: /^exp_\d+$/ } }, { projection: { id: 1 } })
+      .sort({ id: -1 })
+      .limit(1)
+      .toArray();
+
+    let maxNum = 0;
+    if (latest.length > 0 && latest[0].id) {
+      const parsed = parseInt(String(latest[0].id).replace("exp_", ""), 10);
+      if (!Number.isNaN(parsed)) maxNum = parsed;
+    }
+
+    await metaCol.updateOne(
+      { _id: "experience_counter" } as any,
+      { $setOnInsert: { seq: maxNum } },
+      { upsert: true }
+    );
+  }
+
+  const updatedCounter: any = await metaCol.findOneAndUpdate(
+    { _id: "experience_counter" } as any,
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: "after" }
+  );
+
+  // mongodb v6+ returns the document directly; older shapes nest it in `.value`.
+  const nextNum: number =
+    typeof updatedCounter?.seq === "number"
+      ? updatedCounter.seq
+      : typeof updatedCounter?.value?.seq === "number"
+        ? updatedCounter.value.seq
+        : 0;
+
+  if (!nextNum) {
+    throw new Error("Could not allocate an experience number.");
+  }
+
   const nextId = `exp_${String(nextNum).padStart(3, "0")}`;
   const now = new Date().toISOString();
 
-  const approved = { ...draftExperience };
-  approved.id = nextId;
+  const approved: any = {
+    ...incoming,
+    id: nextId,
+    created_at: now,
+    updated_at: now,
+  };
+
   if (author) {
     approved.author = {
       email: author.email.toLowerCase(),
@@ -229,19 +298,41 @@ export async function ingestExperienceToCanonical(
       image: author.image || null,
     };
   }
-  approved.created_at = now;
-  approved.updated_at = now;
+
   approved.source = {
-    ...(approved.source || {}),
+    ...(incoming.source || {}),
     experience_number: nextNum,
   };
+  if (sha256) {
+    approved.source.sha256 = sha256;
+  }
 
   for (let i = 0; i < (approved.rounds || []).length; i++) {
     approved.rounds[i].sequence = i + 1;
   }
 
-  // Insert into MongoDB
-  const result = await col.insertOne(approved);
+  let inserted;
+  try {
+    inserted = await col.insertOne(approved);
+  } catch (error: any) {
+    // A unique index on source.sha256 may reject a concurrent duplicate.
+    if (error?.code === 11000 && sha256) {
+      const existing = await col.findOne(
+        { "source.sha256": sha256 },
+        { projection: { id: 1, source: 1 } }
+      );
+      if (existing) {
+        return {
+          success: true,
+          duplicate: true,
+          assigned_id: existing._id.toString(),
+          experience_number: existing.source?.experience_number ?? 0,
+          total_experiences: await col.countDocuments(),
+        };
+      }
+    }
+    throw error;
+  }
 
   // Update metadata
   const totalCount = await col.countDocuments();
@@ -258,7 +349,7 @@ export async function ingestExperienceToCanonical(
 
   return {
     success: true,
-    assigned_id: result.insertedId.toString(),
+    assigned_id: inserted.insertedId.toString(),
     experience_number: nextNum,
     total_experiences: totalCount,
   };

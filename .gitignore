@@ -31,3 +31,9 @@ Thumbs.db
 dist/
 build/
 coverage/
+
+# Verification runtime output
+verify/results/
+verify/.auth/
+
+samplepdfs/

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ingestExperienceToCanonical } from "@/lib/data";
+import { ExperienceExtractionSchema } from "@/lib/extraction-schema";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
@@ -11,23 +12,40 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const draft = body.experience;
+    const rawDraft = body.experience;
 
-    if (!draft) {
+    if (!rawDraft || typeof rawDraft !== "object") {
       return NextResponse.json(
         { error: "No experience payload provided in request body." },
         { status: 400 }
       );
     }
 
-    if (!draft.company?.name && !draft.company?.normalized_name) {
+    // Re-validate on the server. The preview UI can be bypassed with curl.
+    const parsed = ExperienceExtractionSchema.safeParse(rawDraft);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Experience must include a valid company name." },
+        {
+          error: "Invalid experience payload",
+          issues: parsed.error.issues.map((issue) => ({
+            path: issue.path.join("."),
+            message: issue.message,
+          })),
+        },
         { status: 400 }
       );
     }
 
-    if (!draft.rounds || !Array.isArray(draft.rounds) || draft.rounds.length === 0) {
+    const draft = parsed.data;
+
+    if (!draft.company?.name && !draft.company?.normalized_name) {
+      return NextResponse.json(
+        { error: "Experience must include a company name." },
+        { status: 400 }
+      );
+    }
+
+    if (!Array.isArray(draft.rounds) || draft.rounds.length === 0) {
       return NextResponse.json(
         { error: "Experience must include at least one interview round." },
         { status: 400 }
@@ -41,8 +59,17 @@ export async function POST(req: NextRequest) {
     };
 
     const result = await ingestExperienceToCanonical(draft, author);
+
+    if (result.duplicate) {
+      return NextResponse.json({
+        ...result,
+        message: `This source PDF is already published as ${result.assigned_id}.`,
+      });
+    }
+
     return NextResponse.json(result);
   } catch (err: any) {
+    console.error("[Ingest] failed:", err);
     return NextResponse.json(
       { error: "Ingestion failed", detail: err.message },
       { status: 500 }

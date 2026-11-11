@@ -1,74 +1,227 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
+import { spawn } from "child_process";
+import fs from "fs";
 import path from "path";
-import { extractWithGroq } from "./groq-extractor";
+import { extractExperience } from "./groq-extractor";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
-/**
- * PDF text extraction using pypdf via child process.
- * Returns the raw text and page count.
- */
-async function extractPdfText(
-  pdfBuffer: Buffer
-): Promise<{ text: string; pageCount: number }> {
-  const { execFile } = await import("child_process");
-  const { promisify } = await import("util");
-  const execFileAsync = promisify(execFile);
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const maxDuration = 120;
 
-  const tmpPath = path.join(
-    "/tmp",
-    `oxtr_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`
-  );
-  await fs.writeFile(tmpPath, pdfBuffer);
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const PDF_TEXT_TIMEOUT_MS = 45_000;
 
-  try {
-    const pythonPath = path.resolve(
-      process.cwd(),
-      "../../apps/api/.venv/bin/python"
-    );
-    const apiDir = path.resolve(process.cwd(), "../../apps/api");
+interface PdfTextResult {
+  text: string;
+  pageCount: number;
+  method: "layout" | "native" | "ocr" | "pdftotext";
+}
 
-    const script = `
-import sys, json
-from app.pdf_text import extract_pdf_text
-with open("${tmpPath}", "rb") as f:
-    result = extract_pdf_text(f.read())
-print(json.dumps({"text": result.text, "page_count": result.page_count}))
-`;
+/* ------------------------------------------------------------------ */
+/*  Process helper — streams the PDF through stdin, never touches disk */
+/* ------------------------------------------------------------------ */
 
-    const { stdout } = await execFileAsync(pythonPath, ["-c", script], {
-      env: { ...process.env, PYTHONPATH: apiDir },
-      maxBuffer: 10 * 1024 * 1024,
+function runWithInput(
+  command: string,
+  args: string[],
+  input: Buffer,
+  options: { cwd?: string; env?: NodeJS.ProcessEnv; timeoutMs: number }
+): Promise<{ stdout: Buffer; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const stdout: Buffer[] = [];
+    const stderr: Buffer[] = [];
+
+    const child = spawn(command, args, {
+      cwd: options.cwd,
+      env: options.env,
+      stdio: ["pipe", "pipe", "pipe"],
     });
 
-    return JSON.parse(stdout);
-  } finally {
-    await fs.unlink(tmpPath).catch(() => {});
-  }
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      child.kill("SIGKILL");
+      reject(new Error(`${command} timed out after ${Math.round(options.timeoutMs / 1000)}s`));
+    }, options.timeoutMs);
+
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve({
+        stdout: Buffer.concat(stdout),
+        stderr: Buffer.concat(stderr).toString("utf-8"),
+      });
+    };
+
+    child.stdout.on("data", (chunk: Buffer) => stdout.push(chunk));
+    child.stderr.on("data", (chunk: Buffer) => stderr.push(chunk));
+
+    child.on("error", (error) => finish(error));
+    child.on("close", (code) => {
+      if (code === 0) {
+        finish();
+      } else {
+        const detail = Buffer.concat(stderr).toString("utf-8").trim().slice(0, 400);
+        finish(new Error(`${command} exited with code ${code}${detail ? `: ${detail}` : ""}`));
+      }
+    });
+
+    // A dead child can emit EPIPE; the close/error handlers report the real cause.
+    child.stdin.on("error", () => {});
+    child.stdin.end(input);
+  });
 }
 
-/**
- * Simple fallback text extraction when pypdf is unavailable.
- * Reads PDF as raw text buffer — crude but better than nothing.
- */
-function fallbackTextExtract(buffer: Buffer): string {
-  const raw = buffer.toString("utf-8", 0, Math.min(buffer.length, 500000));
-  // Extract readable text between stream markers
-  const chunks: string[] = [];
-  const text = raw.replace(/[^\x20-\x7E\n\r\t]/g, " ");
-  for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    if (trimmed.length > 20 && !/^[%/<\[]/.test(trimmed)) {
-      chunks.push(trimmed);
+const PYTHON_SCRIPT = `
+import sys, json
+from app.pdf_text import extract_pdf_text
+
+content = sys.stdin.buffer.read()
+result = extract_pdf_text(content)
+print(json.dumps({"text": result.text, "page_count": result.page_count, "method": result.method}))
+`;
+
+function resolvePythonCandidates(): string[] {
+  const candidates = [
+    process.env.PDF_PYTHON,
+    path.resolve(process.cwd(), "../../apps/api/.venv/bin/python"),
+    path.resolve(process.cwd(), "../api/.venv/bin/python"),
+    "python3",
+    "python",
+  ].filter((value): value is string => Boolean(value));
+
+  return Array.from(new Set(candidates));
+}
+
+function resolveApiDir(): string | null {
+  const candidates = [
+    path.resolve(process.cwd(), "../../apps/api"),
+    path.resolve(process.cwd(), "../api"),
+  ];
+  for (const candidate of candidates) {
+    try {
+      if (fs.statSync(candidate).isDirectory()) return candidate;
+    } catch {
+      // try the next candidate
     }
   }
-  return chunks.join("\n");
+  return null;
 }
+
+interface PythonAttempt {
+  result: PdfTextResult | null;
+  /** Present when Python ran but rejected the PDF itself. */
+  inputError?: string;
+}
+
+async function extractWithPython(pdfBuffer: Buffer): Promise<PythonAttempt> {
+  const apiDir = resolveApiDir();
+  const cwd = apiDir || process.cwd();
+  const errors: string[] = [];
+
+  for (const python of resolvePythonCandidates()) {
+    try {
+      const { stdout } = await runWithInput(python, ["-c", PYTHON_SCRIPT], pdfBuffer, {
+        cwd,
+        env: apiDir ? { ...process.env, PYTHONPATH: apiDir } : process.env,
+        timeoutMs: PDF_TEXT_TIMEOUT_MS,
+      });
+
+      const parsed = JSON.parse(stdout.toString("utf-8")) as {
+        text?: string;
+        page_count?: number;
+        method?: string;
+      };
+
+      if (parsed.text?.trim()) {
+        const method =
+          parsed.method === "native" || parsed.method === "ocr"
+            ? parsed.method
+            : "layout";
+        return {
+          result: {
+            text: parsed.text,
+            pageCount: parsed.page_count || 0,
+            method,
+          },
+        };
+      }
+
+      // Python works; the PDF itself has no text layer. Let the caller try
+      // pdftotext before reporting this.
+      return {
+        result: null,
+        inputError:
+          "No readable text was found. The PDF may be image-based or scanned.",
+      };
+    } catch (error: any) {
+      const message = error.message || "";
+
+      // PdfExtractionError signals an unreadable or encrypted PDF.
+      const known = message.match(/PdfExtractionError:\s*([^\n]+)/)?.[1]?.trim();
+      if (known) {
+        return { result: null, inputError: known };
+      }
+
+      errors.push(`${python}: ${message.slice(0, 220)}`);
+    }
+  }
+
+  if (errors.length) {
+    console.warn(`[PDF] Python text extraction failed: ${errors.join(" | ")}`);
+  }
+  return { result: null };
+}
+
+async function extractWithPdftotext(pdfBuffer: Buffer): Promise<PdfTextResult | null> {
+  try {
+    const { stdout } = await runWithInput("pdftotext", ["-layout", "-", "-"], pdfBuffer, {
+      timeoutMs: PDF_TEXT_TIMEOUT_MS,
+    });
+    const text = stdout.toString("utf-8").trim();
+    if (text.length > 0) {
+      return { text, pageCount: 0, method: "pdftotext" };
+    }
+  } catch (error: any) {
+    console.warn(`[PDF] pdftotext fallback failed: ${error.message?.slice(0, 200)}`);
+  }
+  return null;
+}
+
+async function extractPdfText(pdfBuffer: Buffer): Promise<PdfTextResult> {
+  const python = await extractWithPython(pdfBuffer);
+  if (python.result) return python.result;
+
+  const pdftotext = await extractWithPdftotext(pdfBuffer);
+  if (pdftotext) {
+    console.warn("[PDF] Python text layer unavailable; used pdftotext fallback.");
+    return pdftotext;
+  }
+
+  if (python.inputError) {
+    throw new Error(python.inputError);
+  }
+
+  throw new Error(
+    "No PDF text extractor is available. Install the apps/api Python environment or the poppler-utils (pdftotext) package."
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Route                                                              */
+/* ------------------------------------------------------------------ */
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session) {
+  if (!session || !session.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -76,89 +229,96 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("file");
 
-    if (!file || !(file instanceof Blob)) {
+    if (!file || typeof file === "string") {
+      return NextResponse.json({ error: "No PDF file provided" }, { status: 400 });
+    }
+
+    const blob = file as File;
+    const originalName = blob.name || "uploaded.pdf";
+    const filename = path.basename(originalName).replace(/[^\w.\- ()]/g, "_");
+
+    if (blob.size === 0) {
+      return NextResponse.json({ error: "The uploaded file is empty." }, { status: 400 });
+    }
+    if (blob.size > MAX_FILE_BYTES) {
       return NextResponse.json(
-        { error: "No PDF file provided" },
-        { status: 400 }
+        { error: `PDF is too large (${(blob.size / 1024 / 1024).toFixed(1)} MB). Limit is 10 MB.` },
+        { status: 413 }
       );
     }
 
-    const filename = (file as any).name || "uploaded.pdf";
-    const lowerName = filename.toLowerCase();
+    const buffer = Buffer.from(await blob.arrayBuffer());
 
-    // 1. Check for matching benchmark sample fixtures by filename
-    const sampleMap: Record<string, string> = {
-      walmart: "candidate-walmart-extracted.json",
-      candidate: "candidate-walmart-extracted.json",
-      phonepe: "phonepe-candidate-extracted.json",
-      candidate: "phonepe-candidate-extracted.json",
-      idfc: "candidate-i-idfc-extracted.json",
-      praveen: "candidate-i-idfc-extracted.json",
-      oracle: "oracle-candidate-g-extracted.json",
-      kalyan: "oracle-candidate-g-extracted.json",
-    };
-
-    for (const [key, jsonFile] of Object.entries(sampleMap)) {
-      if (lowerName.includes(key)) {
-        const possiblePaths = [
-          path.join(process.cwd(), "..", "..", jsonFile),
-          path.join(process.cwd(), jsonFile),
-        ];
-        for (const p of possiblePaths) {
-          try {
-            const raw = await fs.readFile(p, "utf-8");
-            return NextResponse.json(JSON.parse(raw));
-          } catch {
-            // continue
-          }
-        }
-      }
+    // `File.type` can be empty or wrong; verify the actual PDF signature.
+    if (buffer.subarray(0, 5).toString("latin1") !== "%PDF-") {
+      return NextResponse.json(
+        { error: "That file is not a PDF.", detail: "The file does not start with a %PDF- header." },
+        { status: 415 }
+      );
     }
 
-    // 2. Extract text from PDF
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    let rawText: string;
-    let pageCount: number;
-
+    let extraction: PdfTextResult;
     try {
-      const result = await extractPdfText(buffer);
-      rawText = result.text;
-      pageCount = result.pageCount;
-    } catch {
-      // pypdf unavailable — crude fallback
-      rawText = fallbackTextExtract(buffer);
-      pageCount = 1;
-    }
-
-    if (!rawText || rawText.trim().length < 50) {
+      extraction = await extractPdfText(buffer);
+    } catch (error: any) {
       return NextResponse.json(
         {
-          error: "Could not extract text from PDF",
+          error: "Could not read the PDF",
           detail:
-            "The PDF appears to be image-based or empty. Try a text-based PDF.",
+            error.message ||
+            "The PDF may be image-only or encrypted. Try a text-based PDF.",
         },
         { status: 422 }
       );
     }
 
-    // 3. Extract structured data via Groq LLM
+    if (!extraction.text || extraction.text.trim().length < 50) {
+      return NextResponse.json(
+        {
+          error: "Could not extract enough text from the PDF",
+          detail:
+            "The PDF appears to be image-based or empty. Upload a text-based PDF, or scan it with OCR first.",
+        },
+        { status: 422 }
+      );
+    }
+
     try {
-      const result = await extractWithGroq(rawText, filename, pageCount);
+      const result = await extractExperience(
+        extraction.text,
+        filename,
+        extraction.pageCount
+      );
+
+      result.pipeline = {
+        ...(result.pipeline || {
+          providers: [],
+          warnings: [],
+          rounds_detected: result.experiences[0]?.rounds?.length || 0,
+          page_count: extraction.pageCount,
+          text_characters: extraction.text.length,
+          duration_ms: 0,
+        }),
+        method: extraction.method,
+      };
+
       return NextResponse.json(result);
-    } catch (groqErr: any) {
+    } catch (error: any) {
+      console.error("[Extract] pipeline failed:", error);
       return NextResponse.json(
         {
           error: "Extraction failed",
-          detail: groqErr.message || "LLM extraction encountered an error.",
+          detail:
+            error.message ||
+            "The LLM provider chain did not return usable data. Try again in a minute.",
         },
         { status: 503 }
       );
     }
-  } catch (err: any) {
+  } catch (error: any) {
+    console.error("[Extract] unexpected error:", error);
     return NextResponse.json(
-      { error: "Extraction pipeline error", detail: err.message },
+      { error: "Extraction pipeline error", detail: error.message },
       { status: 500 }
     );
   }

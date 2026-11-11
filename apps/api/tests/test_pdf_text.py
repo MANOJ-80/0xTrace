@@ -3,12 +3,14 @@ from pathlib import Path
 from app.pdf_text import extract_pdf_text
 
 
-def test_extracts_text_from_example_pdf() -> None:
+def test_extracts_text_with_layout() -> None:
     root = Path(__file__).resolve().parents[3]
-    pdf = root / "ExperiencePDFs" / "Candidate_C.pdf"
+    pdf = root / "data" / "Candidate_C.pdf"
     extracted = extract_pdf_text(pdf.read_bytes())
 
     assert extracted.page_count == 5
-    assert extracted.method == "native"
+    assert extracted.method in {"layout", "native"}
     assert "Walmart- Interview Experience" in extracted.text
     assert "Object Oriented Programming" in extracted.text
+    # Layout extraction keeps the header labels on their own lines.
+    assert "\nRole : Software Development Engineer 2" in extracted.text

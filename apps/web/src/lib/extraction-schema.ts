@@ -6,6 +6,7 @@ export const ExperienceExtractionSchema = z.object({
     experience_number: z.number().optional(),
     file_name: z.string().optional(),
     page_count: z.number().optional(),
+    sha256: z.string().optional(),
   }).default({}),
   candidate: z.object({
     name: z.string().nullable().optional(),
