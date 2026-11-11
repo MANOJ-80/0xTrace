@@ -5,18 +5,35 @@ import path from "path";
 import { extractExperience } from "./groq-extractor";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { extractPdfWithJs } from "@/lib/pdf-extract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+export const maxDuration = 60;
 
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
-const PDF_TEXT_TIMEOUT_MS = 45_000;
+const MAX_FILE_BYTES = Math.floor(4.5 * 1024 * 1024);
+const PDF_TEXT_TIMEOUT_MS = 30_000;
 
 interface PdfTextResult {
   text: string;
   pageCount: number;
-  method: "layout" | "native" | "ocr" | "pdftotext";
+  method: "layout" | "native" | "ocr" | "pdftotext" | "pdfjs";
+}
+
+/* ------------------------------------------------------------------ */
+/*  JS extraction (pdfjs-dist) — works everywhere, no native deps      */
+/* ------------------------------------------------------------------ */
+
+async function extractWithJs(pdfBuffer: Buffer): Promise<PdfTextResult | null> {
+  try {
+    const result = await extractPdfWithJs(pdfBuffer);
+    if (result.text.trim().length > 0) {
+      return { text: result.text, pageCount: result.pageCount, method: "pdfjs" };
+    }
+  } catch (error: any) {
+    console.warn(`[PDF] pdfjs-dist extraction failed: ${error.message?.slice(0, 200)}`);
+  }
+  return null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -156,7 +173,7 @@ async function extractWithPython(pdfBuffer: Buffer): Promise<PythonAttempt> {
       }
 
       // Python works; the PDF itself has no text layer. Let the caller try
-      // pdftotext before reporting this.
+      // other methods before reporting this.
       return {
         result: null,
         inputError:
@@ -196,22 +213,41 @@ async function extractWithPdftotext(pdfBuffer: Buffer): Promise<PdfTextResult | 
   return null;
 }
 
+/**
+ * Extraction priority:
+ *   1. Python (best layout fidelity, local dev only)
+ *   2. pdftotext binary (good layout, local dev only)
+ *   3. pdfjs-dist (pure JS, always available — works on Vercel)
+ *
+ * Steps 1 and 2 will silently fail on Vercel because neither Python
+ * nor poppler-utils are installed there.  Step 3 catches the fallthrough.
+ */
 async function extractPdfText(pdfBuffer: Buffer): Promise<PdfTextResult> {
+  // Try Python first (best quality, local-dev only)
   const python = await extractWithPython(pdfBuffer);
   if (python.result) return python.result;
 
+  // Try pdftotext binary (good layout, local-dev only)
   const pdftotext = await extractWithPdftotext(pdfBuffer);
   if (pdftotext) {
     console.warn("[PDF] Python text layer unavailable; used pdftotext fallback.");
     return pdftotext;
   }
 
+  // Pure JS fallback — always works, including on Vercel
+  const jsResult = await extractWithJs(pdfBuffer);
+  if (jsResult) {
+    console.log("[PDF] Used pdfjs-dist (pure JS) text extraction.");
+    return jsResult;
+  }
+
+  // If Python ran successfully but reported a PDF-level problem, surface that.
   if (python.inputError) {
     throw new Error(python.inputError);
   }
 
   throw new Error(
-    "No PDF text extractor is available. Install the apps/api Python environment or the poppler-utils (pdftotext) package."
+    "Could not extract text from this PDF. The file may be image-only or corrupted."
   );
 }
 

@@ -207,9 +207,9 @@ export default function ExtractionStudio({ initialSample }: ExtractionStudioProp
               onChange={(event) => {
                 const selected = event.target.files?.[0];
                 if (!selected) return;
-                if (selected.size > 10 * 1024 * 1024) {
+                if (selected.size > 4.5 * 1024 * 1024) {
                   setFile(null);
-                  setError("That PDF is larger than 10 MB.");
+                  setError("PDF file must be under 4.5 MB for upload.");
                   return;
                 }
                 setFile(selected);
@@ -222,7 +222,7 @@ export default function ExtractionStudio({ initialSample }: ExtractionStudioProp
                 {file ? file.name : "Select a PDF file"}
               </div>
               <p className="text-xs text-ox-muted">
-                {file ? `${(file.size / 1024).toFixed(1)} KB` : "PDF up to 10 MB"}
+                {file ? `${(file.size / 1024).toFixed(1)} KB` : "PDF up to 4.5 MB"}
               </p>
             </label>
           </div>

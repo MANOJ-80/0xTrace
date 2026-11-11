@@ -19,7 +19,7 @@ import { cleanExtractedExperience, redactObject } from "@/lib/quality-clean";
 import type { ExtractionResponse, Experience, ExtractPipelineMeta } from "@/lib/types";
 
 const ROUND_CONCURRENCY = 2;
-const DEFAULT_EXTRACTION_BUDGET_MS = 90_000;
+const DEFAULT_EXTRACTION_BUDGET_MS = 50_000;
 
 function extractionBudgetMs(): number {
   const configured = Number(process.env.EXTRACTION_BUDGET_MS);
