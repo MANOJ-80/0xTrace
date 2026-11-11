@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getCollection } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getServerSession } from "next-auth/next";
@@ -76,6 +77,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     const result = await col.updateOne(query, { $set: finalUpdate });
 
+    revalidatePath("/experiences");
+    revalidatePath(`/experiences/${params.id}`);
+    revalidatePath("/my-experiences");
+    revalidatePath("/questions");
+    revalidatePath("/analytics");
+    revalidatePath("/admin");
+    revalidatePath("/");
+
     return NextResponse.json({ success: true, modifiedCount: result.modifiedCount });
   } catch (err: any) {
     return NextResponse.json({ error: "Failed to update", detail: err.message }, { status: 500 });
@@ -125,6 +134,14 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       { _id: "dataset_metadata" } as any,
       { $set: { total_experiences: totalCount, updated_at: new Date().toISOString() } }
     );
+
+    revalidatePath("/experiences");
+    revalidatePath(`/experiences/${params.id}`);
+    revalidatePath("/my-experiences");
+    revalidatePath("/questions");
+    revalidatePath("/analytics");
+    revalidatePath("/admin");
+    revalidatePath("/");
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

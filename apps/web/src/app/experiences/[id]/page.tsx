@@ -3,7 +3,8 @@ import { getExperienceById } from "@/lib/data";
 import ExperienceDetailView from "@/components/ExperienceDetailView";
 
 // Dynamic rendering — data comes from MongoDB at request time
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import type { Metadata } from "next";
 

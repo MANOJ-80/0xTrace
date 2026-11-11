@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { ingestExperienceToCanonical } from "@/lib/data";
 import { ExperienceExtractionSchema } from "@/lib/extraction-schema";
 import { getServerSession } from "next-auth/next";
@@ -66,6 +67,13 @@ export async function POST(req: NextRequest) {
         message: `This source PDF is already published as ${result.assigned_id}.`,
       });
     }
+
+    revalidatePath("/experiences");
+    revalidatePath("/my-experiences");
+    revalidatePath("/questions");
+    revalidatePath("/analytics");
+    revalidatePath("/admin");
+    revalidatePath("/");
 
     return NextResponse.json(result);
   } catch (err: any) {

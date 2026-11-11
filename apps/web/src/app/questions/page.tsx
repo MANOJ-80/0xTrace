@@ -1,7 +1,8 @@
 import { getQuestionBank, getCompanyStats } from "@/lib/data";
 import QuestionBankClient from "./QuestionBankClient";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "Question & Coding Problem Bank",

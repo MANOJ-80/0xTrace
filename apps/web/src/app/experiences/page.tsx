@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { getAllExperiences, getCompanyStats } from "@/lib/data";
 import ExperienceDirectoryClient from "./ExperienceDirectoryClient";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata = {
   title: "Interview Experiences Directory",
