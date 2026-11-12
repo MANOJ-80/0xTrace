@@ -352,7 +352,23 @@ select[class*="appearance-none"] {
 .form-markdown-editor .w-md-editor-toolbar li > button { color: var(--ox-text); }
 .form-markdown-editor .w-md-editor-toolbar li > button:hover,
 .form-markdown-editor .w-md-editor-toolbar li.active > button { background: var(--ox-surface-raised); color: var(--ox-accent); }
-.form-markdown-editor .w-md-editor-text { font-family: var(--font-geist-sans), system-ui, sans-serif; font-size: 13px !important; line-height: 1.6 !important; }
+/* The editor draws visible text in a <pre> behind a transparent textarea. Both
+   layers must share one font metric, or the caret drifts out of sync with the
+   glyphs while typing. The library pins 14px/18px on the <pre> code element, so
+   every layer is set together here. */
+.form-markdown-editor .w-md-editor-text,
+.form-markdown-editor .w-md-editor-text-pre,
+.form-markdown-editor .w-md-editor-text-pre > code,
+.form-markdown-editor .w-md-editor-text-input {
+  font-family: var(--font-geist-sans), system-ui, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 22px !important;
+  letter-spacing: 0 !important;
+  font-variant-ligatures: none !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+}
 .form-markdown-editor .w-md-editor-text-pre,
 .form-markdown-editor .w-md-editor-text-pre > code { color: var(--ox-text) !important; }
 .form-markdown-editor .w-md-editor-text-input { caret-color: var(--ox-ink); }
