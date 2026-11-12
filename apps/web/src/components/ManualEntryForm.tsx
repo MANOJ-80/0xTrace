@@ -340,9 +340,9 @@ export default function ManualEntryForm({
       rounds: form.rounds.map((r, i) => {
         // Keep per-round metadata the form does not edit (date, venue, platform)
         // when the round position is unchanged.
-        const prior = existing?.rounds?.[i];
+        const priorRound = existing?.rounds?.[i];
         return {
-          ...(prior || {}),
+          ...(priorRound || {}),
           sequence: i + 1,
           name: `Round ${i + 1}: ${r.name}`,
           original_name: r.name,
@@ -353,24 +353,28 @@ export default function ManualEntryForm({
           description: r.description,
           raw_content: r.description,
           questions: r.questions
-            .filter((q) => q.question.trim())
-            .map((q) => ({
-              question: q.question,
-              topic: q.topic || null,
-              difficulty: q.difficulty || null,
-              category: q.category || null,
+            .map((q, qi) => ({ draft: q, prior: priorRound?.questions?.[qi] }))
+            .filter(({ draft }) => draft.question.trim())
+            .map(({ draft, prior }) => ({
+              ...(prior || {}),
+              question: draft.question,
+              topic: draft.topic || null,
+              difficulty: draft.difficulty || null,
+              category: draft.category || null,
             })),
           coding: {
-            ...(prior?.coding || {}),
+            ...(priorRound?.coding || {}),
             problem_count: r.coding.filter((c) => c.title.trim()).length,
             problems: r.coding
-              .filter((c) => c.title.trim())
-              .map((c) => ({
-                title: c.title,
-                description: c.description || null,
-                difficulty: c.difficulty || null,
-                topics: c.topics
-                  ? c.topics.split(",").map((t) => t.trim()).filter(Boolean)
+              .map((c, ci) => ({ draft: c, prior: priorRound?.coding?.problems?.[ci] }))
+              .filter(({ draft }) => draft.title.trim())
+              .map(({ draft, prior }) => ({
+                ...(prior || {}),
+                title: draft.title,
+                description: draft.description || null,
+                difficulty: draft.difficulty || null,
+                topics: draft.topics
+                  ? draft.topics.split(",").map((t) => t.trim()).filter(Boolean)
                   : [],
               })),
           },
