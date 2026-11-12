@@ -97,12 +97,12 @@ export default function RoundModal({
 
   const normalizedQuestions = (currentRound.questions || []).map((q: any) => {
     if (typeof q === "string") {
-      return { question: q, topic: "Core CS", difficulty: "medium", category: "technical" };
+      return { question: q, topic: null, difficulty: null, category: "technical", details: null };
     }
     return {
       question: q.question || "",
-      topic: q.topic || "Core CS",
-      difficulty: q.difficulty || "medium",
+      topic: q.topic || null,
+      difficulty: q.difficulty || null,
       category: q.category || "technical",
       details: q.details || null,
     };
@@ -110,12 +110,12 @@ export default function RoundModal({
 
   const normalizedCoding = (currentRound.coding?.problems || []).map((p: any) => {
     if (typeof p === "string") {
-      return { title: p.slice(0, 80), description: p, difficulty: "medium", topics: ["Algorithms"] };
+      return { title: p.slice(0, 80), description: p, difficulty: null, topics: [] };
     }
     return {
       title: p.title || "Coding Problem",
       description: p.description || p.title || "",
-      difficulty: p.difficulty || "medium",
+      difficulty: p.difficulty || null,
       topics: p.topics || [],
     };
   });

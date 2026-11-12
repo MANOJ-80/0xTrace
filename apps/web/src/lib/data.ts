@@ -155,7 +155,7 @@ export async function getQuestionBank() {
       for (const rawQ of round.questions || []) {
         const qObj: InterviewQuestion =
           typeof rawQ === "string"
-            ? { question: rawQ, topic: "Core CS", difficulty: "medium" }
+            ? { question: rawQ }
             : (rawQ as InterviewQuestion);
         if (qObj && qObj.question) {
           questions.push({
@@ -171,7 +171,7 @@ export async function getQuestionBank() {
       for (const rawCp of round.coding?.problems || []) {
         const cpObj: CodingProblem =
           typeof rawCp === "string"
-            ? { title: (rawCp as string).slice(0, 80), description: rawCp as string, difficulty: "medium" }
+            ? { title: (rawCp as string).slice(0, 80), description: rawCp as string }
             : (rawCp as CodingProblem);
         if (cpObj && cpObj.title) {
           codingProblems.push({

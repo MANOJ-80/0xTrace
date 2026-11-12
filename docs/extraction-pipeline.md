@@ -56,12 +56,43 @@ deadline (`apps/web/src/lib/llm-providers.ts`).
   longer than `MAX_ROUND_CHARS` are split and merged.
 - **Tips/result** extract advice and the conclusion.
 
+### Question metadata
+
+The round prompt asks for `topic`, `difficulty`, and `category` per question and
+shows `null` in the schema. It never embeds a pipe-joined enum, because models
+echo that list back as a literal topic.
+
+`apps/web/src/lib/question-metadata.ts` owns the vocabulary and the post-check:
+
+- 19 topic labels: Operating Systems, DBMS & SQL, Data Structures & Algorithms,
+  Object Oriented Programming, Computer Networks, Cloud Computing, DevOps &
+  Containers, Frontend & React, Backend & APIs, Security & Authentication,
+  System Design, Java, Python, JavaScript, C/C++, Machine Learning, Projects &
+  Experience, Aptitude & Puzzles, HR & Behavioral.
+- Keyword inference runs first: AWS/S3/EC2 → Cloud Computing, Docker and
+  containerization → DevOps & Containers, JWT/signature/password → Security &
+  Authentication, and so on. A model label is only a fallback when no keyword
+  matches, so a narrow prompt cannot force an obvious question into the wrong
+  bucket.
+- Labels longer than 80 characters, containing a pipe, or reading `null`,
+  `none`, `unknown`, `technical`, `core cs` and similar are rejected.
+- Difficulty accepts easy, medium, hard, and combined labels such as
+  `Easy-Medium`; anything else becomes `null`.
+- Category is `technical` when a topic is present, and `behavioral` or `hr` for
+  HR & Behavioral questions.
+
+Missing metadata stays `null` end to end. The preview and question bank render
+nothing for an unknown topic or difficulty instead of inventing `Core CS` or
+`medium`. Coding problems get the same difficulty normalisation, and their
+topic tags drop pipe strings and empty values.
+
 ## 4. Validation
 
 `parseExtractionResult` applies the zod schema; `cleanExtractedExperience`
-normalises round names, deduplicates, and redacts contact details. Problems are
-pushed into `pipeline.warnings` and shown in the preview instead of being
-silently published.
+normalises round names, deduplicates, and redacts contact details. Question and
+coding-problem metadata pass through the normalisers above before merging.
+Problems are pushed into `pipeline.warnings` and shown in the preview instead of
+being silently published.
 
 ## Evaluation
 

@@ -16,6 +16,11 @@ import { chunkDocument, type ChunkedDocument, type RoundChunk } from "@/lib/chun
 import { llmExtractJSON } from "@/lib/llm-providers";
 import { parseExtractionResult } from "@/lib/extraction-schema";
 import { cleanExtractedExperience, redactObject } from "@/lib/quality-clean";
+import {
+  normalizeQuestion,
+  normalizeQuestionDifficulty,
+  QUESTION_TOPICS,
+} from "@/lib/question-metadata";
 import type { ExtractionResponse, Experience, ExtractPipelineMeta } from "@/lib/types";
 
 const ROUND_CONCURRENCY = 2;
@@ -211,14 +216,50 @@ async function extractRound(chunk: RoundChunk, deadline: number) {
   for (const part of parts) {
     const { data, provider } = await llmExtractJSON<Record<string, any>>(
       `Extract interview questions and coding problems from this interview round text.
-Each interview question should be a SEPARATE item. Identify coding problems by algorithm names, LeetCode references, or problem statements.
-Return JSON: {
+Each interview question must be a separate item, in the order it was asked.
+Identify coding problems by algorithm names, LeetCode references, or problem statements.
+
+Return JSON with this shape:
+{
   "description": "brief narrative of what happened in this round",
-  "questions": [{ "question": "the actual question asked", "topic": "OS|DBMS|DSA|OOPS|Python|Java|SQL|HR|Behavioral|null", "category": "technical|behavioral|hr|null" }],
-  "coding_problems": [{ "title": "short title", "description": "problem statement", "difficulty": "easy|medium|hard|null", "topics": ["array","string","dp","graph","tree","greedy","math","other"] }],
-  "shortlisted_count": number|null,
-  "sections": [{ "name": "section name", "question_count": number }]
-}`,
+  "questions": [
+    {
+      "question": "the actual question asked",
+      "topic": null,
+      "difficulty": null,
+      "category": null
+    }
+  ],
+  "coding_problems": [
+    {
+      "title": "short title",
+      "description": "problem statement",
+      "difficulty": null,
+      "topics": ["array"]
+    }
+  ],
+  "shortlisted_count": null,
+  "sections": [{ "name": "section name", "question_count": 0 }]
+}
+
+Replace each null in a question with:
+- topic: exactly one label from the list below, or null when none fits.
+- difficulty: easy, medium, or hard, rated for a campus interview. Use null for conversational questions.
+- category: technical for CS and engineering questions, behavioral for experience and teamwork questions, hr for career and company questions.
+
+Topic labels:
+${QUESTION_TOPICS.join(", ")}
+
+Rules:
+- Never return the word "null" as a string. Use JSON null.
+- Never combine topics. Do not use a pipe character or list more than one label.
+- Use "Cloud Computing" for AWS, Azure, GCP, S3, EC2, IAM, and cloud service questions.
+- Use "System Design" for design, scaling, load balancer, message queue, caching, and architecture questions.
+- Use "Backend & APIs" for Node.js, Express, server, and API questions.
+- Use "Frontend & React" for React, DOM, hooks, and component questions.
+- Use "Security & Authentication" for JWT, OAuth, cookies, passwords, API keys, and PII.
+- Use "Projects & Experience" for questions about the candidate's projects, internship, or resume.
+- Use "HR & Behavioral" for career goals, teamwork, conflict, relocation, and personal background.`,
       part,
       4096,
       { deadline }
@@ -243,8 +284,39 @@ Return JSON: {
     }
   }
 
-  const mergedQuestions = dedupeBy(questions, (question) => String(question.question));
-  const mergedProblems = dedupeBy(problems, (problem) => String(problem.title));
+  const mergedQuestions = dedupeBy(
+    questions
+      .map((question) => normalizeQuestion(question))
+      .filter((question) => question.question.length > 0),
+    (question) => question.question
+  );
+  const mergedProblems = dedupeBy(
+    problems
+      .map((problem) => {
+        const title =
+          typeof problem.title === "string" ? problem.title.trim() : "";
+        return {
+          ...problem,
+          title,
+          difficulty: normalizeQuestionDifficulty(problem.difficulty),
+          topics: Array.isArray(problem.topics)
+            ? problem.topics
+                .map((topic: unknown) =>
+                  typeof topic === "string" ? topic.trim() : ""
+                )
+                .filter(
+                  (topic: string) =>
+                    topic.length > 0 &&
+                    topic.length <= 40 &&
+                    !topic.includes("|") &&
+                    !/^null$/i.test(topic)
+                )
+            : [],
+        };
+      })
+      .filter((problem) => problem.title.length > 0),
+    (problem) => problem.title
+  );
 
   return {
     providers,
