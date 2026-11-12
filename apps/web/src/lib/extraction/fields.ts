@@ -151,6 +151,26 @@ function validLabel(label: string): boolean {
   return true;
 }
 
+/**
+ * Guard the single-space label split used when the text layer drops column
+ * padding. Prose such as `Role was a good fit` shares the same shape as
+ * `Role Software Engineer`, so require the value to start like a header value.
+ */
+function looksLikeValue(key: HeaderKey, value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (
+    /^(?:was|is|are|were|will|would|has|have|had|and|or|the|a|an|for|at|in|of|to|with|this|that)\b/i.test(
+      trimmed
+    )
+  ) {
+    return false;
+  }
+  if (!/^[A-Z0-9₹$€£]/.test(trimmed)) return false;
+  if (key === "ctc" || key === "stipend") return /\d/.test(trimmed);
+  return trimmed.split(/\s+/).length <= 12;
+}
+
 export interface LabelledValue {
   key: HeaderKey | null;
   label: string;
@@ -181,9 +201,21 @@ export function parseLabelledLine(text: string): LabelledValue[] {
     // Headers also separate with a dash: `Package- 15.78 LPA`, `Role - SDE`.
     // Only accept it when the left side is a recognised field label.
     const dashed = trimmed.match(/^(.{2,32}?)\s*[-–—]\s+(.+)$/);
-    if (dashed && canonicalKey(dashed[1])) {
+    if (dashed && validLabel(dashed[1]) && canonicalKey(dashed[1])) {
       separator = dashed[1].length;
       separatorLength = trimmed.slice(separator).match(/^\s*[-–—]\s+/)?.[0].length || 0;
+    } else {
+      // Layout-less extractors collapse column padding to a single space:
+      // `Role Software Engineer (SE)`. Accept that only for known labels whose
+      // value still reads like a header value, never a prose sentence.
+      const spaced = trimmed.match(/^(.{2,32}?)\s+(\S.*)$/);
+      if (spaced) {
+        const key = canonicalKey(spaced[1]);
+        if (key && looksLikeValue(key, spaced[2])) {
+          separator = spaced[1].length;
+          separatorLength = 1;
+        }
+      }
     }
   }
   if (separator < 0) return [];
@@ -295,6 +327,7 @@ function field(key: HeaderKey, value: string | null, confidence: FieldConfidence
 interface Banner {
   company: string | null;
   lineIndex: number;
+  name: string | null;
 }
 
 function findBanner(lines: DocLine[]): Banner | null {
@@ -305,15 +338,27 @@ function findBanner(lines: DocLine[]): Banner | null {
     const drive = flat.match(/^(?:placement|hiring)\s+drive\s*[-–—:]\s*(.+)$/i);
     if (drive) {
       const company = sanitizeCompany(drive[1]);
-      if (company) return { company, lineIndex: line.index };
+      if (company) return { company, lineIndex: line.index, name: null };
     }
 
     const titled = flat.match(
-      /^(.{2,90}?)\s*(?:[-–—|:]\s*)?(?:interview|placement)\s*experience\b/i
+      /^(.{2,90}?)\s*(?:[-–—|:]\s*)?(?:interview|placement)\s*experience(.*)$/i
     );
     if (titled) {
+      const rawTrailing = titled[2];
+      // A glued remainder such as `ExperienceSanjeev` is a lost line break.
+      // A spaced remainder such as `Experience 2024` is ordinary title text.
+      const glued = /^[A-Za-z]/.test(rawTrailing);
+      const trailing = rawTrailing.trim().replace(/^[-–—|:]\s*/, "");
+      const name =
+        trailing && /^[A-Z][A-Za-z .'’\-]{1,60}$/.test(trailing)
+          ? sanitizePerson(trailing)
+          : null;
+      // Reject `Interview Experienced Hire`: no separator and not a person.
+      if (glued && !name) continue;
+
       const company = sanitizeCompany(titled[1]);
-      if (company) return { company, lineIndex: line.index };
+      if (company) return { company, lineIndex: line.index, name };
     }
   }
   return null;
@@ -360,12 +405,16 @@ export function parseHeader(lines: DocLine[]): ParsedHeader {
 
   // A candidate name often sits directly below the title, with no label.
   if (fields.name.confidence === "low" && banner) {
-    const start = lines.findIndex((line) => line.index === banner.lineIndex);
-    for (let offset = 1; offset <= 2 && start + offset < lines.length; offset++) {
-      const person = sanitizePerson(lines[start + offset].text);
-      if (person) {
-        fields.name = field("name", person, "medium");
-        break;
+    if (banner.name) {
+      fields.name = field("name", banner.name, "medium");
+    } else {
+      const start = lines.findIndex((line) => line.index === banner.lineIndex);
+      for (let offset = 1; offset <= 2 && start + offset < lines.length; offset++) {
+        const person = sanitizePerson(lines[start + offset].text);
+        if (person) {
+          fields.name = field("name", person, "medium");
+          break;
+        }
       }
     }
   }

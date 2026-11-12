@@ -2,12 +2,16 @@
 /**
  * Deterministic extraction eval.
  *
- * Compiles the TypeScript chunker, extracts text through the same Python layer
- * the API uses, and compares the result with expectations.json. This measures
- * the regex/document-model pass only; the LLM repair stage is exercised
- * manually because free-tier quotas make it unsuitable for a test loop.
+ * Compiles the TypeScript chunker, extracts text through one of the text
+ * layers, and compares the result with expectations.json. `js` uses the same
+ * unpdf path production runs on Vercel; `python` uses the pdftotext/OCR layer
+ * from apps/api. This measures the regex/document-model pass only; the LLM
+ * repair stage is exercised manually because free-tier quotas make it
+ * unsuitable for a test loop.
  *
- *   node eval/extraction/run.js
+ *   node eval/extraction/run.js                    # unpdf, the production path
+ *   node eval/extraction/run.js --extractor=python # layout text
+ *   node eval/extraction/run.js --extractor=both   # run both, compare pass rates
  *   node eval/extraction/run.js --verbose
  */
 
@@ -24,6 +28,19 @@ const PYTHON = path.join(ROOT, "apps/api/.venv/bin/python");
 const API_DIR = path.join(ROOT, "apps/api");
 
 const verbose = process.argv.includes("--verbose");
+
+const extractorArg = process.argv.find((arg) => arg.startsWith("--extractor="));
+const extractor = extractorArg ? extractorArg.split("=")[1] : "js";
+if (!["js", "python", "both"].includes(extractor)) {
+  throw new Error(`Unknown extractor "${extractor}". Use js, python, or both.`);
+}
+
+// Compiled modules under .build require packages from apps/web/node_modules.
+const Module = require("module");
+process.env.NODE_PATH = [path.join(WEB, "node_modules"), process.env.NODE_PATH]
+  .filter(Boolean)
+  .join(path.delimiter);
+Module._initPaths();
 
 function compile() {
   const tsc = path.join(WEB, "node_modules/.bin/tsc");
@@ -46,7 +63,30 @@ const PYTHON_SCRIPT = [
   'print(json.dumps({"text": result.text, "method": result.method, "pages": result.page_count}))',
 ].join("\n");
 
-function extractText(file) {
+let jsExtractor = null;
+
+function getJsExtractor() {
+  if (!jsExtractor) {
+    const modulePath = path.join(BUILD, "lib/pdf-extract.js");
+    if (!fs.existsSync(modulePath)) {
+      throw new Error(`Compiled JS extractor not found at ${modulePath}. Run the eval from the repo root.`);
+    }
+    jsExtractor = require(modulePath);
+  }
+  return jsExtractor;
+}
+
+async function extractWithJs(file) {
+  const absolute = path.join(ROOT, file);
+  const { extractPdfWithJs } = getJsExtractor();
+  const result = await extractPdfWithJs(fs.readFileSync(absolute));
+  if (!result.text || !result.text.trim()) {
+    throw new Error(`unpdf extraction returned no text for ${file}`);
+  }
+  return { text: result.text, method: "unpdf", pages: result.pageCount };
+}
+
+function extractWithPython(file) {
   const absolute = path.join(ROOT, file);
   if (fs.existsSync(PYTHON)) {
     const result = spawnSync(PYTHON, ["-c", PYTHON_SCRIPT, API_DIR, absolute], {
@@ -203,11 +243,9 @@ function checkCase(file, expected, actual) {
   return { file, checks, failures, actual };
 }
 
-function main() {
-  compile();
-  const { chunkDocument } = require(path.join(BUILD, "lib/chunker.js"));
-  const expectations = JSON.parse(fs.readFileSync(EXPECTATIONS, "utf8"));
+let chunkDocument = null;
 
+async function runSuite(mode, expectations) {
   const groups = [
     ["Tuning set", expectations.tuning],
     ["Holdout set", expectations.holdout],
@@ -230,7 +268,8 @@ function main() {
         continue;
       }
 
-      const { text, method, pages } = extractText(file);
+      const { text, method, pages } =
+        mode === "js" ? await extractWithJs(file) : extractWithPython(file);
       const actual = chunkDocument(text);
       evaluated++;
       const result = checkCase(file, expected, actual);
@@ -269,9 +308,29 @@ function main() {
   }
 
   console.log(
-    `\nSummary: ${totalChecks - totalFailures}/${totalChecks} checks passed across ${evaluated} files`
+    `\nSummary (${mode}): ${totalChecks - totalFailures}/${totalChecks} checks passed across ${evaluated} files`
   );
-  if (totalFailures > 0) process.exitCode = 1;
+  return { totalChecks, totalFailures, evaluated };
 }
 
-main();
+async function main() {
+  compile();
+  chunkDocument = require(path.join(BUILD, "lib/chunker.js")).chunkDocument;
+  const expectations = JSON.parse(fs.readFileSync(EXPECTATIONS, "utf8"));
+
+  const modes = extractor === "both" ? ["js", "python"] : [extractor];
+  let overallFailures = 0;
+
+  for (const mode of modes) {
+    if (modes.length > 1) console.log(`\n=== extractor: ${mode} ===`);
+    const summary = await runSuite(mode, expectations);
+    overallFailures += summary.totalFailures;
+  }
+
+  if (overallFailures > 0) process.exitCode = 1;
+}
+
+main().catch((error) => {
+  console.error(error.message || error);
+  process.exit(1);
+});

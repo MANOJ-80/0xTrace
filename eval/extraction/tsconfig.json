@@ -9,5 +9,5 @@
     "rootDir": "../../apps/web/src",
     "outDir": ".build"
   },
-  "include": ["../../apps/web/src/lib/chunker.ts"]
+  "include": ["../../apps/web/src/lib/chunker.ts", "../../apps/web/src/lib/pdf-extract.ts"]
 }
