@@ -347,6 +347,16 @@ select[class*="appearance-none"] {
 .form-step-panel { padding: clamp(16px, 3vw, 28px); border: 1px solid var(--ox-edge); border-radius: var(--radius-lg); background: var(--ox-surface); }
 .form-round-card { border: 1px solid var(--ox-edge); border-radius: var(--radius-md); background: #F7F6F2; }
 .form-markdown-editor { background: #F7F6F2; }
+.form-markdown-editor .w-md-editor { background: #F7F6F2; box-shadow: none; color: var(--ox-ink); --md-editor-font-family: var(--font-geist-sans), system-ui, sans-serif; }
+.form-markdown-editor .w-md-editor-toolbar { border-bottom: 1px solid var(--ox-edge); background: var(--ox-window); }
+.form-markdown-editor .w-md-editor-toolbar li > button { color: var(--ox-text); }
+.form-markdown-editor .w-md-editor-toolbar li > button:hover,
+.form-markdown-editor .w-md-editor-toolbar li.active > button { background: var(--ox-surface-raised); color: var(--ox-accent); }
+.form-markdown-editor .w-md-editor-text { font-family: var(--font-geist-sans), system-ui, sans-serif; font-size: 13px !important; line-height: 1.6 !important; }
+.form-markdown-editor .w-md-editor-text-pre,
+.form-markdown-editor .w-md-editor-text-pre > code { color: var(--ox-text) !important; }
+.form-markdown-editor .w-md-editor-text-input { caret-color: var(--ox-ink); }
+.form-markdown-editor .w-md-editor-text-input::placeholder { color: var(--ox-muted); -webkit-text-fill-color: var(--ox-muted); }
 .form-success { padding: 32px 20px; border: 1px solid #B8C5AA; border-radius: var(--radius-lg); background: #EEF2E9; }
 .submit-action { border-color: #526443; background: #526443; color: white; }
 .submit-action:hover { border-color: #3F4E33; background: #3F4E33; }

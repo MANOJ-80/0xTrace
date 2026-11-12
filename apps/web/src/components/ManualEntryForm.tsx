@@ -737,13 +737,17 @@ export default function ManualEntryForm({
 
                     {/* Description */}
                     <Field label="Your Experience / Walkthrough" required>
-                      <div data-color-mode="dark" className="form-markdown-editor mt-1 w-full rounded-md border border-ox-edge overflow-hidden focus-within:border-ox-accent transition-colors">
+                      <div data-color-mode="light" className="form-markdown-editor mt-1 w-full rounded-md border border-ox-edge overflow-hidden focus-within:border-ox-accent transition-colors">
                         <MDEditor
                           value={round.description}
                           onChange={(val) => updateRound(ri, { description: val || "" })}
                           preview="edit"
                           hideToolbar={false}
                           height={200}
+                          textareaProps={{
+                            placeholder:
+                              "Describe the round, the questions asked, and how it went.",
+                          }}
                           style={{ backgroundColor: 'transparent' }}
                         />
                       </div>
