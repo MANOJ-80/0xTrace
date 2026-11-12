@@ -5,6 +5,8 @@ import { ObjectId } from "mongodb";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { recordActivity } from "@/lib/audit";
+import { toPublicExperience } from "@/lib/public-experience";
+import type { Experience } from "@/lib/types";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -21,7 +23,20 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ ...doc, _id: doc._id.toString() });
+    const serialized = { ...doc, _id: doc._id.toString() } as unknown as Experience;
+
+    // Owners and admins need the full document for the structured and raw
+    // editors. Everyone else gets the public shape.
+    const session = await getServerSession(authOptions);
+    const email = session?.user?.email?.toLowerCase();
+    const isAdmin = !!session?.user?.isAdmin;
+    const isAuthor = Boolean(
+      email && serialized.author?.email?.toLowerCase() === email
+    );
+
+    return NextResponse.json(
+      isAdmin || isAuthor ? serialized : toPublicExperience(serialized)
+    );
   } catch (err: any) {
     return NextResponse.json({ error: "Failed to fetch", detail: err.message }, { status: 500 });
   }

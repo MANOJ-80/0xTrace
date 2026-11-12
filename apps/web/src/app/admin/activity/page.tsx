@@ -16,6 +16,7 @@ const FILTERS: { value: string; label: string }[] = [
   { value: "", label: "All actions" },
   { value: "create", label: "Created" },
   { value: "update", label: "Updated" },
+  { value: "merge", label: "Merged" },
   { value: "delete", label: "Deleted" },
   { value: "bulk_delete", label: "Bulk deleted" },
 ];
@@ -25,6 +26,7 @@ const ACTION_LABELS: Record<AuditAction, string> = {
   update: "Updated",
   delete: "Deleted",
   bulk_delete: "Bulk deleted",
+  merge: "Merged",
 };
 
 const ACTION_TONES: Record<AuditAction, string> = {
@@ -32,6 +34,7 @@ const ACTION_TONES: Record<AuditAction, string> = {
   update: "warn",
   delete: "fail",
   bulk_delete: "fail",
+  merge: "pass",
 };
 
 function formatDate(value: string): string {

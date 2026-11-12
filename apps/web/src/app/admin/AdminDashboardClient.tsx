@@ -17,6 +17,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Tags,
   Trash2,
   Users,
   X,
@@ -163,8 +164,33 @@ export default function AdminDashboardClient() {
     loadOverview();
   };
 
-  const deleteSelected = async () => {
-    if (selected.size === 0) return;
+  const normalizeCompanies = async () => {
+    if (
+      !window.confirm(
+        "Recompute the canonical company key for every record? This rewrites company.normalized_name and keeps display names unchanged."
+      )
+    ) {
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/companies/normalize", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Normalization failed");
+      setNotice(
+        `Normalized ${data.updated.toLocaleString()} of ${data.scanned.toLocaleString()} records across ${data.companies.toLocaleString()} companies (${data.variantGroups.toLocaleString()} spelling variant groups).`
+      );
+      refresh();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteSelected = async () => {    if (selected.size === 0) return;
     if (
       !window.confirm(
         `Delete ${selected.size} experience${selected.size === 1 ? "" : "s"}? This cannot be undone.`
@@ -245,6 +271,16 @@ export default function AdminDashboardClient() {
               <Copy className="h-4 w-4" />
               Duplicates
             </Link>
+            <button
+              type="button"
+              onClick={normalizeCompanies}
+              disabled={busy}
+              className="admin-nav-link"
+              title="Recompute the canonical company key for every record"
+            >
+              <Tags className="h-4 w-4" />
+              Normalize names
+            </button>
             <a href="/api/admin/export?format=json" className="admin-nav-link">
               <Download className="h-4 w-4" />
               JSON

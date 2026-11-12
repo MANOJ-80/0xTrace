@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllExperiences } from "@/lib/data";
+import { toPublicExperiences } from "@/lib/public-experience";
 
 export async function GET(req: NextRequest) {
   try {
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
-      experiences: paginated,
+      experiences: toPublicExperiences(paginated),
     });
   } catch (err: any) {
     return NextResponse.json(

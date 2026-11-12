@@ -8,6 +8,7 @@ import {
 } from "./types";
 import { getCollection } from "./mongodb";
 import { ObjectId } from "mongodb";
+import { normalizeCompanyKey, mostCommonName } from "./company";
 import crypto from "crypto";
 
 /* ------------------------------------------------------------------ */
@@ -42,6 +43,7 @@ export async function getExperienceById(id: string): Promise<Experience | null> 
 export async function getCompanyStats(): Promise<CompanyStats[]> {
   const experiences = await getAllExperiences();
   const companyMap = new Map<string, {
+    nameCounts: Map<string, number>;
     count: number;
     roles: Set<string>;
     selected: number;
@@ -51,9 +53,11 @@ export async function getCompanyStats(): Promise<CompanyStats[]> {
   }>();
 
   for (const exp of experiences) {
-    const cName = exp.company?.name || exp.company?.normalized_name || "Unknown";
-    if (!companyMap.has(cName)) {
-      companyMap.set(cName, {
+    const displayName = exp.company?.name || exp.company?.normalized_name || "Unknown";
+    const key = normalizeCompanyKey(displayName) || "unknown";
+    if (!companyMap.has(key)) {
+      companyMap.set(key, {
+        nameCounts: new Map(),
         count: 0,
         roles: new Set(),
         selected: 0,
@@ -62,7 +66,8 @@ export async function getCompanyStats(): Promise<CompanyStats[]> {
         questionsCount: 0,
       });
     }
-    const stat = companyMap.get(cName)!;
+    const stat = companyMap.get(key)!;
+    stat.nameCounts.set(displayName, (stat.nameCounts.get(displayName) || 0) + 1);
     stat.count += 1;
     if (exp.job?.role) stat.roles.add(exp.job.role);
     if (exp.outcome?.status?.toLowerCase().includes("select") || exp.outcome?.status?.toLowerCase().includes("offer")) {
@@ -80,10 +85,10 @@ export async function getCompanyStats(): Promise<CompanyStats[]> {
   }
 
   const result: CompanyStats[] = [];
-  for (const [name, stat] of companyMap.entries()) {
+  for (const stat of companyMap.values()) {
     const roundSequenceSample = stat.roundSequences.length > 0 ? stat.roundSequences[0] : [];
     result.push({
-      name,
+      name: mostCommonName(stat.nameCounts),
       experienceCount: stat.count,
       roles: Array.from(stat.roles),
       selectedCount: stat.selected,
@@ -214,6 +219,14 @@ export async function ingestExperienceToCanonical(
     updated_at: _updatedAt,
     ...incoming
   } = draftExperience || {};
+
+  // Store one canonical company key regardless of who created the record.
+  if (incoming.company?.name) {
+    incoming.company = {
+      ...incoming.company,
+      normalized_name: normalizeCompanyKey(incoming.company.name),
+    };
+  }
 
   // Prefer the hash computed during extraction; recompute from raw text if the
   // client dropped it. This is what makes re-uploading the same PDF idempotent.
@@ -436,7 +449,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   let totalCodingProblems = 0;
   let totalTips = 0;
 
-  const companyMap = new Map<string, { count: number; selected: number; rejected: number }>();
+  const companyMap = new Map<string, { nameCounts: Map<string, number>; count: number; selected: number; rejected: number }>();
   const roundTypeMap = new Map<string, number>();
   const outcomeMap = new Map<string, number>();
   const topicMap = new Map<string, number>();
@@ -445,9 +458,13 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
   const monthMap = new Map<string, number>();
 
   for (const exp of experiences) {
-    const cName = exp.company?.name || exp.company?.normalized_name || "Unknown";
-    if (!companyMap.has(cName)) companyMap.set(cName, { count: 0, selected: 0, rejected: 0 });
-    const cs = companyMap.get(cName)!;
+    const displayName = exp.company?.name || exp.company?.normalized_name || "Unknown";
+    const companyKey = normalizeCompanyKey(displayName) || "unknown";
+    if (!companyMap.has(companyKey)) {
+      companyMap.set(companyKey, { nameCounts: new Map(), count: 0, selected: 0, rejected: 0 });
+    }
+    const cs = companyMap.get(companyKey)!;
+    cs.nameCounts.set(displayName, (cs.nameCounts.get(displayName) || 0) + 1);
     cs.count++;
     const status = (exp.outcome?.status || "unknown").toLowerCase();
     if (status.includes("select") || status.includes("offer")) cs.selected++;
@@ -482,8 +499,13 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     }
   }
 
-  const companyBreakdown = Array.from(companyMap.entries())
-    .map(([name, v]) => ({ name, ...v }))
+  const companyBreakdown = Array.from(companyMap.values())
+    .map((v) => ({
+      name: mostCommonName(v.nameCounts),
+      count: v.count,
+      selected: v.selected,
+      rejected: v.rejected,
+    }))
     .sort((a, b) => b.count - a.count);
 
   const roundTypes = Array.from(roundTypeMap.entries())

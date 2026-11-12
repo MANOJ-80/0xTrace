@@ -5,7 +5,7 @@ import { getActivity } from "@/lib/audit";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ACTIONS = new Set(["create", "update", "delete", "bulk_delete"]);
+const ACTIONS = new Set(["create", "update", "delete", "bulk_delete", "merge"]);
 
 export async function GET(req: NextRequest) {
   const session = await requireAdmin();

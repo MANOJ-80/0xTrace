@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next";
 import { ArrowLeft, Copy, ExternalLink, Pencil } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { findDuplicateGroups } from "@/lib/admin-experiences";
+import MergeIntoButton from "./MergeIntoButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -46,7 +47,8 @@ export default async function DuplicatesPage() {
           <h1 className="page-title">Possible duplicates</h1>
           <p className="page-description">
             Records that share the same company and candidate, matched ignoring case
-            and surrounding whitespace.
+            and surrounding whitespace. Merge fills empty fields on one record, then
+            deletes the others.
           </p>
         </div>
         <div className="admin-activity-summary">
@@ -123,6 +125,13 @@ export default async function DuplicatesPage() {
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Link>
+                            <MergeIntoButton
+                              targetId={record._id}
+                              targetLabel={`${record.id || record._id} (${group.company})`}
+                              sourceIds={group.records
+                                .filter((item) => item._id !== record._id)
+                                .map((item) => item._id)}
+                            />
                             <Link
                               href={`/admin/edit/${record._id}`}
                               className="admin-icon-action"

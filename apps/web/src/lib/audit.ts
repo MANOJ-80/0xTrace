@@ -7,7 +7,7 @@ import { getCollection } from "./mongodb";
  * that triggered it, so `recordActivity` swallows and logs errors.
  */
 
-export type AuditAction = "create" | "update" | "delete" | "bulk_delete";
+export type AuditAction = "create" | "update" | "delete" | "bulk_delete" | "merge";
 
 export interface AuditActor {
   email?: string | null;

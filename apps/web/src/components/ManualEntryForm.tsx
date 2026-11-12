@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Experience } from "@/lib/types";
+import { normalizeCompanyKey } from "@/lib/company";
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
 
@@ -319,7 +320,7 @@ export default function ManualEntryForm({
       company: {
         ...(existing?.company || {}),
         name: form.companyName,
-        normalized_name: form.companyName.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+        normalized_name: normalizeCompanyKey(form.companyName),
       },
       job: {
         ...(existing?.job || {}),
