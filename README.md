@@ -75,6 +75,7 @@ GROQ_API_KEY=your_groq_api_key
 GROQ_MODEL=llama-3.3-70b-versatile
 MONGODB_URI=mongodb+srv://...
 ADMIN_PASSWORD=your_admin_password
+EXTRACTION_HOURLY_LIMIT=5
 ```
 
 Run the development server:

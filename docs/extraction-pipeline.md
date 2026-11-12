@@ -66,8 +66,10 @@ silently published.
 ## Evaluation
 
 ```bash
-node eval/extraction/run.js            # deterministic pass
-node eval/extraction/run.js --verbose  # per-round detail
+node eval/extraction/run.js                    # unpdf, the path Vercel runs
+node eval/extraction/run.js --extractor=python # pdftotext layout text
+node eval/extraction/run.js --extractor=both   # compare pass rates
+node eval/extraction/run.js --verbose          # per-round detail
 ```
 
 - `expectations.json` splits the fixtures into a **tuning** set and a
@@ -76,11 +78,23 @@ node eval/extraction/run.js --verbose  # per-round detail
 - Fixture PDFs are local files under `samplepdfs/` and `data/`. The runner
   prints `fixture not present, skipped` for any that are missing, so a fresh
   clone reports the cases it can run.
-- The runner compiles the TypeScript chunker, extracts text through the real
-  Python layer, and checks company, candidate, role, CTC, round count, outcome,
-  counts, tips, and structural invariants.
+- The runner compiles the TypeScript chunker and PDF extractor, then checks
+  company, candidate, role, CTC, round count, outcome, counts, tips, and
+  structural invariants.
 - `company_llm` / `candidate_llm` mark fields that the deterministic pass may
   leave empty because only the LLM can recover them.
+- Default to `unpdf` because that is what production uses. The layout path can
+  read a glyph that `unpdf` misses, and the reverse also happens: on
+  `CAT_MOHNISH S.pdf`, `pdftotext` drops the leading `R` in `Round-3`, so the
+  layout path finds two rounds where the document has three.
 
 A fix that only makes one PDF pass is not a fix. Change a general rule, then run
-the whole set, holdouts included.
+the whole set on both extractors, holdouts included.
+
+## Extraction quota
+
+`apps/web/src/lib/extraction-quota.ts` caps `POST /api/extract` at five runs
+per account per hour. Counters live in the `extraction_usage` collection with
+one document per user and hour, guarded by a TTL index. Admins are exempt.
+Override the limit with `EXTRACTION_HOURLY_LIMIT`. A rejected request returns
+429 with a `Retry-After` header.

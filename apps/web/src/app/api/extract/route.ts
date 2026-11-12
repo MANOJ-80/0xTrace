@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { extractPdfWithJs } from "@/lib/pdf-extract";
 import { getUserExperienceCount } from "@/lib/data";
+import { consumeExtractionQuota } from "@/lib/extraction-quota";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -288,7 +289,7 @@ export async function POST(req: NextRequest) {
     }
     if (blob.size > MAX_FILE_BYTES) {
       return NextResponse.json(
-        { error: `PDF is too large (${(blob.size / 1024 / 1024).toFixed(1)} MB). Limit is 10 MB.` },
+        { error: `PDF is too large (${(blob.size / 1024 / 1024).toFixed(1)} MB). Limit is ${MAX_FILE_BYTES / 1024 / 1024} MB.` },
         { status: 413 }
       );
     }
@@ -301,6 +302,35 @@ export async function POST(req: NextRequest) {
         { error: "That file is not a PDF.", detail: "The file does not start with a %PDF- header." },
         { status: 415 }
       );
+    }
+
+    // Each run can spend up to a minute in the LLM chain. Cap attempts per
+    // account so a session cannot loop the endpoint at the project's expense.
+    if (!session.user.isAdmin) {
+      const quota = await consumeExtractionQuota(session.user.email).catch((error) => {
+        console.error("[quota] extraction quota check failed:", error);
+        return null;
+      });
+      if (!quota) {
+        return NextResponse.json(
+          {
+            error: "Upload is temporarily unavailable",
+            detail: "The upload limit check did not respond. Try again in a minute.",
+          },
+          { status: 503 }
+        );
+      }
+      if (!quota.allowed) {
+        return NextResponse.json(
+          {
+            error: "Extraction limit reached",
+            detail: `Student accounts can run ${quota.limit} PDF extractions per hour. Try again in ${Math.ceil(
+              quota.retryAfterSeconds / 60
+            )} minute(s).`,
+          },
+          { status: 429, headers: { "Retry-After": String(quota.retryAfterSeconds) } }
+        );
+      }
     }
 
     let extraction: PdfTextResult;
