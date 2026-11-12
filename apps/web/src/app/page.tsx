@@ -10,7 +10,7 @@ export const revalidate = 0;
 
 const HERO_COMPANIES = [
   { key: "everstage", name: "Everstage", role: "Security Engineer" },
-  { key: "aivar_innovations", name: "Aivar Innovations Private Limited" },
+  { key: "aivar_innovations", name: "Aivar Innovations Private Limited", role: "AI Engineer" },
   { key: "caterpillar", name: "Caterpillar", role: "Software Engineer" },
   { key: "societe_generale", name: "Societe Generale", role: "Software Engineer" },
   { key: "hyperverge", name: "HyperVerge", role: "Software Engineer" },
