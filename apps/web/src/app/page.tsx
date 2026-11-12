@@ -1,9 +1,68 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getAllExperiences } from "@/lib/data";
+import { normalizeCompanyKey } from "@/lib/company";
+import HeroRecordCarousel, { type HeroRecord } from "@/components/HeroRecordCarousel";
+import type { Experience } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+const HERO_COMPANIES = [
+  { key: "everstage", name: "Everstage", role: "Security Engineer" },
+  { key: "aivar_innovations", name: "Aivar Innovations Private Limited" },
+  { key: "caterpillar", name: "Caterpillar", role: "Software Engineer" },
+  { key: "societe_generale", name: "Societe Generale", role: "Software Engineer" },
+  { key: "hyperverge", name: "HyperVerge", role: "Software Engineer" },
+];
+
+function buildPlaceholder(name: string, key: string, role?: string): HeroRecord {
+  return {
+    id: `exp_${key}`,
+    company: name,
+    role: role ?? "Software Engineer",
+    year: "2025",
+    placeholder: true,
+    rounds: [
+      { name: "Round 1: Online Assessment", type: "online_assessment", questions: 0 },
+      { name: "Round 2: Technical Interview", type: "technical_interview", questions: 0 },
+      { name: "Round 3: HR Interview", type: "hr_interview", questions: 0 },
+    ],
+  };
+}
+
+function toHeroRecord(experience: Experience, name: string, role?: string): HeroRecord {
+  return {
+    id: experience.id,
+    company: name,
+    role: role || experience.job?.role || "Role not specified",
+    year: String(experience.timeline?.year ?? "Campus placement"),
+    rounds: (experience.rounds ?? []).slice(0, 3).map((round) => ({
+      name: round.name,
+      type: round.type || "Interview",
+      questions: round.questions?.length ?? 0,
+    })),
+  };
+}
+
+function scoreExperience(experience: Experience) {
+  const rounds = experience.rounds ?? [];
+  const questionCount = rounds.reduce((total, round) => total + (round.questions?.length ?? 0), 0);
+  return questionCount * 10 + rounds.length;
+}
+
+function pickHeroRecords(experiences: Experience[]): HeroRecord[] {
+  return HERO_COMPANIES.map(({ key, name, role }) => {
+    const matches = experiences.filter((experience) => {
+      const normalized = normalizeCompanyKey(experience.company?.name);
+      return normalized === key || normalized.startsWith(`${key}_`);
+    });
+    const [best] = [...matches].sort((a, b) => scoreExperience(b) - scoreExperience(a));
+
+    if (best) return toHeroRecord(best, name, role);
+    return buildPlaceholder(name, key, role);
+  });
+}
 
 export default async function HomePage() {
   const experiences = await getAllExperiences();
@@ -13,8 +72,7 @@ export default async function HomePage() {
     (total, experience) => total + (experience.rounds ?? []).reduce((roundTotal, round) => roundTotal + (round.questions?.length ?? 0), 0),
     0,
   );
-  const featured = experiences[0];
-  const featuredRounds = (featured?.rounds ?? []).slice(0, 3);
+  const heroRecords = pickHeroRecords(experiences);
 
   return (
     <div className="landing-page">
@@ -31,39 +89,9 @@ export default async function HomePage() {
           <p className="hero-note">Accounts are candidate-reported and may not reflect every interview.</p>
         </div>
 
-        {featured && (
-          <figure className="hero-visual" aria-label={`Example interview record for ${featured.company?.name ?? "a campus placement"}`}>
-            <div className="record-preview">
-              <div className="record-topline">
-                <span>Candidate account · {featured.timeline?.year ?? "Campus placement"}</span>
-                <span className="font-mono">{featured.id}</span>
-              </div>
-              <div className="preview-content">
-                <p className="preview-kicker">Interview record</p>
-                <div className="preview-heading-row">
-                  <div>
-                    <h2>{featured.company?.name ?? "Company experience"}</h2>
-                    <p>{featured.job?.role || "Role not specified"}</p>
-                  </div>
-                  <span className="record-badge">Candidate-reported</span>
-                </div>
-                <div className="round-list">
-                  {featuredRounds.map((round, index) => (
-                    <div className="round-row" key={`${round.sequence}-${round.name}`}>
-                      <span className="round-index">{String(index + 1).padStart(2, "0")}</span>
-                      <span className="round-main">
-                        <strong>{round.name}</strong>
-                        <span>{(round.type || "Interview").replace(/_/g, " ")}</span>
-                      </span>
-                      <span className="round-count">{round.questions?.length ?? 0}<span> questions</span></span>
-                    </div>
-                  ))}
-                </div>
-                <p className="preview-footer">Original writeup available with the full record</p>
-              </div>
-            </div>
-          </figure>
-        )}
+        <div className="hero-visual">
+          <HeroRecordCarousel records={heroRecords} />
+        </div>
       </section>
 
       <section className="proof-strip" aria-label="Archive contents">

@@ -418,8 +418,46 @@ select[class*="appearance-none"] {
 .round-count { color: var(--ox-text); font: 12px/1.3 var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .round-count span { color: var(--ox-muted); font: 12px/1.3 var(--font-geist-sans), sans-serif; }
 .round-arrow { color: var(--ox-muted); }
-.preview-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 8px 0; color: var(--ox-muted); font-size: 12px; }
 .visual-caption { margin-top: 12px; color: var(--ox-muted); font-size: 12px; }
+.record-carousel { min-width: 0; }
+.record-viewport { position: relative; overflow: hidden; border-radius: 12px; box-shadow: var(--shadow-raised); perspective: 1200px; }
+.record-track { display: flex; transition: transform 1.1s cubic-bezier(.45, .05, .25, 1); }
+.record-slide { flex: 0 0 100%; min-width: 0; opacity: 0; transform-origin: center center; transition: transform 1.1s cubic-bezier(.45, .05, .25, 1), opacity .7s ease; will-change: transform, opacity; }
+.record-slide.is-next { transform: translateX(9%) rotateY(-7deg) scale(.955); }
+.record-slide.is-past { transform: translateX(-9%) rotateY(7deg) scale(.955); }
+.record-slide.is-active { opacity: 1; transform: none; }
+.record-slide.is-active .preview-kicker { animation: record-content-in .5s cubic-bezier(.22, 1, .36, 1) .2s both; }
+.record-slide.is-active .preview-heading-row { animation: record-content-in .55s cubic-bezier(.22, 1, .36, 1) .27s both; }
+.record-slide.is-active .round-row { animation: record-content-in .5s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(.35s + var(--i, 0) * .07s); }
+@keyframes record-content-in {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.record-carousel .record-preview { display: flex; height: 100%; flex-direction: column; box-shadow: none; }
+.record-progress { position: absolute; top: 0; left: 0; z-index: 2; width: 100%; height: 2px; background: var(--ox-accent); transform-origin: left center; animation: record-progress var(--dwell, 5000ms) linear both; }
+@keyframes record-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.record-carousel .preview-content { display: flex; flex: 1; flex-direction: column; }
+.record-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 2px 0; }
+.record-dots { display: flex; align-items: center; gap: 2px; }
+.record-dot { position: relative; min-width: 30px; padding: 4px 2px 6px; border: 0; background: none; color: var(--ox-muted); font: 11px/1 var(--font-geist-mono), monospace; letter-spacing: .06em; cursor: pointer; transition: color .16s var(--ease-out); }
+.record-dot::after { content: ""; position: absolute; right: 2px; bottom: 0; left: 2px; height: 1px; background: var(--ox-accent); transform: scaleX(0); transform-origin: left center; transition: transform .3s var(--ease-out); }
+.record-dot:hover { color: var(--ox-text); }
+.record-dot[aria-current="true"] { color: var(--ox-accent); }
+.record-dot[aria-current="true"]::after { transform: scaleX(1); }
+.record-dot:focus-visible { border-radius: 2px; outline: 2px solid var(--ox-accent); outline-offset: 2px; }
+.record-meta { display: flex; align-items: center; gap: 10px; color: var(--ox-muted); font: 11px/1 var(--font-geist-mono), monospace; letter-spacing: .06em; }
+.record-play { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid #D7D0C3; border-radius: 4px; background: transparent; color: var(--ox-muted); cursor: pointer; transition: color .16s var(--ease-out), border-color .16s var(--ease-out); }
+.record-play:hover { border-color: var(--ox-accent); color: var(--ox-accent); }
+.record-play:focus-visible { outline: 2px solid var(--ox-accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .record-track,
+  .record-slide,
+  .record-dot::after { transition: none; }
+  .record-slide .preview-kicker,
+  .record-slide .preview-heading-row,
+  .record-slide .round-row { animation: none; }
+  .record-progress { display: none; }
+}
 .proof-strip { display: grid; grid-template-columns: 1.3fr repeat(4, 1fr); align-items: center; gap: 16px; padding: 20px 0 22px; border-top: 1px solid var(--landing-line); border-bottom: 1px solid var(--landing-line); }
 .proof-intro { color: var(--ox-text); font-size: 13px; }
 .proof-stat { display: flex; flex-direction: column; gap: 4px; padding-left: 20px; border-left: 1px solid var(--landing-line); }
