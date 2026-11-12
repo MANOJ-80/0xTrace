@@ -9,19 +9,19 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const HERO_COMPANIES = [
-  { key: "everstage", name: "Everstage", role: "Security Engineer" },
+  { key: "everstage", name: "Everstage", role: "Security Engineer", year: "2026" },
   { key: "aivar_innovations", name: "Aivar Innovations Private Limited", role: "AI Engineer" },
   { key: "caterpillar", name: "Caterpillar", role: "Software Engineer" },
   { key: "societe_generale", name: "Societe Generale", role: "Software Engineer" },
-  { key: "hyperverge", name: "HyperVerge", role: "Software Engineer" },
+  { key: "hyperverge", name: "HyperVerge", role: "Software Engineer", year: "2026" },
 ];
 
-function buildPlaceholder(name: string, key: string, role?: string): HeroRecord {
+function buildPlaceholder(name: string, key: string, role?: string, year?: string): HeroRecord {
   return {
     id: `exp_${key}`,
     company: name,
     role: role ?? "Software Engineer",
-    year: "2025",
+    year: year ?? "2025",
     placeholder: true,
     rounds: [
       { name: "Round 1: Online Assessment", type: "online_assessment", questions: 0 },
@@ -31,12 +31,12 @@ function buildPlaceholder(name: string, key: string, role?: string): HeroRecord 
   };
 }
 
-function toHeroRecord(experience: Experience, name: string, role?: string): HeroRecord {
+function toHeroRecord(experience: Experience, name: string, role?: string, year?: string): HeroRecord {
   return {
     id: experience.id,
     company: name,
     role: role || experience.job?.role || "Role not specified",
-    year: String(experience.timeline?.year ?? "Campus placement"),
+    year: year ?? String(experience.timeline?.year ?? "Campus placement"),
     rounds: (experience.rounds ?? []).slice(0, 3).map((round) => ({
       name: round.name,
       type: round.type || "Interview",
@@ -52,15 +52,15 @@ function scoreExperience(experience: Experience) {
 }
 
 function pickHeroRecords(experiences: Experience[]): HeroRecord[] {
-  return HERO_COMPANIES.map(({ key, name, role }) => {
+  return HERO_COMPANIES.map(({ key, name, role, year }) => {
     const matches = experiences.filter((experience) => {
       const normalized = normalizeCompanyKey(experience.company?.name);
       return normalized === key || normalized.startsWith(`${key}_`);
     });
     const [best] = [...matches].sort((a, b) => scoreExperience(b) - scoreExperience(a));
 
-    if (best) return toHeroRecord(best, name, role);
-    return buildPlaceholder(name, key, role);
+    if (best) return toHeroRecord(best, name, role, year);
+    return buildPlaceholder(name, key, role, year);
   });
 }
 
