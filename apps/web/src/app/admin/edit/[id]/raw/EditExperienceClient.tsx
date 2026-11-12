@@ -77,8 +77,10 @@ export default function EditExperienceClient({ id }: { id: string }) {
             <span aria-hidden="true">←</span> Back to experience manager
           </Link>
           <div className="page-kicker">Record editor</div>
-          <h1 className="page-title">Edit experience</h1>
-          <p className="page-description">Update the source data for this interview record.</p>
+          <h1 className="page-title">Raw JSON source</h1>
+          <p className="page-description">
+            Edit the stored document directly. <Link href={`/admin/edit/${id}`} className="underline">Return to the structured editor</Link> for normal changes.
+          </p>
         </div>
         <button
           onClick={handleSave}

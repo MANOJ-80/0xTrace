@@ -62,6 +62,9 @@ async function seed() {
   await db.collection("experiences").createIndex({ "job.role": 1 });
   await db.collection("experiences").createIndex({ created_at: -1 });
   await db.collection("experiences").createIndex({ "author.email": 1 });
+  await db.collection("experiences").createIndex({ "company.name": 1, "candidate.name": 1 });
+  await db.collection("activity_log").createIndex({ created_at: -1 });
+  await db.collection("activity_log").createIndex({ action: 1, created_at: -1 });
   await db.collection("experiences").createIndex({
     "company.name": "text",
     "candidate.name": "text",

@@ -4,6 +4,7 @@ import { ingestExperienceToCanonical, getUserExperienceCount } from "@/lib/data"
 import { ExperienceExtractionSchema } from "@/lib/extraction-schema";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { recordActivity } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -82,6 +83,17 @@ export async function POST(req: NextRequest) {
         message: `This source PDF is already published as ${result.assigned_id}.`,
       });
     }
+
+    await recordActivity({
+      action: "create",
+      actor: { email: author.email, name: author.name },
+      target: {
+        id: result.assigned_id,
+        company: draft.company?.name || null,
+        candidate: draft.candidate?.name || null,
+      },
+      detail: session.user.isAdmin ? "Admin submission" : "Author submission",
+    });
 
     revalidatePath("/experiences");
     revalidatePath("/my-experiences");

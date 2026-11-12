@@ -4,6 +4,7 @@ import { getCollection } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { recordActivity } from "@/lib/audit";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -77,6 +78,20 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     const result = await col.updateOne(query, { $set: finalUpdate });
 
+    const changedKeys = Object.keys(updateData).slice(0, 12);
+    await recordActivity({
+      action: "update",
+      actor: { email: session.user.email, name: session.user.name },
+      target: {
+        id: existingDoc.id || String(existingDoc._id),
+        company: existingDoc.company?.name || null,
+        candidate: existingDoc.candidate?.name || null,
+      },
+      detail: `${isAdmin && !isAuthor ? "Admin edit" : "Author edit"}: ${
+        changedKeys.join(", ") || "no fields"
+      }`,
+    });
+
     revalidatePath("/experiences");
     revalidatePath(`/experiences/${params.id}`);
     revalidatePath("/my-experiences");
@@ -126,6 +141,17 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     const result = await col.deleteOne(query);
+
+    await recordActivity({
+      action: "delete",
+      actor: { email: session.user.email, name: session.user.name },
+      target: {
+        id: existingDoc.id || String(existingDoc._id),
+        company: existingDoc.company?.name || null,
+        candidate: existingDoc.candidate?.name || null,
+      },
+      detail: isAdmin && !isAuthor ? "Admin delete" : "Author delete",
+    });
 
     // Update metadata count
     const metaCol = await getCollection("metadata");

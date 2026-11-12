@@ -57,6 +57,31 @@ export interface AdminOverview {
   topCompanies: { name: string; count: number }[];
 }
 
+export interface DuplicateRecord {
+  _id: string;
+  id?: string | null;
+  created_at?: string | null;
+  role?: string | null;
+  outcome?: string | null;
+  quality?: number | null;
+  author_email?: string | null;
+  source_file?: string | null;
+}
+
+export interface DuplicateGroup {
+  key: string;
+  company: string;
+  candidate: string;
+  count: number;
+  records: DuplicateRecord[];
+}
+
+export interface DuplicateResult {
+  groups: DuplicateGroup[];
+  totalGroups: number;
+  totalRecords: number;
+}
+
 const ATTENTION_MATCH = {
   $or: [
     { "quality.issues.0": { $exists: true } },
@@ -266,5 +291,62 @@ export async function getAdminOverview(): Promise<AdminOverview> {
       name: row._id || "Unknown",
       count: row.count,
     })),
+  };
+}
+
+export async function findDuplicateGroups(limit = 200): Promise<DuplicateResult> {
+  const col = await getCollection("experiences");
+  const rows = await col
+    .aggregate([
+      {
+        $match: {
+          "company.name": { $nin: [null, ""] },
+          "candidate.name": { $nin: [null, ""] },
+        },
+      },
+      {
+        $group: {
+          // Case and surrounding whitespace should not hide a duplicate.
+          _id: {
+            company: { $toLower: { $trim: { input: "$company.name" } } },
+            candidate: { $toLower: { $trim: { input: "$candidate.name" } } },
+          },
+          company: { $first: "$company.name" },
+          candidate: { $first: "$candidate.name" },
+          count: { $sum: 1 },
+          records: {
+            $push: {
+              _id: { $toString: "$_id" },
+              id: "$id",
+              created_at: "$created_at",
+              role: "$job.role",
+              outcome: "$outcome.status",
+              quality: "$quality.score",
+              author_email: "$author.email",
+              source_file: "$source.file_name",
+            },
+          },
+        },
+      },
+      { $match: { count: { $gt: 1 } } },
+      { $sort: { count: -1, "_id.company": 1, "_id.candidate": 1 } },
+      { $limit: Math.min(500, Math.max(1, limit)) },
+    ])
+    .toArray();
+
+  const groups = rows.map((row) => ({
+    key: `${row._id.company}::${row._id.candidate}`,
+    company: row.company || "Unknown",
+    candidate: row.candidate || "Unknown",
+    count: row.count,
+    records: (row.records || []).sort((a: DuplicateRecord, b: DuplicateRecord) =>
+      String(b.created_at || "").localeCompare(String(a.created_at || ""))
+    ),
+  })) as DuplicateGroup[];
+
+  return {
+    groups,
+    totalGroups: groups.length,
+    totalRecords: groups.reduce((sum, group) => sum + group.count, 0),
   };
 }

@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { AdminExperienceRow, AdminOverview } from "@/lib/admin-experiences";
 import {
+  Activity,
   AlertTriangle,
   Building2,
   CalendarClock,
   ChevronLeft,
   ChevronRight,
+  Copy,
+  Download,
   ExternalLink,
   Pencil,
   Plus,
@@ -232,15 +235,35 @@ export default function AdminDashboardClient() {
             Review, search, and maintain every interview record in the archive.
           </p>
         </div>
-        <div className="admin-page-actions flex flex-wrap items-center gap-2">
-          <button type="button" onClick={refresh} className="ui-action-secondary" aria-label="Refresh records">
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </button>
-          <Link href="/contribute" className="ui-action-primary">
-            <Plus className="h-4 w-4" />
-            Add experience
-          </Link>
+        <div className="admin-page-actions">
+          <nav className="admin-page-nav" aria-label="Admin tools">
+            <Link href="/admin/activity" className="admin-nav-link">
+              <Activity className="h-4 w-4" />
+              Activity
+            </Link>
+            <Link href="/admin/duplicates" className="admin-nav-link">
+              <Copy className="h-4 w-4" />
+              Duplicates
+            </Link>
+            <a href="/api/admin/export?format=json" className="admin-nav-link">
+              <Download className="h-4 w-4" />
+              JSON
+            </a>
+            <a href="/api/admin/export?format=csv" className="admin-nav-link">
+              <Download className="h-4 w-4" />
+              CSV
+            </a>
+          </nav>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={refresh} className="ui-action-secondary" aria-label="Refresh records">
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </button>
+            <Link href="/contribute" className="ui-action-primary">
+              <Plus className="h-4 w-4" />
+              Add experience
+            </Link>
+          </div>
         </div>
       </header>
 

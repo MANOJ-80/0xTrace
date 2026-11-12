@@ -143,6 +143,8 @@ interface ManualEntryFormProps {
   mode?: "create" | "edit";
   hasPublished?: boolean;
   isAdmin?: boolean;
+  /** Admin edits return to the admin console instead of the author pages. */
+  adminMode?: boolean;
 }
 
 export default function ManualEntryForm({
@@ -151,6 +153,7 @@ export default function ManualEntryForm({
   mode = "create",
   hasPublished = false,
   isAdmin = false,
+  adminMode = false,
 }: ManualEntryFormProps = {}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -293,66 +296,90 @@ export default function ManualEntryForm({
     setSubmitting(true);
     setError(null);
 
-    const experience = {
-      id: "exp_draft",
-      source: { entry_method: "manual" },
+    // Edit mode must merge into the stored record, not replace it. Fields the
+    // form does not expose (author, eligibility, contacts email/phone, quality,
+    // raw_text, pre-placement data) are preserved by the leading spread.
+    const existing = mode === "edit" ? initialExperience : undefined;
+
+    const experience: any = {
+      ...(existing || {}),
+      id: existing?.id || "exp_draft",
+      source: {
+        ...(existing?.source || {}),
+        entry_method: existing?.source?.entry_method || "manual",
+      },
       candidate: {
+        ...(existing?.candidate || {}),
         name: form.candidateName || null,
         department: form.department || null,
         degree: form.degree || null,
         college: form.college || null,
         cgpa: form.cgpa ? parseFloat(form.cgpa) || form.cgpa : null,
-        roll_no: null,
       },
       company: {
+        ...(existing?.company || {}),
         name: form.companyName,
         normalized_name: form.companyName.toLowerCase().replace(/[^a-z0-9]/g, "_"),
       },
       job: {
+        ...(existing?.job || {}),
         role: form.role || null,
         employment_type: form.employmentType || null,
         location: form.location || null,
       },
       timeline: {
+        ...(existing?.timeline || {}),
         month: form.month || null,
         year: form.year ? parseInt(form.year) : null,
         drive_type: form.driveType || null,
       },
-      eligibility: {},
-      compensation: { ctc: form.ctc || null },
-      rounds: form.rounds.map((r, i) => ({
-        sequence: i + 1,
-        name: `Round ${i + 1}: ${r.name}`,
-        original_name: r.name,
-        type: r.type,
-        mode: r.mode || null,
-        duration: r.duration || null,
-        difficulty: r.difficulty || null,
-        description: r.description,
-        raw_content: r.description,
-        questions: r.questions
-          .filter((q) => q.question.trim())
-          .map((q) => ({
-            question: q.question,
-            topic: q.topic || null,
-            difficulty: q.difficulty || null,
-            category: q.category || null,
-          })),
-        coding: {
-          problem_count: r.coding.filter((c) => c.title.trim()).length,
-          problems: r.coding
-            .filter((c) => c.title.trim())
-            .map((c) => ({
-              title: c.title,
-              description: c.description || null,
-              difficulty: c.difficulty || null,
-              topics: c.topics
-                ? c.topics.split(",").map((t) => t.trim()).filter(Boolean)
-                : [],
+      compensation: {
+        ...(existing?.compensation || {}),
+        ctc: form.ctc || null,
+      },
+      rounds: form.rounds.map((r, i) => {
+        // Keep per-round metadata the form does not edit (date, venue, platform)
+        // when the round position is unchanged.
+        const prior = existing?.rounds?.[i];
+        return {
+          ...(prior || {}),
+          sequence: i + 1,
+          name: `Round ${i + 1}: ${r.name}`,
+          original_name: r.name,
+          type: r.type,
+          mode: r.mode || null,
+          duration: r.duration || null,
+          difficulty: r.difficulty || null,
+          description: r.description,
+          raw_content: r.description,
+          questions: r.questions
+            .filter((q) => q.question.trim())
+            .map((q) => ({
+              question: q.question,
+              topic: q.topic || null,
+              difficulty: q.difficulty || null,
+              category: q.category || null,
             })),
-        },
-      })),
-      outcome: { status: form.outcome || "unknown" },
+          coding: {
+            ...(prior?.coding || {}),
+            problem_count: r.coding.filter((c) => c.title.trim()).length,
+            problems: r.coding
+              .filter((c) => c.title.trim())
+              .map((c) => ({
+                title: c.title,
+                description: c.description || null,
+                difficulty: c.difficulty || null,
+                topics: c.topics
+                  ? c.topics.split(",").map((t) => t.trim()).filter(Boolean)
+                  : [],
+              })),
+          },
+        };
+      }),
+      outcome: {
+        ...(existing?.outcome || {}),
+        status: form.outcome || "unknown",
+      },
       tips: form.tips
         .split("\n")
         .map((t) => t.trim())
@@ -362,10 +389,17 @@ export default function ManualEntryForm({
         .map((m) => m.trim())
         .filter(Boolean),
       conclusion: form.conclusion || null,
-      contacts: { linkedin: form.linkedin || null },
-      additional_information: [],
-      quality: { score: 100, issues: [] },
-      raw_text: [
+      contacts: {
+        ...(existing?.contacts || {}),
+        linkedin: form.linkedin || null,
+      },
+    };
+
+    if (!existing) {
+      experience.eligibility = {};
+      experience.additional_information = [];
+      experience.quality = { score: 100, issues: [] };
+      experience.raw_text = [
         `Company: ${form.companyName}`,
         form.role && `Role: ${form.role}`,
         form.candidateName && `Candidate: ${form.candidateName}`,
@@ -375,8 +409,8 @@ export default function ManualEntryForm({
         form.mistakes && `Mistakes:\n${form.mistakes}`,
       ]
         .filter(Boolean)
-        .join("\n\n"),
-    };
+        .join("\n\n");
+    }
 
     try {
       if (mode === "edit" && experienceId) {
@@ -468,10 +502,10 @@ export default function ManualEntryForm({
           </button>
           {mode === "edit" ? (
             <button
-              onClick={() => router.push("/my-experiences")}
+              onClick={() => router.push(adminMode ? "/admin" : "/my-experiences")}
               className="ui-action-secondary"
             >
-              My Experiences
+              {adminMode ? "Back to admin" : "My Experiences"}
             </button>
           ) : (
             <button

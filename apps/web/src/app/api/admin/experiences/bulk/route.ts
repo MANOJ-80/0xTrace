@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { ObjectId } from "mongodb";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getCollection } from "@/lib/mongodb";
+import { recordActivity } from "@/lib/audit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +40,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const col = await getCollection("experiences");
+    const doomed = await col
+      .find({ $or: clauses }, { projection: { id: 1, company: 1, candidate: 1 } })
+      .toArray();
     const result = await col.deleteMany({ $or: clauses });
+
+    await recordActivity({
+      action: "bulk_delete",
+      actor: { email: session.user.email, name: session.user.name },
+      count: result.deletedCount,
+      target: { id: ids.slice(0, 3).join(", ") + (ids.length > 3 ? "…" : "") },
+      detail: doomed
+        .slice(0, 8)
+        .map((doc) => doc.company?.name || doc.id || String(doc._id))
+        .join(", "),
+    });
 
     const metaCol = await getCollection("metadata");
     const totalCount = await col.countDocuments();
