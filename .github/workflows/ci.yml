@@ -45,8 +45,7 @@ jobs:
           NEXTAUTH_URL: http://localhost:3000
 
       - name: Report dependency advisories
-        run: npm audit --audit-level=high
-        continue-on-error: true
+        run: npm audit --audit-level=high || true
 
   dataset-guard:
     name: No candidate dataset in git
