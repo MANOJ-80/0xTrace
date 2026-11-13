@@ -465,7 +465,7 @@ export default function ExtractionStudio({
                         candidate: { ...experience.candidate, name: event.target.value },
                       })
                     }
-                    placeholder="e.g. Candidate C"
+                    placeholder="e.g. Priya S"
                     className="w-full px-3 py-2 rounded-md bg-ox-void border border-ox-edge text-ox-ink text-sm focus:outline-none focus:border-ox-accent"
                   />
                 </label>

@@ -121,7 +121,7 @@ async function runBrowserTests() {
     await page.goto("http://localhost:3000/upload", { waitUntil: "networkidle0" });
 
     // Click on verified sample: Walmart
-    console.log("  Clicking 'Candidate — Walmart' sample button...");
+    console.log("  Clicking the Walmart sample button...");
     const sampleButtons = await page.$$("button");
     let clickedSample = false;
     for (const btn of sampleButtons) {

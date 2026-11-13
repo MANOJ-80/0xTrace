@@ -15,7 +15,7 @@ cp .env.example .env
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/experiences/parse \
-  -F "file=@../../ExperiencePDFs/Candidate_C.pdf"
+  -F "file=@../../data/sample.pdf"
 ```
 
 ```bash

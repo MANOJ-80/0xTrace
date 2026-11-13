@@ -645,7 +645,7 @@ export default function ManualEntryForm({
               <p className="text-xs font-semibold uppercase tracking-wider text-ox-muted">Candidate Details</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Your Name">
-                  <input className={inputCls} placeholder="e.g. Candidate H" value={form.candidateName} onChange={(e) => set("candidateName", e.target.value)} />
+                  <input className={inputCls} placeholder="e.g. Rahul Kumar" value={form.candidateName} onChange={(e) => set("candidateName", e.target.value)} />
                 </Field>
                 <Field label="Department">
                   <input className={inputCls} placeholder="e.g. BE CSE" value={form.department} onChange={(e) => set("department", e.target.value)} />

@@ -55,12 +55,22 @@ jobs:
       - name: Check out
         uses: actions/checkout@v4
 
-      - name: Fail if dataset or local expectations are tracked
+      - name: Fail if candidate data is tracked
         run: |
-          tracked=$(git ls-files | grep -E '^(data/|samplepdfs/)|expectations\.local\.json$' || true)
+          tracked=$(git ls-files | grep -E '^(data/|samplepdfs/|ExperiencePDFs/)|expectations\.local\.json$|^[^/]+-(canonical|extracted|ui)\.json$|^[^/]+_Interview_Experiences\.md$|\.pdf$' || true)
           if [ -n "$tracked" ]; then
             echo "Candidate data must not be committed:"
             echo "$tracked"
             exit 1
           fi
           echo "No candidate dataset is tracked."
+
+      - name: Fail if personal email addresses are tracked
+        run: |
+          hits=$(git grep -InE '[A-Za-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.[A-Za-z]{2,}' -- . || true)
+          if [ -n "$hits" ]; then
+            echo "Personal email addresses must not be committed:"
+            echo "$hits"
+            exit 1
+          fi
+          echo "No personal email addresses are tracked."
