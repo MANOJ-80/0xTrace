@@ -53,7 +53,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const isAdmin = Boolean(session?.user?.isAdmin);
     const isAuthor = Boolean(email && isAuthorOf(serialized, email));
 
-    if (serialized.moderation_status === "pending" && !isAdmin && !isAuthor) {
+    const isUnpublished =
+      serialized.moderation_status === "pending" ||
+      serialized.moderation_status === "rejected";
+    if (isUnpublished && !isAdmin && !isAuthor) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 

@@ -16,7 +16,10 @@ interface ExperienceDetailPageProps {
 }
 
 function canView(experience: NonNullable<Awaited<ReturnType<typeof getExperienceById>>>, email?: string | null, isAdmin?: boolean) {
-  if (experience.moderation_status !== "pending") return true;
+  const isUnpublished =
+    experience.moderation_status === "pending" ||
+    experience.moderation_status === "rejected";
+  if (!isUnpublished) return true;
   if (isAdmin) return true;
   return Boolean(email && experience.author?.email?.toLowerCase() === email.toLowerCase());
 }

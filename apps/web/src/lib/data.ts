@@ -25,15 +25,17 @@ export function invalidateCache() {
 /**
  * Full records for server-side use.
  *
- * Public pages should call `getExperienceSummaries` instead. Pending review
- * records are hidden unless the caller explicitly asks for them, so admin and
- * author views pass `{ includePending: true }`.
+ * Public pages should call `getExperienceSummaries` instead. Pending and
+ * rejected records are hidden unless the caller explicitly asks for
+ * everything, so author and admin views use the targeted admin/author queries.
  */
 export async function getAllExperiences(
-  options: { includePending?: boolean } = {}
+  options: { includeUnpublished?: boolean } = {}
 ): Promise<Experience[]> {
   const col = await getCollection("experiences");
-  const filter = options.includePending ? {} : { moderation_status: { $ne: "pending" } };
+  const filter = options.includeUnpublished
+    ? {}
+    : { moderation_status: { $nin: ["pending", "rejected"] } };
   const docs = await col.find(filter).toArray();
   return docs.map(doc => ({ ...doc, _id: doc._id.toString() })) as unknown as Experience[];
 }
@@ -49,7 +51,7 @@ export async function getExperienceSummaries(): Promise<ExperienceSummary[]> {
   const col = await getCollection("experiences");
   const rows = await col
     .aggregate([
-      { $match: { moderation_status: { $ne: "pending" } } },
+      { $match: { moderation_status: { $nin: ["pending", "rejected"] } } },
       {
         $project: {
           _id: { $toString: "$_id" },
