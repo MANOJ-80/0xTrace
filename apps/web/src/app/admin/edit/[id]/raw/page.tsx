@@ -3,11 +3,10 @@ import EditExperienceClient from "./EditExperienceClient";
 export const revalidate = 3600;
 
 interface RawEditPageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
-export default function RawEditPage({ params }: RawEditPageProps) {
-  return <EditExperienceClient id={params.id} />;
+export default async function RawEditPage({ params }: RawEditPageProps) {
+  const { id } = await params;
+  return <EditExperienceClient id={id} />;
 }

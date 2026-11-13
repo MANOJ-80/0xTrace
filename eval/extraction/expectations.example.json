@@ -1,0 +1,31 @@
+{
+  "tuning": [
+    "samplepdfs/example-one.pdf"
+  ],
+  "holdout": [
+    "samplepdfs/example-two.pdf"
+  ],
+  "cases": {
+    "samplepdfs/example-one.pdf": {
+      "company": "Example Company",
+      "candidate": "Candidate A",
+      "role": "Software Engineer",
+      "ctc": null,
+      "rounds": 3,
+      "outcome_status": "selected",
+      "selected": null,
+      "total": null,
+      "tips": true
+    },
+    "samplepdfs/example-two.pdf": {
+      "company_contains": "Example",
+      "candidate": "Candidate B",
+      "role": null,
+      "rounds": 2,
+      "outcome_status": null,
+      "selected": null,
+      "total": null,
+      "tips": false
+    }
+  }
+}

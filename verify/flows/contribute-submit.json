@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "id": "contribute-submit",
+  "title": "Submit a complete interview experience",
+  "priority": "high",
+  "tags": ["contribute", "form", "write"],
+  "environment": "local",
+  "role": "signed-in-user",
+  "surface": "web",
+  "source": "generated",
+  "feature": "contribute-form",
+  "preconditions": [
+    "The local app is running against the isolated database.",
+    "An approved institutional session is available.",
+    "The run may create one synthetic record and remove it afterwards."
+  ],
+  "steps": [
+    {
+      "action": "Open /contribute and submit with required fields blank.",
+      "expected": "Submission is blocked and the first missing required field is identified.",
+      "evidence": ["screenshot", "network"],
+      "handles": ["button:Submit Experience", "status:required"]
+    },
+    {
+      "action": "Fill company, role, candidate details, one round with a walkthrough and one question, then submit.",
+      "expected": "The record is created, the form reports success, and the new record is reachable.",
+      "evidence": ["screenshot", "network"],
+      "handles": ["textbox:Company Name", "button:Submit Experience"]
+    },
+    {
+      "action": "Open /my-experiences and confirm the new record is listed.",
+      "expected": "The record appears under the signed-in user's contributions.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:My Experiences"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "Delete the synthetic record created by this check and confirm it is gone from the directory.",
+  "risk": "Writes to the isolated database only. Blocked without an institutional identity."
+}

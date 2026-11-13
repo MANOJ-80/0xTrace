@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "id": "directory-search",
+  "title": "Narrow the directory with search and the outcome filter",
+  "priority": "critical",
+  "tags": ["directory", "search", "filters"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "experience-directory",
+  "preconditions": [
+    "The directory is open and shows the full seeded list."
+  ],
+  "steps": [
+    {
+      "action": "Type 'Acko' into the search field 'Search interview experiences'.",
+      "expected": "Only records matching the query remain and the count line drops below the full total.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["searchbox:Search interview experiences", "status:Showing"]
+    },
+    {
+      "action": "Clear the search and select 'Rejected' in the outcome filter group.",
+      "expected": "Only records whose outcome is rejected remain, and the selected segment is marked pressed.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["button:Rejected", "group:Filter by outcome"]
+    },
+    {
+      "action": "Select the 'Selected' outcome segment.",
+      "expected": "The list changes to records with a selected or offer outcome and the count updates.",
+      "evidence": ["screenshot", "notes"],
+      "handles": ["button:Selected"]
+    },
+    {
+      "action": "Choose 'Sort: Company (A-Z)' from the sort control.",
+      "expected": "The visible company names are ordered alphabetically.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["combobox:Sort interview experiences"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "Reset the filters so the next check starts from the full list.",
+  "risk": "Read-only."
+}

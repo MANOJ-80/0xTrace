@@ -159,8 +159,9 @@ export default function ManualEntryForm({
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState<{ id: string } | null>(null);
+  const [success, setSuccess] = useState<{ id: string; pending: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
 
   const [form, setForm] = useState<FormState>(() => {
     if (initialExperience) {
@@ -426,7 +427,7 @@ export default function ManualEntryForm({
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Update failed");
-        setSuccess({ id: experienceId });
+        setSuccess({ id: experienceId, pending: false });
       } else {
         const res = await fetch("/api/canonical/ingest", {
           method: "POST",
@@ -435,7 +436,7 @@ export default function ManualEntryForm({
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Submission failed");
-        setSuccess({ id: data.assigned_id });
+        setSuccess({ id: data.assigned_id, pending: data.moderation_status === "pending" });
       }
     } catch (err: any) {
       setError(err.message);
@@ -482,7 +483,11 @@ export default function ManualEntryForm({
           <CheckCircle2 className="w-8 h-8 text-green-400" />
         </div>
         <h2 className="text-2xl font-semibold text-ox-ink">
-          {mode === "edit" ? "Experience updated" : "Experience published"}
+          {mode === "edit"
+            ? "Experience updated"
+            : success.pending
+              ? "Submitted for review"
+              : "Experience published"}
         </h2>
         <p className="text-ox-muted">
           {mode === "edit" ? (
@@ -490,6 +495,13 @@ export default function ManualEntryForm({
               Your changes to{" "}
               <code className="text-ox-accent font-mono">{success.id}</code> have
               been saved.
+            </>
+          ) : success.pending ? (
+            <>
+              Your interview experience was saved as{" "}
+              <code className="text-ox-accent font-mono">{success.id}</code>. A
+              moderator will review it before it appears in the public archive.
+              You can open it now to check the details.
             </>
           ) : (
             <>
@@ -560,7 +572,7 @@ export default function ManualEntryForm({
         ) : (
           <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-ox-surface border border-ox-edge text-xs text-ox-muted">
             <AlertTriangle className="w-4 h-4 text-ox-accent flex-shrink-0" />
-            <span>Notice: Student accounts can publish one interview experience. You can edit your submission anytime after publishing.</span>
+            <span>Notice: Student accounts can submit one interview experience. New submissions go to a moderator for review before they appear in the public archive. You can edit your submission after it is published.</span>
           </div>
         )
       )}
@@ -941,6 +953,30 @@ export default function ManualEntryForm({
               )}
             </div>
 
+            {mode === "create" && (
+              <div className="rounded-lg border border-ox-edge bg-ox-void p-4">
+                <label className="flex items-start gap-3 text-sm text-ox-muted">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(event) => setConsent(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-ox-accent"
+                    required
+                  />
+                  <span>
+                    I have permission to share this interview experience and the
+                    details it contains. I understand that it will be reviewed by a
+                    moderator before publication, that my full name is shortened in
+                    the public archive, and that I can request removal at any time.{" "}
+                    <a href="/privacy" className="text-ox-accent underline underline-offset-2">
+                      Privacy policy
+                    </a>
+                    .
+                  </span>
+                </label>
+              </div>
+            )}
+
             {error && (
               <div className="bg-red-900/20 border border-red-700 rounded-lg px-4 py-3 text-sm text-red-300">
                 {error}
@@ -971,7 +1007,7 @@ export default function ManualEntryForm({
         ) : (
           <button
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || (mode === "create" && !consent)}
             className="ui-action-primary submit-action disabled:opacity-50"
           >
             {submitting ? (

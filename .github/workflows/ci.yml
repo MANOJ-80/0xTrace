@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Typecheck and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXTAUTH_SECRET: ci-build-only-not-a-real-secret
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Report dependency advisories
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  dataset-guard:
+    name: No candidate dataset in git
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Fail if dataset or local expectations are tracked
+        run: |
+          tracked=$(git ls-files | grep -E '^(data/|samplepdfs/)|expectations\.local\.json$' || true)
+          if [ -n "$tracked" ]; then
+            echo "Candidate data must not be committed:"
+            echo "$tracked"
+            exit 1
+          fi
+          echo "No candidate dataset is tracked."

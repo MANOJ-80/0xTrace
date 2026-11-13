@@ -4,12 +4,14 @@ import { getServerSession } from "next-auth/next";
 import { ArrowLeft, Copy, ExternalLink, Pencil } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { findDuplicateGroups } from "@/lib/admin-experiences";
+import { PRIVATE_ROBOTS } from "@/lib/metadata";
 import MergeIntoButton from "./MergeIntoButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
+  robots: PRIVATE_ROBOTS,
   title: "Duplicates | 0xTrace Admin",
 };
 

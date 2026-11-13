@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "id": "api-detail-404",
+  "title": "Resolve a record by id and reject an unknown id",
+  "priority": "normal",
+  "tags": ["api", "contract", "error-state"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "api",
+  "source": "generated",
+  "feature": "experience-api",
+  "preconditions": [
+    "The local app is running against the isolated seeded database."
+  ],
+  "steps": [
+    {
+      "action": "GET /api/experiences/<ObjectId of a known record>.",
+      "expected": "200 with the same _id and the record fields.",
+      "evidence": ["notes", "network"],
+      "handles": ["endpoint:GET /api/experiences/[id]"]
+    },
+    {
+      "action": "GET /api/experiences/exp_001.",
+      "expected": "200 for the legacy id lookup, returning the record whose id is exp_001.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:GET /api/experiences/exp_001"]
+    },
+    {
+      "action": "GET /api/experiences/exp_999999.",
+      "expected": "404 with a JSON error body, not an HTML error page.",
+      "evidence": ["notes", "network"],
+      "handles": ["endpoint:GET /api/experiences/unknown"]
+    }
+  ],
+  "viewports": [],
+  "cleanup": "No data changes.",
+  "risk": "Read-only. The ObjectId must come from the isolated store, not from a remote cluster."
+}

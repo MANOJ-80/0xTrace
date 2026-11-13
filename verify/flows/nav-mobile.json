@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "id": "nav-mobile",
+  "title": "Open and use the mobile menu",
+  "priority": "high",
+  "tags": ["navigation", "mobile", "keyboard"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "site-navigation",
+  "preconditions": [
+    "The local app is running and the doctor check passes."
+  ],
+  "steps": [
+    {
+      "action": "Open / at 390 x 844 and activate the menu toggle.",
+      "expected": "A mobile navigation panel opens, the toggle reports expanded, and the same five destinations are listed.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["button:Open menu", "navigation:Mobile navigation"]
+    },
+    {
+      "action": "Choose About from the mobile panel.",
+      "expected": "The About page renders and the panel closes.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["link:About", "heading:Interview knowledge, passed forward."]
+    },
+    {
+      "action": "Open the panel and activate the close control.",
+      "expected": "The panel closes and the toggle reports collapsed.",
+      "evidence": ["screenshot", "notes"],
+      "handles": ["button:Close menu"]
+    }
+  ],
+  "viewports": ["mobile"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only navigation."
+}

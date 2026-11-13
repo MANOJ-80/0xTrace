@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "id": "auth-guest-redirects",
+  "title": "Redirect guests from every protected route with the destination preserved",
+  "priority": "critical",
+  "tags": ["auth", "gate", "redirect"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "authentication-gate",
+  "preconditions": [
+    "The local app is running and the doctor check passes.",
+    "No session cookie is present."
+  ],
+  "steps": [
+    {
+      "action": "Request /questions, /analytics, /contribute, /upload, and /my-experiences without a session.",
+      "expected": "Each responds with a redirect to /login and a callbackUrl that matches the requested path.",
+      "evidence": ["notes", "network"],
+      "handles": ["heading:Sign in to continue"]
+    },
+    {
+      "action": "Request /admin without a session.",
+      "expected": "The request redirects to /login with callbackUrl=/admin.",
+      "evidence": ["notes", "network"],
+      "handles": ["heading:Sign in to continue"]
+    },
+    {
+      "action": "Open the redirect target for /questions in the browser.",
+      "expected": "The sign-in page renders and the institutional-email requirement is stated.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:Sign in to continue", "status:@psgitech.ac.in"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only. Do not attempt to complete OAuth."
+}

@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "about-faq",
+  "title": "Expand and collapse the FAQ answers",
+  "priority": "normal",
+  "tags": ["about", "faq", "state"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "about-page",
+  "preconditions": [
+    "The about page is open."
+  ],
+  "steps": [
+    {
+      "action": "Inspect the FAQ list in its initial state.",
+      "expected": "The first question is expanded and the remaining questions are collapsed.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["group:Using the archive"]
+    },
+    {
+      "action": "Expand the second question and collapse the first.",
+      "expected": "The chosen answer becomes visible and the collapsed one is hidden.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["button:Are questions word-for-word transcripts?"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only."
+}

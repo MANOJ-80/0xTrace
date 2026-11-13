@@ -6,8 +6,10 @@ import type { AdminExperienceRow, AdminOverview } from "@/lib/admin-experiences"
 import {
   Activity,
   AlertTriangle,
+  Ban,
   Building2,
   CalendarClock,
+  Check,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -58,6 +60,7 @@ export default function AdminDashboardClient() {
   const [debouncedQ, setDebouncedQ] = useState("");
   const [outcome, setOutcome] = useState("");
   const [quality, setQuality] = useState("");
+  const [status, setStatus] = useState("");
   const [sort, setSort] = useState("recent");
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -89,7 +92,7 @@ export default function AdminDashboardClient() {
   useEffect(() => {
     setPage(1);
     setSelected(new Set());
-  }, [debouncedQ, outcome, quality, sort, limit]);
+  }, [debouncedQ, outcome, quality, status, sort, limit]);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -97,11 +100,12 @@ export default function AdminDashboardClient() {
     if (outcome) params.set("outcome", outcome);
     if (quality === "attention") params.set("attention", "1");
     else if (quality) params.set("quality", quality);
+    if (status) params.set("status", status);
     params.set("sort", sort);
     params.set("page", String(page));
     params.set("limit", String(limit));
     return params.toString();
-  }, [debouncedQ, outcome, quality, sort, page, limit]);
+  }, [debouncedQ, outcome, quality, status, sort, page, limit]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -151,11 +155,38 @@ export default function AdminDashboardClient() {
     });
   };
 
+  const setModeration = async (row: AdminExperienceRow, next: "published" | "rejected") => {
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/experiences/${row._id || row.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moderation_status: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Could not update moderation status");
+      }
+      setNotice(
+        next === "published"
+          ? "Record published to the archive."
+          : "Record rejected. It stays hidden from the archive."
+      );
+      refresh();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const clearFilters = () => {
     setQ("");
     setDebouncedQ("");
     setOutcome("");
     setQuality("");
+    setStatus("");
     setSort("recent");
   };
 
@@ -190,7 +221,8 @@ export default function AdminDashboardClient() {
     }
   };
 
-  const deleteSelected = async () => {    if (selected.size === 0) return;
+  const deleteSelected = async () => {
+    if (selected.size === 0) return;
     if (
       !window.confirm(
         `Delete ${selected.size} experience${selected.size === 1 ? "" : "s"}? This cannot be undone.`
@@ -247,7 +279,7 @@ export default function AdminDashboardClient() {
     }
   };
 
-  const hasFilters = Boolean(debouncedQ || outcome || quality || sort !== "recent");
+  const hasFilters = Boolean(debouncedQ || outcome || quality || status || sort !== "recent");
   const start = total === 0 ? 0 : (page - 1) * limit + 1;
   const end = Math.min(page * limit, total);
 
@@ -332,9 +364,24 @@ export default function AdminDashboardClient() {
         </div>
         <div className="admin-stat">
           <span className="admin-stat-icon"><CalendarClock className="h-4 w-4" /></span>
-          <span className="admin-stat-label">New this week</span>
-          <strong className="admin-stat-value">{overview ? overview.last7Days.toLocaleString() : "—"}</strong>
-          <span className="admin-stat-note">Submitted in the last 7 days</span>
+          <span className="admin-stat-label">Pending review</span>
+          <strong className="admin-stat-value">{overview ? overview.pending.toLocaleString() : "—"}</strong>
+          <div className="admin-stat-note">
+            {overview
+              ? overview.pending > 0
+                ? `Waiting for approval · ${overview.last7Days.toLocaleString()} submitted this week`
+                : `Nothing waiting · ${overview.last7Days.toLocaleString()} submitted this week`
+              : "Loading summary"}
+            {overview && overview.pending > 0 && (
+              <button
+                type="button"
+                onClick={() => setStatus(status === "pending" ? "" : "pending")}
+                className="admin-stat-action"
+              >
+                {status === "pending" ? "Show all records" : "Review pending"}
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
@@ -381,6 +428,17 @@ export default function AdminDashboardClient() {
           </div>
 
           <div className="admin-filters">
+            <select
+              value={status}
+              onChange={(event) => setStatus(event.target.value)}
+              aria-label="Filter by moderation status"
+            >
+              <option value="">All statuses</option>
+              <option value="pending">Pending review</option>
+              <option value="published">Published</option>
+              <option value="rejected">Rejected</option>
+            </select>
+
             <select
               value={quality}
               onChange={(event) => setQuality(event.target.value)}
@@ -482,7 +540,15 @@ export default function AdminDashboardClient() {
                         />
                       </td>
                       <td>
-                        <div className="admin-primary-cell">{row.company?.name || "Unknown"}</div>
+                        <div className="admin-primary-cell">
+                          {row.company?.name || "Unknown"}
+                          {row.moderation_status === "pending" && (
+                            <span className="admin-badge admin-badge--warn ml-2">Pending</span>
+                          )}
+                          {row.moderation_status === "rejected" && (
+                            <span className="admin-badge admin-badge--fail ml-2">Rejected</span>
+                          )}
+                        </div>
                         <div className="admin-secondary-cell">
                           {row.id || row._id}
                           {row.source?.experience_number ? ` · #${row.source.experience_number}` : ""}
@@ -516,6 +582,30 @@ export default function AdminDashboardClient() {
                       <td className="hidden lg:table-cell whitespace-nowrap">{formatDate(row.created_at)}</td>
                       <td>
                         <div className="admin-row-actions">
+                          {row.moderation_status === "pending" && (
+                            <button
+                              type="button"
+                              onClick={() => setModeration(row, "published")}
+                              disabled={busy}
+                              className="admin-icon-action admin-icon-action--approve"
+                              aria-label={`Approve and publish experience for ${row.company?.name || "unknown company"}`}
+                              title="Approve and publish"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                          )}
+                          {row.moderation_status === "pending" && (
+                            <button
+                              type="button"
+                              onClick={() => setModeration(row, "rejected")}
+                              disabled={busy}
+                              className="admin-icon-action admin-icon-action--danger"
+                              aria-label={`Reject experience for ${row.company?.name || "unknown company"}`}
+                              title="Reject submission"
+                            >
+                              <Ban className="h-4 w-4" />
+                            </button>
+                          )}
                           <Link
                             href={`/experiences/${row._id || row.id}`}
                             target="_blank"

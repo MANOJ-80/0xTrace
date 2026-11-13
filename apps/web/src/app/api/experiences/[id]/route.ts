@@ -5,58 +5,84 @@ import { ObjectId } from "mongodb";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { recordActivity } from "@/lib/audit";
-import { toPublicExperience } from "@/lib/public-experience";
-import type { Experience } from "@/lib/types";
+import { toExperienceSummary } from "@/lib/public-experience";
+import type { Experience, ModerationStatus } from "@/lib/types";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+const AUTHOR_EDITABLE_FIELDS = new Set([
+  "candidate",
+  "company",
+  "job",
+  "timeline",
+  "eligibility",
+  "compensation",
+  "pre_placement",
+  "rounds",
+  "outcome",
+  "tips",
+  "mistakes",
+  "conclusion",
+  "contacts",
+  "additional_information",
+]);
+
+const ADMIN_ONLY_FIELDS = new Set(["quality", "raw_text", "source", "moderation_status"]);
+const MODERATION_STATUSES = new Set<ModerationStatus>(["pending", "published", "rejected"]);
+const MAX_JSON_BYTES = 1_000_000;
+
+function findQuery(id: string): Record<string, unknown> {
+  return ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { id };
+}
+
+function isAuthorOf(doc: Record<string, any>, email: string): boolean {
+  return Boolean(doc.author?.email && String(doc.author.email).toLowerCase() === email);
+}
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const col = await getCollection("experiences");
-    let doc = null;
-
-    if (ObjectId.isValid(params.id)) {
-      doc = await col.findOne({ _id: new ObjectId(params.id) });
-    } else {
-      doc = await col.findOne({ id: params.id });
-    }
+    const doc = await col.findOne(findQuery(id));
 
     if (!doc) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     const serialized = { ...doc, _id: doc._id.toString() } as unknown as Experience;
-
-    // Owners and admins need the full document for the structured and raw
-    // editors. Everyone else gets the public shape.
     const session = await getServerSession(authOptions);
     const email = session?.user?.email?.toLowerCase();
-    const isAdmin = !!session?.user?.isAdmin;
-    const isAuthor = Boolean(
-      email && serialized.author?.email?.toLowerCase() === email
-    );
+    const isAdmin = Boolean(session?.user?.isAdmin);
+    const isAuthor = Boolean(email && isAuthorOf(serialized, email));
 
+    if (serialized.moderation_status === "pending" && !isAdmin && !isAuthor) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Owners and admins need the full document for the structured and raw
+    // editors. Everyone else gets the anonymous summary.
     return NextResponse.json(
-      isAdmin || isAuthor ? serialized : toPublicExperience(serialized)
+      isAdmin || isAuthor ? serialized : toExperienceSummary(serialized as unknown as Record<string, any>)
     );
-  } catch (err: any) {
-    return NextResponse.json({ error: "Failed to fetch", detail: err.message }, { status: 500 });
+  } catch (error) {
+    console.error("[api/experiences/:id] fetch failed:", error);
+    return NextResponse.json({ error: "Failed to fetch experience" }, { status: 500 });
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > MAX_JSON_BYTES) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
   try {
     const col = await getCollection("experiences");
-
-    let query: any = {};
-    if (ObjectId.isValid(params.id)) {
-      query = { _id: new ObjectId(params.id) };
-    } else {
-      query = { id: params.id };
-    }
+    const query = findQuery(id);
 
     const existingDoc = await col.findOne(query);
     if (!existingDoc) {
@@ -64,10 +90,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const userEmail = session.user.email.toLowerCase();
-    const isAuthor =
-      existingDoc.author?.email &&
-      existingDoc.author.email.toLowerCase() === userEmail;
-    const isAdmin = !!session.user.isAdmin;
+    const isAuthor = isAuthorOf(existingDoc, userEmail);
+    const isAdmin = Boolean(session.user.isAdmin);
 
     if (!isAuthor && !isAdmin) {
       return NextResponse.json(
@@ -77,23 +101,49 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     const body = await req.json();
-
-    // Prevent overwriting immutable or security fields
-    const { _id, id, author, created_at, ...updateData } = body;
-
-    const finalUpdate: any = {
-      ...updateData,
-      updated_at: new Date().toISOString(),
-    };
-
-    // Only admins can deliberately alter the author field
-    if (isAdmin && author !== undefined) {
-      finalUpdate.author = author;
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid update payload" }, { status: 400 });
     }
 
-    const result = await col.updateOne(query, { $set: finalUpdate });
+    // Never accept server-managed identity or timestamps from the client.
+    const {
+      _id: _ignoredDocId,
+      id: _ignoredRecordId,
+      author,
+      created_at: _ignoredCreatedAt,
+      ...candidateUpdate
+    } = body as Record<string, unknown>;
 
-    const changedKeys = Object.keys(updateData).slice(0, 12);
+    const updateData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(candidateUpdate)) {
+      if (AUTHOR_EDITABLE_FIELDS.has(key)) {
+        updateData[key] = value;
+      } else if (isAdmin && ADMIN_ONLY_FIELDS.has(key)) {
+        updateData[key] = value;
+      }
+    }
+
+    if (isAdmin && author !== undefined) {
+      updateData.author = author;
+    }
+
+    if (isAdmin && updateData.moderation_status !== undefined) {
+      if (!MODERATION_STATUSES.has(updateData.moderation_status as ModerationStatus)) {
+        return NextResponse.json({ error: "Invalid moderation status" }, { status: 400 });
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "No editable fields supplied" }, { status: 400 });
+    }
+
+    updateData.updated_at = new Date().toISOString();
+
+    const result = await col.updateOne(query, { $set: updateData });
+
+    const changedKeys = Object.keys(updateData)
+      .filter((key) => key !== "updated_at")
+      .slice(0, 12);
     await recordActivity({
       action: "update",
       actor: { email: session.user.email, name: session.user.name },
@@ -108,7 +158,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     });
 
     revalidatePath("/experiences");
-    revalidatePath(`/experiences/${params.id}`);
+    revalidatePath(`/experiences/${id}`);
     revalidatePath("/my-experiences");
     revalidatePath("/questions");
     revalidatePath("/analytics");
@@ -116,12 +166,14 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     revalidatePath("/");
 
     return NextResponse.json({ success: true, modifiedCount: result.modifiedCount });
-  } catch (err: any) {
-    return NextResponse.json({ error: "Failed to update", detail: err.message }, { status: 500 });
+  } catch (error) {
+    console.error("[api/experiences/:id] update failed:", error);
+    return NextResponse.json({ error: "Failed to update experience" }, { status: 500 });
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -129,13 +181,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   try {
     const col = await getCollection("experiences");
-    
-    let query: any = {};
-    if (ObjectId.isValid(params.id)) {
-      query = { _id: new ObjectId(params.id) };
-    } else {
-      query = { id: params.id };
-    }
+    const query = findQuery(id);
 
     const existingDoc = await col.findOne(query);
     if (!existingDoc) {
@@ -143,10 +189,8 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     const userEmail = session.user.email.toLowerCase();
-    const isAuthor =
-      existingDoc.author?.email &&
-      existingDoc.author.email.toLowerCase() === userEmail;
-    const isAdmin = !!session.user.isAdmin;
+    const isAuthor = isAuthorOf(existingDoc, userEmail);
+    const isAdmin = Boolean(session.user.isAdmin);
 
     if (!isAuthor && !isAdmin) {
       return NextResponse.json(
@@ -168,7 +212,6 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       detail: isAdmin && !isAuthor ? "Admin delete" : "Author delete",
     });
 
-    // Update metadata count
     const metaCol = await getCollection("metadata");
     const totalCount = await col.countDocuments();
     await metaCol.updateOne(
@@ -177,7 +220,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     );
 
     revalidatePath("/experiences");
-    revalidatePath(`/experiences/${params.id}`);
+    revalidatePath(`/experiences/${id}`);
     revalidatePath("/my-experiences");
     revalidatePath("/questions");
     revalidatePath("/analytics");
@@ -185,7 +228,8 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     revalidatePath("/");
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: "Failed to delete", detail: err.message }, { status: 500 });
+  } catch (error) {
+    console.error("[api/experiences/:id] delete failed:", error);
+    return NextResponse.json({ error: "Failed to delete experience" }, { status: 500 });
   }
 }

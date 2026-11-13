@@ -9,6 +9,7 @@ import {
   sameCompanyAndCandidate,
 } from "@/lib/merge-experience";
 import type { Experience } from "@/lib/types";
+import { serverError } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -152,10 +153,7 @@ export async function POST(req: NextRequest) {
       targetId: targetDoc.id || String(targetDoc._id),
       merged: removal.deletedCount,
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: "Merge failed", detail: error.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    return serverError("api/admin/duplicates/merge", error, "Merge failed");
   }
 }

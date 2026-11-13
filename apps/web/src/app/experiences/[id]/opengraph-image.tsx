@@ -11,15 +11,14 @@ export const size = {
 export const contentType = "image/png";
 
 interface Props {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export default async function Image({ params }: Props) {
+  const { id } = await params;
   let exp = null;
   try {
-    exp = await getExperienceById(params.id);
+    exp = await getExperienceById(id);
   } catch (e) {
     // Graceful fallback
   }

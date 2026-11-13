@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAdminExperiences, type AdminSort } from "@/lib/admin-experiences";
+import { serverError } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
   const qualityParam = params.get("quality") || "";
   const sortParam = (params.get("sort") || "recent") as AdminSort;
+  const statusParam = params.get("status") || "";
 
   try {
     const result = await getAdminExperiences({
@@ -23,15 +25,16 @@ export async function GET(req: NextRequest) {
       outcome: params.get("outcome") || "",
       quality: qualityParam === "flagged" || qualityParam === "ok" ? qualityParam : "",
       attention: qualityParam === "attention",
+      status:
+        statusParam === "pending" || statusParam === "published" || statusParam === "rejected"
+          ? statusParam
+          : "",
       sort: SORTS.has(sortParam) ? sortParam : "recent",
       page: Number(params.get("page") || 1),
       limit: Number(params.get("limit") || 25),
     });
     return NextResponse.json(result);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: "Failed to load experiences", detail: error.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    return serverError("api/admin/experiences", error, "Failed to load experiences");
   }
 }

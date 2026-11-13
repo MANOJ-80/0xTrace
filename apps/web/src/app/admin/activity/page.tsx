@@ -4,11 +4,13 @@ import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { getActivity, type AuditAction } from "@/lib/audit";
+import { PRIVATE_ROBOTS } from "@/lib/metadata";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
+  robots: PRIVATE_ROBOTS,
   title: "Activity log | 0xTrace Admin",
 };
 
@@ -50,10 +52,11 @@ function formatDate(value: string): string {
 }
 
 interface ActivityPageProps {
-  searchParams: { page?: string; action?: string };
+  searchParams: Promise<{ page?: string; action?: string }>;
 }
 
-export default async function ActivityPage({ searchParams }: ActivityPageProps) {
+export default async function ActivityPage({ searchParams: searchParamsPromise }: ActivityPageProps) {
+  const searchParams = await searchParamsPromise;
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.email) {
     redirect("/login?callbackUrl=/admin/activity");

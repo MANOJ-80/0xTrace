@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "id": "detail-content",
+  "title": "Read a full interview record",
+  "priority": "critical",
+  "tags": ["detail", "content", "auth"],
+  "environment": "local",
+  "role": "signed-in-user",
+  "surface": "web",
+  "source": "generated",
+  "feature": "experience-detail",
+  "preconditions": [
+    "The local app is running with the seeded database.",
+    "An approved institutional session is available and stored for reuse."
+  ],
+  "steps": [
+    {
+      "action": "Open a known record while signed in.",
+      "expected": "The company, role, outcome, candidate details, and round list render, with the record id visible.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:company", "status:Interview rounds"]
+    },
+    {
+      "action": "Open the first round.",
+      "expected": "The round detail opens with its questions and closes back to the list.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["button:round"]
+    },
+    {
+      "action": "Switch to the 'Original Writeup' tab.",
+      "expected": "The original candidate text renders in the document reader.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["button:Original Writeup"]
+    },
+    {
+      "action": "Open a record id that does not exist.",
+      "expected": "The not-found page renders instead of an error or a blank screen.",
+      "evidence": ["screenshot", "console"],
+      "handles": ["heading:404"]
+    }
+  ],
+  "viewports": ["desktop", "mobile"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only, but requires an identity this run does not have. Report blocked rather than substituting the public API response."
+}

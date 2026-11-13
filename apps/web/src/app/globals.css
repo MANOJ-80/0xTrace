@@ -262,6 +262,7 @@ select[class*="appearance-none"] {
 .admin-stat-label { grid-area: label; color: var(--ox-muted); font-size: 12px; }
 .admin-stat-value { grid-area: value; color: var(--ox-ink); font: 500 24px/1.15 var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 .admin-stat-note { grid-area: note; margin-top: 8px; color: var(--ox-muted); font-size: 11px; line-height: 1.4; }
+.admin-stat-action { display: block; margin-top: 6px; padding: 0; border: 0; background: none; color: var(--ox-accent); font-size: 11px; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .admin-outcomes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .admin-outcome-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--ox-edge); border-radius: 999px; background: var(--ox-surface); color: var(--ox-text); font-size: 12px; text-transform: capitalize; cursor: pointer; transition: border-color .16s var(--ease-out), background-color .16s var(--ease-out); }
 .admin-outcome-chip strong { color: var(--ox-ink); font: 500 12px/1 var(--font-geist-mono), monospace; font-variant-numeric: tabular-nums; }
@@ -308,6 +309,7 @@ select[class*="appearance-none"] {
 .admin-icon-action { display: inline-grid; place-items: center; width: 30px; height: 30px; border: 1px solid transparent; border-radius: 6px; color: var(--ox-muted); transition: color .16s var(--ease-out), background-color .16s var(--ease-out), border-color .16s var(--ease-out); }
 .admin-icon-action:hover { border-color: var(--ox-edge); background: var(--ox-surface-raised); color: var(--ox-ink); }
 .admin-icon-action--danger:hover { border-color: #D9ACA5; background: #F8ECEA; color: var(--ox-signal-fail); }
+.admin-icon-action--approve:hover { border-color: #9EC9A9; background: #EDF7EF; color: var(--ox-signal-pass); }
 .admin-table-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--ox-edge); color: var(--ox-muted); font-size: 12px; }
 .admin-pagination { display: flex; align-items: center; gap: 10px; }
 .admin-pagination button { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 10px; border: 1px solid var(--ox-edge); border-radius: 6px; background: var(--ox-surface); color: var(--ox-text); font-size: 12px; }
@@ -539,3 +541,25 @@ select[class*="appearance-none"] {
   .closing-cta { align-items: flex-start; flex-direction: column; padding: 20px 0; }
   .landing-bottom { align-items: flex-start; flex-direction: column; gap: 8px; }
 }
+
+/* ---------- Legal and contact prose ---------- */
+.legal-page { display: grid; gap: 28px; max-width: 760px; }
+.legal-page header { display: grid; gap: 8px; }
+.legal-page section { display: grid; gap: 10px; }
+.legal-page h2 {
+  margin: 0;
+  color: var(--ox-ink);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.legal-page p,
+.legal-page li {
+  margin: 0;
+  color: var(--ox-text);
+  font-size: 14px;
+  line-height: 1.75;
+}
+.legal-page ul { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.legal-page a { color: var(--ox-accent); text-decoration: underline; text-underline-offset: 2px; }
+.legal-page a:hover { color: var(--ox-accent-hover); }

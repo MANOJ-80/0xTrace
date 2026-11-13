@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "id": "nav-desktop",
+  "title": "Reach each top-level page from the desktop navbar",
+  "priority": "high",
+  "tags": ["navigation", "navbar"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "site-navigation",
+  "preconditions": [
+    "The local app is running and the doctor check passes."
+  ],
+  "steps": [
+    {
+      "action": "Open / and inspect the main navigation.",
+      "expected": "Home, Experiences, Questions, Analytics, and About are listed, and Home is marked as the current page.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["navigation:Main navigation", "link:Home"]
+    },
+    {
+      "action": "Activate Experiences, then About.",
+      "expected": "Each destination renders its heading and the matching navbar item becomes current.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["link:Experiences", "link:About"]
+    },
+    {
+      "action": "Inspect the footer navigation.",
+      "expected": "Experiences, Questions, and About links are present and point at the same routes.",
+      "evidence": ["aria-snapshot"],
+      "handles": ["navigation:Footer navigation"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only navigation."
+}

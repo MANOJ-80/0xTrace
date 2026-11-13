@@ -112,7 +112,7 @@ export default function HeroRecordCarousel({ records }: { records: HeroRecord[] 
             <button
               key={record.id}
               type="button"
-              aria-label={`Show ${record.company} record`}
+              aria-label={`Show record ${index + 1} of ${records.length}: ${record.company}`}
               aria-current={index === active}
               className="record-dot"
               onClick={() => setActive(index)}

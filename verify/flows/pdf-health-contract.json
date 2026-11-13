@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "pdf-health-contract",
+  "title": "Check parser readiness and OpenAPI contract",
+  "priority": "normal",
+  "tags": ["api", "health", "contract"],
+  "environment": "local",
+  "role": "integrator",
+  "surface": "api",
+  "source": "generated",
+  "feature": "pdf-parser-api",
+  "preconditions": [
+    "The FastAPI service is running on a loopback port started for this run."
+  ],
+  "steps": [
+    {
+      "action": "GET /health.",
+      "expected": "200 with {\"status\":\"ok\"}.",
+      "evidence": ["notes", "network"],
+      "handles": ["endpoint:GET /health"]
+    },
+    {
+      "action": "GET /openapi.json.",
+      "expected": "The document title is '0xTrace PDF Parser' and the paths include /health and /api/v1/experiences/parse.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:GET /openapi.json"]
+    }
+  ],
+  "viewports": [],
+  "cleanup": "Stop the service at teardown.",
+  "risk": "Read-only."
+}

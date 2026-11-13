@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "id": "my-experiences-list",
+  "title": "List the signed-in user's contributed records",
+  "priority": "high",
+  "tags": ["my-experiences", "owner-scope"],
+  "environment": "local",
+  "role": "signed-in-user",
+  "surface": "web",
+  "source": "generated",
+  "feature": "my-experiences",
+  "preconditions": [
+    "An approved institutional session is available.",
+    "The account has contributed at least one record, or the empty state is being verified."
+  ],
+  "steps": [
+    {
+      "action": "Open /my-experiences with an account that has no contributions.",
+      "expected": "An empty state explains that no experiences have been shared yet.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:My Experiences"]
+    },
+    {
+      "action": "Open the route with an account that owns records.",
+      "expected": "Only records authored by that account are listed, newest first.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:My Experiences"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Blocked without an institutional identity."
+}

@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "id": "detail-guest-gate",
+  "title": "Send a guest to sign-in when opening a record",
+  "priority": "critical",
+  "tags": ["detail", "auth", "gate"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "experience-detail",
+  "preconditions": [
+    "The local app is running with the seeded database and the doctor check passes.",
+    "No session cookie is present."
+  ],
+  "steps": [
+    {
+      "action": "Open /experiences and activate the first record card.",
+      "expected": "The browser lands on /login with callbackUrl set to the record path, and the record content is not shown.",
+      "evidence": ["screenshot", "notes", "console"],
+      "handles": ["link:experience card", "heading:Sign in to continue"]
+    },
+    {
+      "action": "Open a legacy record URL of the form /experiences/exp_001 directly.",
+      "expected": "The same sign-in redirect happens and callbackUrl preserves the legacy path.",
+      "evidence": ["notes", "network"],
+      "handles": ["heading:Sign in to continue"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only. Do not attempt to forge a session to get past the gate."
+}

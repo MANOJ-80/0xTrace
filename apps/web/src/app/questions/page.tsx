@@ -1,10 +1,12 @@
 import { getQuestionBank, getCompanyStats } from "@/lib/data";
+import { PRIVATE_ROBOTS } from "@/lib/metadata";
 import QuestionBankClient from "./QuestionBankClient";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
+  robots: PRIVATE_ROBOTS,
   title: "Question & Coding Problem Bank",
   description:
     "Search interview questions and coding problems from campus placement experiences by topic, difficulty, and company.",

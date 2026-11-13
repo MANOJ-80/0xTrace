@@ -3,16 +3,21 @@
  * Deterministic extraction eval.
  *
  * Compiles the TypeScript chunker, extracts text through one of the text
- * layers, and compares the result with expectations.json. `js` uses the same
- * unpdf path production runs on Vercel; `python` uses the pdftotext/OCR layer
- * from apps/api. This measures the regex/document-model pass only; the LLM
- * repair stage is exercised manually because free-tier quotas make it
+ * layers, and compares the result with a local expectations file. `js` uses the
+ * same unpdf path production runs on Vercel; `python` uses the pdftotext/OCR
+ * layer from apps/api. This measures the regex/document-model pass only; the
+ * LLM repair stage is exercised manually because free-tier quotas make it
  * unsuitable for a test loop.
+ *
+ * Expectation files contain candidate names and local PDF paths, so they stay
+ * out of the repository. Copy expectations.example.json to
+ * expectations.local.json and point it at files on your machine.
  *
  *   node eval/extraction/run.js                    # unpdf, the production path
  *   node eval/extraction/run.js --extractor=python # layout text
  *   node eval/extraction/run.js --extractor=both   # run both, compare pass rates
  *   node eval/extraction/run.js --verbose
+ *   EXPECTATIONS_FILE=/path/to/file.json node eval/extraction/run.js
  */
 
 const fs = require("fs");
@@ -23,7 +28,10 @@ const ROOT = path.resolve(__dirname, "../..");
 const WEB = path.join(ROOT, "apps/web");
 const BUILD = path.join(__dirname, ".build");
 const TS_CONFIG = path.join(__dirname, "tsconfig.json");
-const EXPECTATIONS = path.join(__dirname, "expectations.json");
+const EXPECTATIONS = path.join(
+  __dirname,
+  process.env.EXPECTATIONS_FILE || "expectations.local.json"
+);
 const PYTHON = path.join(ROOT, "apps/api/.venv/bin/python");
 const API_DIR = path.join(ROOT, "apps/api");
 
@@ -316,6 +324,12 @@ async function runSuite(mode, expectations) {
 async function main() {
   compile();
   chunkDocument = require(path.join(BUILD, "lib/chunker.js")).chunkDocument;
+
+  if (!fs.existsSync(EXPECTATIONS)) {
+    throw new Error(
+      `No expectations file at ${EXPECTATIONS}. Copy eval/extraction/expectations.example.json to eval/extraction/expectations.local.json and point it at PDFs you have locally.`
+    );
+  }
   const expectations = JSON.parse(fs.readFileSync(EXPECTATIONS, "utf8"));
 
   const modes = extractor === "both" ? ["js", "python"] : [extractor];

@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "directory-deep-link",
+  "title": "Preselect a company from a deep link",
+  "priority": "normal",
+  "tags": ["directory", "deep-link", "filters"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "experience-directory",
+  "preconditions": [
+    "The directory is open and at least one company has records."
+  ],
+  "steps": [
+    {
+      "action": "Open /experiences?company=Acko%20Tech directly.",
+      "expected": "The company filter is preselected as 'Acko Tech' and only that company's records are listed.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["combobox:Filter by company", "status:Showing"]
+    },
+    {
+      "action": "Reload the page.",
+      "expected": "The same company remains selected and the same records are shown.",
+      "evidence": ["screenshot", "notes"],
+      "handles": ["combobox:Filter by company"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only. The company value must exist in the seeded data; substitute another seeded company if it does not."
+}

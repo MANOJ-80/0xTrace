@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Experience } from "@/lib/types";
+import { ExperienceSummary } from "@/lib/types";
 import { cn, getOutcomeBadgeColor } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { ArrowUpRight } from "lucide-react";
 
 interface ExperienceCardProps {
-  experience: Experience;
+  experience: ExperienceSummary;
 }
 
 export default function ExperienceCard({ experience }: ExperienceCardProps) {
@@ -19,11 +19,11 @@ export default function ExperienceCard({ experience }: ExperienceCardProps) {
     experience.company?.name || experience.company?.normalized_name || "Unknown Company";
   const roleName = experience.job?.role || "Software Engineer";
   const outcomeStatus = experience.outcome?.status || "Not reported";
-  const rounds = experience.rounds || [];
+  const roundCount = experience.round_count;
 
   const candidateName =
-    experience.candidate?.name || `Candidate #${experience.id.replace("exp_", "")}`;
-    
+    experience.candidate?.display_name || `Candidate #${experience.id.replace("exp_", "")}`;
+
   const href = `/experiences/${experience._id || experience.id}`;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -48,7 +48,7 @@ export default function ExperienceCard({ experience }: ExperienceCardProps) {
         {outcomeStatus}
       </span>
       <span className="experience-card-meta">
-        {rounds.length} {rounds.length === 1 ? "round" : "rounds"}
+        {roundCount} {roundCount === 1 ? "round" : "rounds"}
         <span className="font-mono">{experience.id}</span>
         <ArrowUpRight className="experience-card-arrow w-4 h-4" aria-hidden="true" />
       </span>

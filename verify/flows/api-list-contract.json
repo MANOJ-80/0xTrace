@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "id": "api-list-contract",
+  "title": "Read the experience list contract",
+  "priority": "normal",
+  "tags": ["api", "contract", "pagination"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "api",
+  "source": "generated",
+  "feature": "experience-api",
+  "preconditions": [
+    "The local app is running against the isolated seeded database."
+  ],
+  "steps": [
+    {
+      "action": "GET /api/experiences?limit=1.",
+      "expected": "The response has total, page, limit, totalPages, and experiences; experiences holds one record and total matches the seeded count.",
+      "evidence": ["notes", "network"],
+      "handles": ["endpoint:GET /api/experiences"]
+    },
+    {
+      "action": "GET /api/experiences?search=Acko&limit=100.",
+      "expected": "Every returned record matches the query in company, role, department, or candidate name, and total drops below the full count.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:GET /api/experiences?search"]
+    },
+    {
+      "action": "GET /api/experiences?page=2&limit=24.",
+      "expected": "The response reports page 2 and returns the second slice of records.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:GET /api/experiences?page"]
+    },
+    {
+      "action": "GET /api/experiences?search=zzqxv987654.",
+      "expected": "total is 0 and experiences is an empty array rather than an error.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:GET /api/experiences?search"]
+    }
+  ],
+  "viewports": [],
+  "cleanup": "No data changes.",
+  "risk": "Read-only."
+}

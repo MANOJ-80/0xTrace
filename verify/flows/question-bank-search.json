@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "id": "question-bank-search",
+  "title": "Search questions and coding problems",
+  "priority": "critical",
+  "tags": ["questions", "search", "filters"],
+  "environment": "local",
+  "role": "signed-in-user",
+  "surface": "web",
+  "source": "generated",
+  "feature": "question-bank",
+  "preconditions": [
+    "The local app is running with the seeded database.",
+    "An approved institutional session is available."
+  ],
+  "steps": [
+    {
+      "action": "Open /questions and read the initial counts.",
+      "expected": "The question tab shows the number of interview questions and the coding tab shows the number of coding problems.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["button:Interview questions", "button:Coding problems"]
+    },
+    {
+      "action": "Search for a term that appears in a question.",
+      "expected": "Only matching questions remain and the result count matches the visible rows.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["searchbox:Search interview questions", "status:results"]
+    },
+    {
+      "action": "Switch to the coding tab and apply a difficulty filter.",
+      "expected": "Only coding problems with that difficulty remain.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["button:Coding problems", "button:hard"]
+    },
+    {
+      "action": "Search for a string that matches nothing.",
+      "expected": "The documented no-results message appears in the active list.",
+      "evidence": ["screenshot"],
+      "handles": ["status:No questions match your filters."]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "Clear filters; no data changes.",
+  "risk": "Blocked without an institutional identity. Do not substitute the public experience API."
+}

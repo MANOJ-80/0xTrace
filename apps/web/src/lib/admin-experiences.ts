@@ -16,6 +16,7 @@ export interface AdminListParams {
   outcome?: string;
   quality?: "flagged" | "ok" | "";
   attention?: boolean;
+  status?: "pending" | "published" | "rejected" | "";
   sort?: AdminSort;
   page?: number;
   limit?: number;
@@ -33,6 +34,7 @@ export interface AdminExperienceRow {
   updated_at?: string | null;
   quality: { score?: number | null; issues?: string[] | null } | null;
   source: { file_name?: string | null; experience_number?: number | null } | null;
+  moderation_status?: "pending" | "published" | "rejected" | null;
   round_count: number;
   question_count: number;
 }
@@ -50,6 +52,7 @@ export interface AdminOverview {
   companies: number;
   last7Days: number;
   flagged: number;
+  pending: number;
   missingRole: number;
   missingIdentity: number;
   attention: number;
@@ -119,6 +122,19 @@ function buildFilter(params: AdminListParams): Record<string, unknown> {
     });
   }
 
+  if (params.status) {
+    filters.push(
+      params.status === "published"
+        ? {
+            $or: [
+              { moderation_status: "published" },
+              { moderation_status: { $exists: false } },
+            ],
+          }
+        : { moderation_status: params.status }
+    );
+  }
+
   if (params.attention) {
     filters.push(ATTENTION_MATCH);
   }
@@ -168,6 +184,7 @@ const ROW_PROJECTION = {
   updated_at: 1,
   quality: 1,
   source: 1,
+  moderation_status: 1,
   round_count: { $size: { $ifNull: ["$rounds", []] } },
   question_count: {
     $sum: {
@@ -241,6 +258,10 @@ export async function getAdminOverview(): Promise<AdminOverview> {
             },
             { $count: "value" },
           ],
+          pending: [
+            { $match: { moderation_status: "pending" } },
+            { $count: "value" },
+          ],
           missingRole: [
             { $match: { "job.role": { $in: [null, ""] } } },
             { $count: "value" },
@@ -280,6 +301,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
     companies: count(result?.companies),
     last7Days: count(result?.last7Days),
     flagged: count(result?.flagged),
+    pending: count(result?.pending),
     missingRole: count(result?.missingRole),
     missingIdentity: count(result?.missingIdentity),
     attention: count(result?.attention),

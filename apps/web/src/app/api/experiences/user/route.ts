@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getUserExperiences } from "@/lib/data";
+import { serverError } from "@/lib/api-error";
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,10 +17,7 @@ export async function GET(req: NextRequest) {
       total: experiences.length,
       experiences,
     });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: "Failed to load user experiences", detail: err.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    return serverError("api/experiences/user", error, "Failed to load user experiences");
   }
 }

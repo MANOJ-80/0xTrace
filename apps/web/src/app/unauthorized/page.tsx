@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
+import { PRIVATE_ROBOTS } from "@/lib/metadata";
+
+export const metadata = {
+  robots: PRIVATE_ROBOTS,
+  title: "Access denied | 0xTrace",
+};
 
 export default function UnauthorizedPage() {
   return (

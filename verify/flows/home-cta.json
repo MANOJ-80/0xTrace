@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "home-cta",
+  "title": "Reach the directory and the sign-in gate from the home page",
+  "priority": "high",
+  "tags": ["home", "navigation"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "home-overview",
+  "preconditions": [
+    "The local app is running and the doctor check passes."
+  ],
+  "steps": [
+    {
+      "action": "Activate the primary CTA 'Browse interview experiences'.",
+      "expected": "The browser reaches /experiences and the directory heading is visible.",
+      "evidence": ["screenshot", "console"],
+      "handles": ["link:Browse interview experiences", "heading:Explore interview experiences"]
+    },
+    {
+      "action": "Return to / and activate 'Share your experience'.",
+      "expected": "The browser lands on /login with callbackUrl=/contribute because the contribution form requires sign-in.",
+      "evidence": ["screenshot", "notes"],
+      "handles": ["link:Share your experience", "heading:Sign in to continue"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only navigation."
+}

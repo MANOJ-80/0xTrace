@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "id": "api-protected-writes",
+  "title": "Reject anonymous callers on every protected route handler",
+  "priority": "high",
+  "tags": ["api", "auth", "security-boundary"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "api",
+  "source": "generated",
+  "feature": "experience-api",
+  "preconditions": [
+    "The local app is running.",
+    "No session cookie is sent with the requests."
+  ],
+  "steps": [
+    {
+      "action": "PUT /api/experiences/exp_001 with a JSON body and no session.",
+      "expected": "401 with a JSON error and no change to the record.",
+      "evidence": ["notes", "network"],
+      "handles": ["endpoint:PUT /api/experiences/[id]"]
+    },
+    {
+      "action": "DELETE /api/experiences/exp_001 with no session.",
+      "expected": "401 and the record still resolves afterwards.",
+      "evidence": ["notes", "network"],
+      "handles": ["endpoint:DELETE /api/experiences/[id]"]
+    },
+    {
+      "action": "POST /api/canonical/ingest with a draft body and no session.",
+      "expected": "401 and no record is created.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:POST /api/canonical/ingest"]
+    },
+    {
+      "action": "GET /api/experiences/user and POST /api/extract with no session.",
+      "expected": "Both return 401.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:GET /api/experiences/user", "endpoint:POST /api/extract"]
+    }
+  ],
+  "viewports": [],
+  "cleanup": "Confirm the record count is unchanged after the requests.",
+  "risk": "Read-only in effect. Never send a forged session."
+}

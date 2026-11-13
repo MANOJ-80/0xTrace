@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "id": "pdf-validation",
+  "title": "Reject non-PDF uploads before parsing",
+  "priority": "normal",
+  "tags": ["api", "validation", "upload"],
+  "environment": "local",
+  "role": "integrator",
+  "surface": "api",
+  "source": "generated",
+  "feature": "pdf-parser-api",
+  "preconditions": [
+    "The FastAPI service is running and the doctor check passes.",
+    "A synthetic text file and a file with a .pdf name but no PDF signature are available."
+  ],
+  "steps": [
+    {
+      "action": "POST /api/v1/experiences/parse with a .txt filename.",
+      "expected": "415 with a detail saying only PDF uploads are supported.",
+      "evidence": ["notes", "network"],
+      "handles": ["endpoint:POST /api/v1/experiences/parse"]
+    },
+    {
+      "action": "POST the same endpoint with a .pdf filename whose content is not a PDF.",
+      "expected": "415 with a detail about the missing PDF signature.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:POST /api/v1/experiences/parse"]
+    }
+  ],
+  "viewports": [],
+  "cleanup": "Delete the temporary fixture files.",
+  "risk": "Use synthetic files only. Never upload a real candidate PDF."
+}

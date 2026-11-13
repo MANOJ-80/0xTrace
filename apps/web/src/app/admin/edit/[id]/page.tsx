@@ -10,21 +10,20 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 interface AdminEditPageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export default async function AdminEditPage({ params }: AdminEditPageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.email) {
-    redirect(`/login?callbackUrl=/admin/edit/${params.id}`);
+    redirect(`/login?callbackUrl=/admin/edit/${id}`);
   }
   if (!session.user.isAdmin) {
     redirect("/");
   }
 
-  const experience = await getExperienceById(params.id);
+  const experience = await getExperienceById(id);
   if (!experience) {
     notFound();
   }
@@ -48,7 +47,7 @@ export default async function AdminEditPage({ params }: AdminEditPageProps) {
           </p>
         </div>
         <Link
-          href={`/admin/edit/${params.id}/raw`}
+          href={`/admin/edit/${id}/raw`}
           className="ui-action-secondary"
           title="Edit the stored document as raw JSON"
         >
@@ -59,7 +58,7 @@ export default async function AdminEditPage({ params }: AdminEditPageProps) {
 
       <ManualEntryForm
         initialExperience={experience}
-        experienceId={params.id}
+        experienceId={id}
         mode="edit"
         isAdmin
         adminMode

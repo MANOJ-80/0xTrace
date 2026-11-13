@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getCollection } from "@/lib/mongodb";
 import { recordActivity } from "@/lib/audit";
+import { serverError } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,10 +72,7 @@ export async function POST(req: NextRequest) {
     revalidatePath("/");
 
     return NextResponse.json({ success: true, deletedCount: result.deletedCount });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: "Failed to delete records", detail: error.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    return serverError("api/admin/experiences/bulk", error, "Failed to delete records");
   }
 }

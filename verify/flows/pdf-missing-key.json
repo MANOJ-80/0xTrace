@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "id": "pdf-missing-key",
+  "title": "Return 503 when no extraction key is configured",
+  "priority": "normal",
+  "tags": ["api", "error-state", "configuration"],
+  "environment": "local",
+  "role": "integrator",
+  "surface": "api",
+  "source": "generated",
+  "feature": "pdf-parser-api",
+  "preconditions": [
+    "The FastAPI service is running with no extraction key configured.",
+    "A synthetic text-based PDF is available."
+  ],
+  "steps": [
+    {
+      "action": "POST /api/v1/experiences/parse with the synthetic PDF.",
+      "expected": "503 with a detail stating the key is not configured, and no partial extraction result.",
+      "evidence": ["notes", "network"],
+      "handles": ["endpoint:POST /api/v1/experiences/parse"]
+    }
+  ],
+  "viewports": [],
+  "cleanup": "Delete the temporary fixture file.",
+  "risk": "The key must be empty for this check. If a real key is present, skip and mark blocked instead of sending text to a third party."
+}

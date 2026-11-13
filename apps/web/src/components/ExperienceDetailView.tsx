@@ -24,6 +24,7 @@ import {
   Calendar,
   Banknote,
   Edit,
+  Flag,
   Trash2,
 } from "lucide-react";
 import DocumentReader from "./DocumentReader";
@@ -132,6 +133,15 @@ export default function ExperienceDetailView({ experience }: ExperienceDetailVie
               </button>
             </div>
           )}
+          <Link
+            href={`/contact?type=removal&record=${encodeURIComponent(
+              `/experiences/${experience._id || experience.id}`
+            )}`}
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-ox-muted bg-ox-surface border border-ox-edge hover:border-ox-accent hover:text-ox-ink rounded transition-colors"
+          >
+            <Flag className="w-3.5 h-3.5" />
+            <span>Report or request removal</span>
+          </Link>
           <span className="text-xs text-ox-muted font-mono">
             {experience.id}
           </span>

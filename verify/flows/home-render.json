@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "home-render",
+  "title": "Render the archive overview with live totals",
+  "priority": "high",
+  "tags": ["home", "smoke", "data"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "home-overview",
+  "preconditions": [
+    "The local app is running against the isolated seeded database and the doctor check passes."
+  ],
+  "steps": [
+    {
+      "action": "Open / at 1440 x 900 and wait for the page to settle.",
+      "expected": "The hero heading, the featured record card, and the archive totals render; the totals match the seeded record count.",
+      "evidence": ["screenshot", "aria-snapshot", "console"],
+      "handles": ["heading:See how campus interviews unfold", "region:Archive contents"]
+    },
+    {
+      "action": "Compare the candidate-account total with the record count returned by GET /api/experiences.",
+      "expected": "Both report the same number of records.",
+      "evidence": ["notes", "network"],
+      "handles": ["status:candidate accounts"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only."
+}

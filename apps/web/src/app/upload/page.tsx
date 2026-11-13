@@ -3,8 +3,10 @@ import { FileUp } from "lucide-react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getUserExperienceCount } from "@/lib/data";
+import { PRIVATE_ROBOTS } from "@/lib/metadata";
 
 export const metadata = {
+  robots: PRIVATE_ROBOTS,
   title: "Upload PDF — 0xTrace",
   description:
     "Upload a campus interview PDF, review the extracted rounds and questions, then publish it.",

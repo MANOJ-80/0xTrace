@@ -1,4 +1,5 @@
 import { getAnalyticsData } from "@/lib/data";
+import { PRIVATE_ROBOTS } from "@/lib/metadata";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import { BarChart3 } from "lucide-react";
 
@@ -6,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata = {
+  robots: PRIVATE_ROBOTS,
   title: "Placement Analytics & Insights",
   description:
     "Visualize campus placement trends, company hiring breakdowns, compensation distributions, and interview round difficulty.",

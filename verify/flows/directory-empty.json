@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "directory-empty",
+  "title": "Show the no-results state and recover from it",
+  "priority": "high",
+  "tags": ["directory", "empty-state", "recovery"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "experience-directory",
+  "preconditions": [
+    "The directory is open and shows the full seeded list."
+  ],
+  "steps": [
+    {
+      "action": "Type 'zzqxv987654' into the search field.",
+      "expected": "The list is replaced by the message 'No interview experiences match your search.' with a 'Clear filters' action.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["searchbox:Search interview experiences", "status:No interview experiences match your search."]
+    },
+    {
+      "action": "Activate 'Clear filters'.",
+      "expected": "The full list returns, the count line shows the full total, and the search field is empty.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["button:Clear filters", "searchbox:Search interview experiences"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only."
+}

@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "about-content",
+  "title": "Read the archive disclaimer and capability summary",
+  "priority": "normal",
+  "tags": ["about", "content"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "about-page",
+  "preconditions": [
+    "The local app is running and the doctor check passes."
+  ],
+  "steps": [
+    {
+      "action": "Open /about.",
+      "expected": "The page shows the archive heading, the disclaimer section, the four capability summaries, and a feedback action.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:Interview knowledge, passed forward.", "heading:Candidate accounts are useful context"]
+    },
+    {
+      "action": "Inspect the feedback link without following it.",
+      "expected": "The link targets the project's GitHub issue page and opens in a new tab.",
+      "evidence": ["notes"],
+      "handles": ["link:Create a GitHub issue"]
+    }
+  ],
+  "viewports": ["desktop", "mobile"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only. Do not follow external links during a local run."
+}

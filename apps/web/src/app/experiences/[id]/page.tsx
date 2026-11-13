@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth/next";
 import { getExperienceById } from "@/lib/data";
+import { authOptions } from "@/lib/auth";
+import { PRIVATE_ROBOTS } from "@/lib/metadata";
 import ExperienceDetailView from "@/components/ExperienceDetailView";
 
 // Dynamic rendering — data comes from MongoDB at request time
@@ -9,35 +12,48 @@ export const revalidate = 0;
 import type { Metadata } from "next";
 
 interface ExperienceDetailPageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
+}
+
+function canView(experience: NonNullable<Awaited<ReturnType<typeof getExperienceById>>>, email?: string | null, isAdmin?: boolean) {
+  if (experience.moderation_status !== "pending") return true;
+  if (isAdmin) return true;
+  return Boolean(email && experience.author?.email?.toLowerCase() === email.toLowerCase());
 }
 
 export async function generateMetadata({
   params,
 }: ExperienceDetailPageProps): Promise<Metadata> {
-  const exp = await getExperienceById(params.id);
+  const { id } = await params;
+  const exp = await getExperienceById(id);
   if (!exp) {
     return {
+      robots: PRIVATE_ROBOTS,
       title: "Experience Not Found",
       description: "Campus interview experience not found on 0xTrace.",
+    };
+  }
+
+  const session = await getServerSession(authOptions);
+  if (!canView(exp, session?.user?.email, session?.user?.isAdmin)) {
+    return {
+      robots: PRIVATE_ROBOTS,
+      title: "Experience Not Found",
     };
   }
 
   const company =
     exp.company?.name || exp.company?.normalized_name || "Campus Recruiter";
   const role = exp.job?.role || "Software Engineer";
-  const candidate = exp.candidate?.name || "Student Candidate";
   const outcome = exp.outcome?.status || "Interview Experience";
   const roundsCount = exp.rounds?.length || 0;
   const compensation = exp.compensation?.ctc ? ` · ${exp.compensation.ctc}` : "";
-  const college = exp.candidate?.college || "PSG iTech";
 
   const title = `${company} — ${role} (${outcome})`;
-  const description = `${candidate}'s (${college}) campus interview experience at ${company} for ${role}${compensation}. Verbatim breakdown of ${roundsCount} rounds, technical questions, coding problems & preparation tips.`;
+  const description = `Campus interview experience at ${company} for ${role}${compensation}. A structured breakdown of ${roundsCount} rounds, technical questions, and preparation tips.`;
 
   return {
+    robots: PRIVATE_ROBOTS,
     title,
     description,
     openGraph: {
@@ -55,9 +71,15 @@ export async function generateMetadata({
 }
 
 export default async function ExperienceDetailPage({ params }: ExperienceDetailPageProps) {
-  const experience = await getExperienceById(params.id);
+  const { id } = await params;
+  const experience = await getExperienceById(id);
 
   if (!experience) {
+    notFound();
+  }
+
+  const session = await getServerSession(authOptions);
+  if (!canView(experience, session?.user?.email, session?.user?.isAdmin)) {
     notFound();
   }
 

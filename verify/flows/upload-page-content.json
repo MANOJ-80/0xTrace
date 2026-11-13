@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "upload-page-content",
+  "title": "Read the PDF upload placeholder",
+  "priority": "normal",
+  "tags": ["upload", "content"],
+  "environment": "local",
+  "role": "signed-in-user",
+  "surface": "web",
+  "source": "generated",
+  "feature": "upload-page",
+  "preconditions": [
+    "An approved institutional session is available."
+  ],
+  "steps": [
+    {
+      "action": "Open /upload while signed in.",
+      "expected": "The page states that automated extraction is in development and offers manual entry and directory actions.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:Automated PDF Extraction", "link:Write Experience Manually", "link:Browse Database"]
+    },
+    {
+      "action": "Activate 'Browse Database'.",
+      "expected": "The public directory renders.",
+      "evidence": ["screenshot"],
+      "handles": ["link:Browse Database", "heading:Explore interview experiences"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Blocked without an institutional identity."
+}

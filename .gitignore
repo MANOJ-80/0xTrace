@@ -11,11 +11,21 @@ __pycache__/
 # Next.js build
 .next/
 next-env.d.ts
+*.tsbuildinfo
 
 # Chrome profile data & scratch
 .chrome_profile/
 scratch/
 *.bak
+
+# Candidate dataset and local PDF corpora
+# These contain real names, emails, phone numbers, and writeups. They are
+# loaded into MongoDB for local development and are never committed.
+data/
+samplepdfs/
+
+# Generated video work directories
+brag-output-*/
 
 # OS files
 .DS_Store
@@ -35,5 +45,3 @@ coverage/
 # Verification runtime output
 verify/results/
 verify/.auth/
-
-samplepdfs/

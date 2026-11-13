@@ -45,8 +45,10 @@ export default function ExtractionStudio({
     total_experiences: number;
     duplicate?: boolean;
     message?: string;
+    moderation_status?: "pending" | "published" | "rejected";
   } | null>(null);
   const [ingestError, setIngestError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
 
   const experience = result?.experiences?.[0];
   const pipeline = result?.pipeline;
@@ -125,6 +127,11 @@ export default function ExtractionStudio({
 
     if (!readiness.ready) {
       setIngestError(`Before publishing, add: ${readiness.missing.join(", ")}.`);
+      return;
+    }
+
+    if (!isAdmin && !consent) {
+      setIngestError("Confirm that you have permission to share this experience before submitting.");
       return;
     }
 
@@ -329,10 +336,17 @@ export default function ExtractionStudio({
               <button
                 type="button"
                 onClick={handleApproveAndIngest}
-                disabled={isIngesting || ingestSuccess || !readiness.ready}
+                disabled={
+                  isIngesting ||
+                  ingestSuccess ||
+                  !readiness.ready ||
+                  (!isAdmin && !consent)
+                }
                 title={
                   readiness.ready
-                    ? "Publish this experience"
+                    ? isAdmin
+                      ? "Publish this experience"
+                      : "Submit this experience for review"
                     : `Missing: ${readiness.missing.join(", ")}`
                 }
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
@@ -344,22 +358,47 @@ export default function ExtractionStudio({
                 {isIngesting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Publishing…</span>
+                    <span>{isAdmin ? "Publishing…" : "Submitting…"}</span>
                   </>
                 ) : ingestSuccess ? (
                   <>
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Published</span>
+                    <span>
+                      {ingestResult?.moderation_status === "pending"
+                        ? "Submitted for review"
+                        : "Published"}
+                    </span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Confirm & publish</span>
+                    <span>{isAdmin ? "Confirm & publish" : "Confirm & submit"}</span>
                   </>
                 )}
               </button>
             </div>
           </div>
+
+          {!isAdmin && !ingestSuccess && (
+            <label className="flex items-start gap-3 rounded-lg border border-ox-edge bg-ox-void p-3 text-xs text-ox-muted">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(event) => setConsent(event.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-ox-accent"
+              />
+              <span>
+                I have permission to share this interview experience. I understand
+                that it goes to a moderator for review before publication, that my
+                full name is shortened in the public archive, and that I can request
+                removal at any time.{" "}
+                <a href="/privacy" className="text-ox-accent underline underline-offset-2">
+                  Privacy policy
+                </a>
+                .
+              </span>
+            </label>
+          )}
 
           {/* Pipeline warnings */}
           {pipeline?.warnings?.length ? (
@@ -543,14 +582,20 @@ export default function ExtractionStudio({
                 <CheckCircle2 className="w-5 h-5 text-ox-signal-pass shrink-0" />
                 <div>
                   <h4 className="font-bold text-ox-ink text-sm flex items-center gap-2">
-                    {ingestResult.duplicate ? "Already published" : "Experience published"}
+                    {ingestResult.duplicate
+                      ? "Already submitted"
+                      : ingestResult.moderation_status === "pending"
+                        ? "Submitted for review"
+                        : "Experience published"}
                     <span className="font-mono text-xs px-1.5 py-0.5 rounded-sm bg-ox-surface text-ox-muted border border-ox-edge">
                       {ingestResult.assigned_id}
                     </span>
                   </h4>
                   <p className="text-xs text-ox-muted mt-0.5">
                     {ingestResult.message ||
-                      `Total experiences in dataset: ${ingestResult.total_experiences}`}
+                      (ingestResult.moderation_status === "pending"
+                        ? "A moderator will review this record before it appears in the public archive."
+                        : `Total experiences in dataset: ${ingestResult.total_experiences}`)}
                   </p>
                 </div>
               </div>

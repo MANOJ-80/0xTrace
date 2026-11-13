@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getCollection } from "@/lib/mongodb";
+import { serverError } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -127,10 +128,7 @@ export async function GET(req: NextRequest) {
         "Cache-Control": "no-store",
       },
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: "Export failed", detail: error.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    return serverError("api/admin/export", error, "Export failed");
   }
 }

@@ -12,6 +12,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > 1_000_000) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
   try {
     const body = await req.json();
     const rawDraft = body.experience;
@@ -75,7 +80,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const result = await ingestExperienceToCanonical(draft, author);
+    const moderationStatus = session.user.isAdmin ? "published" : "pending";
+    const result = await ingestExperienceToCanonical(draft, author, { moderationStatus });
 
     if (result.duplicate) {
       return NextResponse.json({
@@ -102,12 +108,9 @@ export async function POST(req: NextRequest) {
     revalidatePath("/admin");
     revalidatePath("/");
 
-    return NextResponse.json(result);
-  } catch (err: any) {
-    console.error("[Ingest] failed:", err);
-    return NextResponse.json(
-      { error: "Ingestion failed", detail: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ ...result, moderation_status: moderationStatus });
+  } catch (error) {
+    console.error("[Ingest] failed:", error);
+    return NextResponse.json({ error: "Ingestion failed" }, { status: 500 });
   }
 }

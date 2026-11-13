@@ -379,23 +379,18 @@ export async function POST(req: NextRequest) {
       };
 
       return NextResponse.json(result);
-    } catch (error: any) {
+    } catch (error) {
       console.error("[Extract] pipeline failed:", error);
       return NextResponse.json(
         {
           error: "Extraction failed",
-          detail:
-            error.message ||
-            "The LLM provider chain did not return usable data. Try again in a minute.",
+          detail: "The extraction provider did not return usable data. Try again in a minute.",
         },
         { status: 503 }
       );
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("[Extract] unexpected error:", error);
-    return NextResponse.json(
-      { error: "Extraction pipeline error", detail: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Extraction pipeline error" }, { status: 500 });
   }
 }

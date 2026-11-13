@@ -103,12 +103,15 @@ export interface AuthorInfo {
   image?: string | null;
 }
 
+export type ModerationStatus = "pending" | "published" | "rejected";
+
 export interface Experience {
   _id?: string;
   id: string;
   author?: AuthorInfo;
   created_at?: string;
   updated_at?: string;
+  moderation_status?: ModerationStatus;
   source: {
     experience_number?: number;
     file_name?: string;
@@ -131,6 +134,28 @@ export interface Experience {
   additional_information: string[];
   quality: Quality;
   raw_text: string;
+}
+
+/**
+ * Fields safe to send to an anonymous browser.
+ *
+ * The directory only needs enough to render a card. Full writeups, contact
+ * details, author email, and raw source text stay out of this shape.
+ */
+export interface ExperienceSummary {
+  _id: string;
+  id: string;
+  company: { name?: string | null; normalized_name?: string | null } | null;
+  candidate: { display_name?: string | null; department?: string | null } | null;
+  job: { role?: string | null } | null;
+  timeline: { year?: number | string | null } | null;
+  outcome: { status?: string | null } | null;
+  round_count: number;
+  question_count: number;
+  coding_count: number;
+  rounds: Array<{ name: string; type: string; questions: number }>;
+  round_names?: string[];
+  moderation_status?: ModerationStatus;
 }
 
 export interface UiDocumentSection {

@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "auth-unauthorized",
+  "title": "Explain the access-denied state",
+  "priority": "normal",
+  "tags": ["auth", "error-state"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "authentication-gate",
+  "preconditions": [
+    "The local app is running and the doctor check passes."
+  ],
+  "steps": [
+    {
+      "action": "Open /unauthorized.",
+      "expected": "The page states that access is restricted to @psgitech.ac.in accounts and offers a link home.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:Access Denied", "link:Return to Home"]
+    },
+    {
+      "action": "Activate 'Return to Home'.",
+      "expected": "The archive home page renders.",
+      "evidence": ["screenshot"],
+      "handles": ["link:Return to Home", "heading:See how campus interviews unfold"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only."
+}

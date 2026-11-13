@@ -69,14 +69,17 @@ export default function RootLayout({
           <div className="max-w-container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
             <div>
               <span className="font-semibold text-ox-ink">0xTrace</span>
-              <p className="mt-1 text-xs text-ox-muted">Campus interview experiences, organized for the next candidate.</p>
+              <p className="mt-1 text-xs text-ox-text">Campus interview experiences, organized for the next candidate.</p>
             </div>
-            <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-ox-muted">
+            <nav aria-label="Footer navigation" className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-ox-text">
               <Link href="/experiences" className="hover:text-ox-ink transition-colors">Experiences</Link>
               <Link href="/questions" className="hover:text-ox-ink transition-colors">Questions</Link>
               <Link href="/about" className="hover:text-ox-ink transition-colors">About</Link>
+              <Link href="/privacy" className="hover:text-ox-ink transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-ox-ink transition-colors">Terms</Link>
+              <Link href="/contact" className="hover:text-ox-ink transition-colors">Contact</Link>
             </nav>
-            <span className="text-xs text-ox-muted">&copy; {new Date().getFullYear()}</span>
+            <span className="text-xs text-ox-text">&copy; {new Date().getFullYear()}</span>
           </div>
         </footer>
         </Providers>

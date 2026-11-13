@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "id": "analytics-render",
+  "title": "Render placement analytics from the archive",
+  "priority": "high",
+  "tags": ["analytics", "data"],
+  "environment": "local",
+  "role": "signed-in-user",
+  "surface": "web",
+  "source": "generated",
+  "feature": "analytics-dashboard",
+  "preconditions": [
+    "The local app is running with the seeded database.",
+    "An approved institutional session is available."
+  ],
+  "steps": [
+    {
+      "action": "Open /analytics.",
+      "expected": "The heading, the experience total, and every breakdown section render without an error boundary.",
+      "evidence": ["screenshot", "aria-snapshot", "console"],
+      "handles": ["heading:Hiring patterns at a glance", "region:analytics"]
+    },
+    {
+      "action": "Compare the experience total with the directory record count.",
+      "expected": "Both report the same number of experiences.",
+      "evidence": ["notes"],
+      "handles": ["status:experiences"]
+    }
+  ],
+  "viewports": ["desktop", "mobile"],
+  "cleanup": "No data changes.",
+  "risk": "Blocked without an institutional identity."
+}

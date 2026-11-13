@@ -1,0 +1,39 @@
+{
+  "version": 2,
+  "id": "admin-dashboard",
+  "title": "Manage records from the admin dashboard",
+  "priority": "high",
+  "tags": ["admin", "write", "destructive"],
+  "environment": "local",
+  "role": "admin",
+  "surface": "web",
+  "source": "generated",
+  "feature": "admin-management",
+  "preconditions": [
+    "An approved admin session is available.",
+    "The database is the isolated seeded store."
+  ],
+  "steps": [
+    {
+      "action": "Open /admin as an admin.",
+      "expected": "The experience manager lists every record and reports the library count.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:Experience manager", "status:experiences in the library"]
+    },
+    {
+      "action": "Search the manager list for a company name.",
+      "expected": "Only matching records remain.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["searchbox:Search"]
+    },
+    {
+      "action": "Start a delete and cancel the confirmation.",
+      "expected": "The record remains and the list is unchanged.",
+      "evidence": ["screenshot", "notes"],
+      "handles": ["button:Delete"]
+    }
+  ],
+  "viewports": ["desktop"],
+  "cleanup": "No record is deleted by this check; cancel any confirmation.",
+  "risk": "Destructive controls are present. Cancel every confirmation. Blocked without an admin identity."
+}

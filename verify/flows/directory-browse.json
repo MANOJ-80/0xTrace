@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "directory-browse",
+  "title": "Browse the full directory of interview records",
+  "priority": "critical",
+  "tags": ["directory", "list"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "experience-directory",
+  "preconditions": [
+    "The local app is running against the isolated seeded database and the doctor check passes."
+  ],
+  "steps": [
+    {
+      "action": "Open /experiences and wait for the list to render.",
+      "expected": "The page shows the directory heading, the record total, and a card list where each card shows a company, a role, an outcome label, and a round count.",
+      "evidence": ["screenshot", "aria-snapshot", "console"],
+      "handles": ["heading:Explore interview experiences", "status:Showing 126 of 126"]
+    },
+    {
+      "action": "Inspect the count line and compare it with the number of rendered cards.",
+      "expected": "The count line reports the same number of records as the cards that are rendered.",
+      "evidence": ["aria-snapshot", "notes"],
+      "handles": ["status:Showing"]
+    }
+  ],
+  "viewports": ["desktop", "mobile"],
+  "cleanup": "No data changes.",
+  "risk": "Read-only."
+}

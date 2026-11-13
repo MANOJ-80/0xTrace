@@ -2,12 +2,12 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Experience } from "@/lib/types";
+import { ExperienceSummary } from "@/lib/types";
 import ExperienceCard from "@/components/ExperienceCard";
 import { Search } from "lucide-react";
 
 interface ExperienceDirectoryClientProps {
-  initialExperiences: Experience[];
+  initialExperiences: ExperienceSummary[];
   companies: string[];
   roles?: string[];
 }
@@ -41,15 +41,13 @@ export default function ExperienceDirectoryClient({
         const cName = (exp.company?.name || "").toLowerCase();
         const rName = (exp.job?.role || "").toLowerCase();
         const dept = (exp.candidate?.department || "").toLowerCase();
-        const candName = (exp.candidate?.name || "").toLowerCase();
-        const raw = (exp.raw_text || "").toLowerCase();
+        const candName = (exp.candidate?.display_name || "").toLowerCase();
 
         const matches =
           cName.includes(q) ||
           rName.includes(q) ||
           dept.includes(q) ||
-          candName.includes(q) ||
-          raw.includes(q);
+          candName.includes(q);
 
         if (!matches) return false;
       }
@@ -83,7 +81,7 @@ export default function ExperienceDirectoryClient({
 
     // Sorting
     if (sortBy === "rounds") {
-      list.sort((a, b) => (b.rounds?.length || 0) - (a.rounds?.length || 0));
+      list.sort((a, b) => b.round_count - a.round_count);
     } else if (sortBy === "company") {
       list.sort((a, b) =>
         (a.company?.name || "").localeCompare(b.company?.name || "")

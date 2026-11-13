@@ -9,18 +9,17 @@ import { ArrowLeft, PenLine } from "lucide-react";
 export const revalidate = 0;
 
 interface EditExperiencePageProps {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export default async function EditExperiencePage({ params }: EditExperiencePageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.email) {
-    redirect(`/login?callbackUrl=/experiences/${params.id}/edit`);
+    redirect(`/login?callbackUrl=/experiences/${id}/edit`);
   }
 
-  const experience = await getExperienceById(params.id);
+  const experience = await getExperienceById(id);
   if (!experience) {
     notFound();
   }
@@ -32,7 +31,7 @@ export default async function EditExperiencePage({ params }: EditExperiencePageP
   const isAdmin = !!session.user.isAdmin;
 
   if (!isAuthor && !isAdmin) {
-    redirect(`/experiences/${params.id}`);
+    redirect(`/experiences/${id}`);
   }
 
   const companyName =
@@ -43,7 +42,7 @@ export default async function EditExperiencePage({ params }: EditExperiencePageP
       {/* Top Header */}
       <div className="flex items-center justify-between border-b border-ox-edge pb-4">
         <Link
-          href={`/experiences/${params.id}`}
+          href={`/experiences/${id}`}
           className="inline-flex items-center gap-1.5 text-sm text-ox-muted hover:text-ox-ink transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -67,7 +66,7 @@ export default async function EditExperiencePage({ params }: EditExperiencePageP
 
       <ManualEntryForm
         initialExperience={experience}
-        experienceId={params.id}
+        experienceId={id}
         mode="edit"
       />
     </div>

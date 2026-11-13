@@ -3,8 +3,10 @@ import { PenLine } from "lucide-react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getUserExperienceCount } from "@/lib/data";
+import { PRIVATE_ROBOTS } from "@/lib/metadata";
 
 export const metadata = {
+  robots: PRIVATE_ROBOTS,
   title: "Contribute — 0xTrace",
   description: "Share your interview experience to help future candidates.",
 };

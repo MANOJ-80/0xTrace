@@ -1,58 +1,53 @@
 import { MetadataRoute } from "next";
-import { getAllExperiences } from "@/lib/data";
-import { Experience } from "@/lib/types";
 
-export const revalidate = 86400; // Cache sitemap for 24 hours
+const siteUrl = process.env.NEXTAUTH_URL || "https://0x-trace.vercel.app";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = process.env.NEXTAUTH_URL || "https://0x-trace.vercel.app";
+/**
+ * Only public routes belong in the sitemap.
+ *
+ * Record pages, the question bank, analytics, and contribution pages require a
+ * session, so listing them here would invite crawlers to pages they cannot
+ * read and could expose candidate data in search results.
+ */
+export default function sitemap(): MetadataRoute.Sitemap {
+  const lastModified = new Date();
 
-  let experiences: Experience[] = [];
-  try {
-    experiences = await getAllExperiences();
-  } catch (e) {
-    // fallback if DB unavailable during static build
-  }
-
-  const staticRoutes: MetadataRoute.Sitemap = [
+  return [
     {
-      url: `${siteUrl}`,
-      lastModified: new Date(),
+      url: siteUrl,
+      lastModified,
       changeFrequency: "daily",
       priority: 1.0,
     },
     {
       url: `${siteUrl}/experiences`,
-      lastModified: new Date(),
+      lastModified,
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: `${siteUrl}/questions`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${siteUrl}/analytics`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.7,
-    },
-    {
       url: `${siteUrl}/about`,
-      lastModified: new Date(),
+      lastModified,
       changeFrequency: "monthly",
       priority: 0.5,
     },
+    {
+      url: `${siteUrl}/privacy`,
+      lastModified,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${siteUrl}/terms`,
+      lastModified,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${siteUrl}/contact`,
+      lastModified,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
   ];
-
-  const experienceRoutes: MetadataRoute.Sitemap = experiences.map((exp) => ({
-    url: `${siteUrl}/experiences/${exp._id || exp.id}`,
-    lastModified: new Date(),
-    changeFrequency: "monthly",
-    priority: 0.8,
-  }));
-
-  return [...staticRoutes, ...experienceRoutes];
 }

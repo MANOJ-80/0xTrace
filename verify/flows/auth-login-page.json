@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "id": "auth-login-page",
+  "title": "Render the institutional sign-in page",
+  "priority": "high",
+  "tags": ["auth", "login"],
+  "environment": "local",
+  "role": "public-visitor",
+  "surface": "web",
+  "source": "generated",
+  "feature": "authentication-gate",
+  "preconditions": [
+    "The local app is running and the doctor check passes."
+  ],
+  "steps": [
+    {
+      "action": "Open /login.",
+      "expected": "The page shows the sign-in heading, the @psgitech.ac.in requirement, and one Google action.",
+      "evidence": ["screenshot", "aria-snapshot"],
+      "handles": ["heading:Sign in to continue", "button:Continue with Google"]
+    },
+    {
+      "action": "Open /login?callbackUrl=/questions and inspect the action without activating it.",
+      "expected": "The page still renders normally and the Google action is present; the callback value is preserved in the URL.",
+      "evidence": ["notes"],
+      "handles": ["button:Continue with Google"]
+    }
+  ],
+  "viewports": ["desktop", "mobile"],
+  "cleanup": "No data changes.",
+  "risk": "Do not activate the Google action: it leaves the local app and cannot complete with placeholder client values."
+}

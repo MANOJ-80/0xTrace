@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "id": "crawl-metadata",
+  "title": "Serve crawl rules, a sitemap, and Open Graph images",
+  "priority": "low",
+  "tags": ["seo", "metadata", "crawler"],
+  "environment": "local",
+  "role": "crawler",
+  "surface": "web",
+  "source": "generated",
+  "feature": "crawl-metadata",
+  "preconditions": [
+    "The local app is running with NEXTAUTH_URL set to the local origin."
+  ],
+  "steps": [
+    {
+      "action": "GET /robots.txt.",
+      "expected": "The file allows crawling, disallows /admin, /admin/*, and /api/*, and points at the sitemap.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:GET /robots.txt"]
+    },
+    {
+      "action": "GET /sitemap.xml.",
+      "expected": "The sitemap lists the home, experiences, questions, and about routes with absolute local URLs.",
+      "evidence": ["notes"],
+      "handles": ["endpoint:GET /sitemap.xml"]
+    },
+    {
+      "action": "GET /opengraph-image and /experiences/exp_001/opengraph-image.",
+      "expected": "Both return a raster image with an image content type.",
+      "evidence": ["notes", "network"],
+      "handles": ["endpoint:GET /opengraph-image"]
+    }
+  ],
+  "viewports": [],
+  "cleanup": "No data changes.",
+  "risk": "Read-only. Do not simulate a crawler against gated routes in this check."
+}

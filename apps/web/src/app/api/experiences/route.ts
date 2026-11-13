@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllExperiences } from "@/lib/data";
-import { toPublicExperiences } from "@/lib/public-experience";
+import { getExperienceSummaries } from "@/lib/data";
 
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;
-    const search = (searchParams.get("search") || "").toLowerCase().trim();
-    const company = (searchParams.get("company") || "").toLowerCase().trim();
-    const role = (searchParams.get("role") || "").toLowerCase().trim();
-    const outcome = (searchParams.get("outcome") || "").toLowerCase().trim();
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "24", 10);
+    const search = (searchParams.get("search") || "").toLowerCase().trim().slice(0, 100);
+    const company = (searchParams.get("company") || "").toLowerCase().trim().slice(0, 100);
+    const role = (searchParams.get("role") || "").toLowerCase().trim().slice(0, 100);
+    const outcome = (searchParams.get("outcome") || "").toLowerCase().trim().slice(0, 40);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "24", 10) || 24));
 
-    let experiences = await getAllExperiences();
+    let experiences = await getExperienceSummaries();
 
     if (search) {
       experiences = experiences.filter((exp) => {
         const cName = (exp.company?.name || "").toLowerCase();
         const rName = (exp.job?.role || "").toLowerCase();
         const dept = (exp.candidate?.department || "").toLowerCase();
-        const candName = (exp.candidate?.name || "").toLowerCase();
+        const candName = (exp.candidate?.display_name || "").toLowerCase();
         return (
           cName.includes(search) ||
           rName.includes(search) ||
@@ -58,12 +57,10 @@ export async function GET(req: NextRequest) {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
-      experiences: toPublicExperiences(paginated),
+      experiences: paginated,
     });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: "Failed to load experiences", detail: err.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("[api/experiences] list failed:", error);
+    return NextResponse.json({ error: "Failed to load experiences" }, { status: 500 });
   }
 }

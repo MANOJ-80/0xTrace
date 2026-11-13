@@ -1,14 +1,17 @@
 import {
   Experience,
+  ExperienceSummary,
   CompanyStats,
   InterviewQuestion,
   CodingProblem,
   ExtractionResponse,
   AuthorInfo,
+  ModerationStatus,
 } from "./types";
 import { getCollection } from "./mongodb";
 import { ObjectId } from "mongodb";
 import { normalizeCompanyKey, mostCommonName } from "./company";
+import { toExperienceSummary } from "./public-experience";
 import crypto from "crypto";
 
 /* ------------------------------------------------------------------ */
@@ -19,10 +22,91 @@ export function invalidateCache() {
   // No-op — MongoDB handles caching at the driver level
 }
 
-export async function getAllExperiences(): Promise<Experience[]> {
+/**
+ * Full records for server-side use.
+ *
+ * Public pages should call `getExperienceSummaries` instead. Pending review
+ * records are hidden unless the caller explicitly asks for them, so admin and
+ * author views pass `{ includePending: true }`.
+ */
+export async function getAllExperiences(
+  options: { includePending?: boolean } = {}
+): Promise<Experience[]> {
   const col = await getCollection("experiences");
-  const docs = await col.find({}).toArray();
+  const filter = options.includePending ? {} : { moderation_status: { $ne: "pending" } };
+  const docs = await col.find(filter).toArray();
   return docs.map(doc => ({ ...doc, _id: doc._id.toString() })) as unknown as Experience[];
+}
+
+/**
+ * Anonymous-safe rows for the directory, home page, and public list API.
+ *
+ * The aggregation never loads `raw_text`, contacts, author details, or the
+ * question text. It only computes the counts and the first three round labels
+ * needed to render a card.
+ */
+export async function getExperienceSummaries(): Promise<ExperienceSummary[]> {
+  const col = await getCollection("experiences");
+  const rows = await col
+    .aggregate([
+      { $match: { moderation_status: { $ne: "pending" } } },
+      {
+        $project: {
+          _id: { $toString: "$_id" },
+          id: 1,
+          company: {
+            name: "$company.name",
+            normalized_name: "$company.normalized_name",
+          },
+          candidate_name: "$candidate.name",
+          department: "$candidate.department",
+          job: { role: "$job.role" },
+          timeline: { year: "$timeline.year" },
+          outcome: { status: "$outcome.status" },
+          moderation_status: 1,
+          round_count: { $size: { $ifNull: ["$rounds", []] } },
+          question_count: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ["$rounds", []] },
+                as: "round",
+                in: { $size: { $ifNull: ["$$round.questions", []] } },
+              },
+            },
+          },
+          coding_count: {
+            $sum: {
+              $map: {
+                input: { $ifNull: ["$rounds", []] },
+                as: "round",
+                in: { $size: { $ifNull: ["$$round.coding.problems", []] } },
+              },
+            },
+          },
+          rounds: {
+            $map: {
+              input: { $slice: [{ $ifNull: ["$rounds", []] }, 3] },
+              as: "round",
+              in: {
+                name: "$$round.name",
+                type: "$$round.type",
+                questions: { $size: { $ifNull: ["$$round.questions", []] } },
+              },
+            },
+          },
+          round_names: {
+            $map: {
+              input: { $ifNull: ["$rounds", []] },
+              as: "round",
+              in: "$$round.name",
+            },
+          },
+        },
+      },
+    ])
+    .toArray();
+
+  return rows.map((row) => toExperienceSummary(row as Record<string, any>));
 }
 
 export async function getExperienceById(id: string): Promise<Experience | null> {
@@ -41,7 +125,7 @@ export async function getExperienceById(id: string): Promise<Experience | null> 
 }
 
 export async function getCompanyStats(): Promise<CompanyStats[]> {
-  const experiences = await getAllExperiences();
+  const experiences = await getExperienceSummaries();
   const companyMap = new Map<string, {
     nameCounts: Map<string, number>;
     count: number;
@@ -73,15 +157,11 @@ export async function getCompanyStats(): Promise<CompanyStats[]> {
     if (exp.outcome?.status?.toLowerCase().includes("select") || exp.outcome?.status?.toLowerCase().includes("offer")) {
       stat.selected += 1;
     }
-    stat.rounds += (exp.rounds || []).length;
+    stat.rounds += exp.round_count;
 
-    let totalQuestionsInExp = 0;
-    const seq = (exp.rounds || []).map((r) => {
-      totalQuestionsInExp += (r.questions || []).length;
-      return r.name;
-    });
+    const seq = exp.round_names || (exp.rounds || []).map((r) => r.name);
     if (seq.length > 0) stat.roundSequences.push(seq);
-    stat.questionsCount += totalQuestionsInExp;
+    stat.questionsCount += exp.question_count;
   }
 
   const result: CompanyStats[] = [];
@@ -102,7 +182,7 @@ export async function getCompanyStats(): Promise<CompanyStats[]> {
 }
 
 export async function getDashboardMetrics() {
-  const experiences = await getAllExperiences();
+  const experiences = await getExperienceSummaries();
   const companies = await getCompanyStats();
 
   let totalRounds = 0;
@@ -110,11 +190,9 @@ export async function getDashboardMetrics() {
   let totalCodingProblems = 0;
 
   for (const exp of experiences) {
-    for (const r of exp.rounds || []) {
-      totalRounds += 1;
-      totalQuestions += (r.questions || []).length;
-      totalCodingProblems += (r.coding?.problems || []).length;
-    }
+    totalRounds += exp.round_count;
+    totalQuestions += exp.question_count;
+    totalCodingProblems += exp.coding_count;
   }
 
   return {
@@ -200,7 +278,8 @@ export async function getSampleExtraction(name: "walmart" | "phonepe" | "idfc"):
 
 export async function ingestExperienceToCanonical(
   draftExperience: any,
-  author?: AuthorInfo
+  author?: AuthorInfo,
+  options: { moderationStatus?: ModerationStatus } = {}
 ): Promise<{
   success: boolean;
   assigned_id: string;
@@ -300,6 +379,7 @@ export async function ingestExperienceToCanonical(
   const approved: any = {
     ...incoming,
     id: nextId,
+    moderation_status: options.moderationStatus || "published",
     created_at: now,
     updated_at: now,
   };

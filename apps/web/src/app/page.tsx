@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { getAllExperiences } from "@/lib/data";
+import { getExperienceSummaries } from "@/lib/data";
 import { normalizeCompanyKey } from "@/lib/company";
 import HeroRecordCarousel, { type HeroRecord } from "@/components/HeroRecordCarousel";
-import type { Experience } from "@/lib/types";
+import type { ExperienceSummary } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -31,7 +31,7 @@ function buildPlaceholder(name: string, key: string, role?: string, year?: strin
   };
 }
 
-function toHeroRecord(experience: Experience, name: string, role?: string, year?: string): HeroRecord {
+function toHeroRecord(experience: ExperienceSummary, name: string, role?: string, year?: string): HeroRecord {
   return {
     id: experience.id,
     company: name,
@@ -40,18 +40,16 @@ function toHeroRecord(experience: Experience, name: string, role?: string, year?
     rounds: (experience.rounds ?? []).slice(0, 3).map((round) => ({
       name: round.name,
       type: round.type || "Interview",
-      questions: round.questions?.length ?? 0,
+      questions: round.questions ?? 0,
     })),
   };
 }
 
-function scoreExperience(experience: Experience) {
-  const rounds = experience.rounds ?? [];
-  const questionCount = rounds.reduce((total, round) => total + (round.questions?.length ?? 0), 0);
-  return questionCount * 10 + rounds.length;
+function scoreExperience(experience: ExperienceSummary) {
+  return experience.question_count * 10 + experience.round_count;
 }
 
-function pickHeroRecords(experiences: Experience[]): HeroRecord[] {
+function pickHeroRecords(experiences: ExperienceSummary[]): HeroRecord[] {
   return HERO_COMPANIES.map(({ key, name, role, year }) => {
     const matches = experiences.filter((experience) => {
       const normalized = normalizeCompanyKey(experience.company?.name);
@@ -65,13 +63,10 @@ function pickHeroRecords(experiences: Experience[]): HeroRecord[] {
 }
 
 export default async function HomePage() {
-  const experiences = await getAllExperiences();
+  const experiences = await getExperienceSummaries();
   const companies = new Set(experiences.map((experience) => experience.company?.name).filter(Boolean));
-  const rounds = experiences.reduce((total, experience) => total + (experience.rounds?.length ?? 0), 0);
-  const questions = experiences.reduce(
-    (total, experience) => total + (experience.rounds ?? []).reduce((roundTotal, round) => roundTotal + (round.questions?.length ?? 0), 0),
-    0,
-  );
+  const rounds = experiences.reduce((total, experience) => total + experience.round_count, 0);
+  const questions = experiences.reduce((total, experience) => total + experience.question_count, 0);
   const heroRecords = pickHeroRecords(experiences);
 
   return (

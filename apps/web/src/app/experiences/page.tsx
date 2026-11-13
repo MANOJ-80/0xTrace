@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getAllExperiences, getCompanyStats } from "@/lib/data";
+import { getExperienceSummaries, getCompanyStats } from "@/lib/data";
 import ExperienceDirectoryClient from "./ExperienceDirectoryClient";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export const metadata = {
 };
 
 export default async function ExperiencesPage() {
-  const experiences = await getAllExperiences();
+  const experiences = await getExperienceSummaries();
   const companies = await getCompanyStats();
 
   return (
