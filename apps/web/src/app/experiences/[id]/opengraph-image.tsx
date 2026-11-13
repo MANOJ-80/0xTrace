@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getExperienceById } from "@/lib/data";
+import { publicCandidateName } from "@/lib/public-experience";
 
 export const runtime = "nodejs";
 
@@ -16,17 +17,25 @@ interface Props {
 
 export default async function Image({ params }: Props) {
   const { id } = await params;
-  let exp = null;
+  let record = null;
   try {
-    exp = await getExperienceById(id);
+    record = await getExperienceById(id);
   } catch (e) {
     // Graceful fallback
   }
 
+  // Pending and rejected records are not public, and the preview must not
+  // reveal a full candidate name. Treat unpublished records as missing.
+  const isUnpublished =
+    record?.moderation_status === "pending" ||
+    record?.moderation_status === "rejected";
+  const exp = isUnpublished ? null : record;
+
   const companyName =
     exp?.company?.name || exp?.company?.normalized_name || "Campus Placement";
   const role = exp?.job?.role || "Software Engineer";
-  const candidateName = exp?.candidate?.name || "Student Candidate";
+  const candidateName =
+    publicCandidateName(exp?.candidate?.name) || "Student Candidate";
   const candidateDegree = exp?.candidate?.degree || "B.Tech / B.E";
   const candidateDept = exp?.candidate?.department
     ? `${candidateDegree} - ${exp.candidate.department}`
