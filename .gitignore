@@ -23,6 +23,11 @@ scratch/
 # loaded into MongoDB for local development and are never committed.
 data/
 samplepdfs/
+ExperiencePDFs/
+*-canonical.json
+*-extracted.json
+*-ui.json
+*_Interview_Experiences.md
 
 # Generated video work directories
 brag-output-*/
