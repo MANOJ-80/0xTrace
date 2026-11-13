@@ -1,6 +1,11 @@
 import { ImageResponse } from "next/og";
+import { getExperienceSummaries } from "@/lib/data";
 
 export const runtime = "nodejs";
+
+// Read the live archive counts when the preview is requested. Rendering this
+// at build time would freeze the numbers and require a database in CI.
+export const dynamic = "force-dynamic";
 
 export const alt = "0xTrace — Campus Interview Intelligence";
 export const size = {
@@ -9,7 +14,37 @@ export const size = {
 };
 export const contentType = "image/png";
 
+const FALLBACK_STATS = {
+  experiences: 127,
+  companies: 45,
+  questions: 490,
+};
+
+async function loadStats() {
+  try {
+    const experiences = await getExperienceSummaries();
+    const companies = new Set(
+      experiences.map((experience) => experience.company?.name).filter(Boolean)
+    );
+    const questions = experiences.reduce(
+      (total, experience) => total + experience.question_count,
+      0
+    );
+
+    return {
+      experiences: experiences.length,
+      companies: companies.size,
+      questions,
+    };
+  } catch (error) {
+    // A missing database must not break link previews.
+    return FALLBACK_STATS;
+  }
+}
+
 export default async function Image() {
+  const stats = await loadStats();
+
   return new ImageResponse(
     (
       <div
@@ -134,7 +169,7 @@ export default async function Image() {
               marginBottom: "14px",
             }}
           >
-            126 Audited Campus Placement Experiences
+            {stats.experiences} Audited Campus Placement Experiences
           </div>
           <div
             style={{
@@ -172,7 +207,7 @@ export default async function Image() {
             }}
           >
             <div style={{ display: "flex", fontSize: "32px", fontWeight: 800, color: "#60A5FA" }}>
-              126
+              {stats.experiences}
             </div>
             <div style={{ display: "flex", fontSize: "14px", color: "#9CA3AF", fontWeight: 600, marginTop: "4px" }}>
               Verified Experiences
@@ -192,7 +227,7 @@ export default async function Image() {
             }}
           >
             <div style={{ display: "flex", fontSize: "32px", fontWeight: 800, color: "#4ADE80" }}>
-              45+
+              {stats.companies}+
             </div>
             <div style={{ display: "flex", fontSize: "14px", color: "#9CA3AF", fontWeight: 600, marginTop: "4px" }}>
               Top Recruiter Companies
@@ -212,7 +247,7 @@ export default async function Image() {
             }}
           >
             <div style={{ display: "flex", fontSize: "32px", fontWeight: 800, color: "#FBBF24" }}>
-              490+
+              {stats.questions}+
             </div>
             <div style={{ display: "flex", fontSize: "14px", color: "#9CA3AF", fontWeight: 600, marginTop: "4px" }}>
               Interview Questions
