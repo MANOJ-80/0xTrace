@@ -144,6 +144,8 @@ interface ManualEntryFormProps {
   mode?: "create" | "edit";
   hasPublished?: boolean;
   isAdmin?: boolean;
+  /** When true, new submissions wait for an admin before publishing. */
+  requireApproval?: boolean;
   /** Admin edits return to the admin console instead of the author pages. */
   adminMode?: boolean;
 }
@@ -154,12 +156,17 @@ export default function ManualEntryForm({
   mode = "create",
   hasPublished = false,
   isAdmin = false,
+  requireApproval = false,
   adminMode = false,
 }: ManualEntryFormProps = {}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState<{ id: string; pending: boolean } | null>(null);
+  const [success, setSuccess] = useState<{
+    id: string;
+    pending: boolean;
+    redactions?: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
 
@@ -436,7 +443,11 @@ export default function ManualEntryForm({
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Submission failed");
-        setSuccess({ id: data.assigned_id, pending: data.moderation_status === "pending" });
+        setSuccess({
+          id: data.assigned_id,
+          pending: data.moderation_status === "pending",
+          redactions: Number(data.redactions) || 0,
+        });
       }
     } catch (err: any) {
       setError(err.message);
@@ -510,6 +521,12 @@ export default function ManualEntryForm({
             </>
           )}
         </p>
+        {success.redactions ? (
+          <p className="text-xs text-ox-muted">
+            We removed {success.redactions} contact detail
+            {success.redactions === 1 ? "" : "s"} from this submission before saving.
+          </p>
+        ) : null}
         <div className="flex items-center justify-center gap-3 pt-2">
           <button
             onClick={() => router.push(`/experiences/${success.id}`)}
@@ -572,7 +589,13 @@ export default function ManualEntryForm({
         ) : (
           <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-ox-surface border border-ox-edge text-xs text-ox-muted">
             <AlertTriangle className="w-4 h-4 text-ox-accent flex-shrink-0" />
-            <span>Notice: Student accounts can submit one interview experience. New submissions go to a moderator for review before they appear in the public archive. You can edit your submission after it is published.</span>
+            <span>
+              Notice: Student accounts can submit one interview experience.{" "}
+              {requireApproval
+                ? "New submissions go to a moderator for review before they appear in the public archive."
+                : "Your submission is published immediately after you confirm."}{" "}
+              You can edit your submission from My Experiences.
+            </span>
           </div>
         )
       )}
@@ -965,9 +988,12 @@ export default function ManualEntryForm({
                   />
                   <span>
                     I have permission to share this interview experience and the
-                    details it contains. I understand that it will be reviewed by a
-                    moderator before publication, that my full name is shortened in
-                    the public archive, and that I can request removal at any time.{" "}
+                    details it contains. I understand that{" "}
+                    {requireApproval
+                      ? "it will be reviewed by a moderator before publication"
+                      : "it will be published immediately after I confirm"}{" "}
+                    and that my full name is shortened in the public archive. I
+                    can request removal at any time.{" "}
                     <a href="/privacy" className="text-ox-accent underline underline-offset-2">
                       Privacy policy
                     </a>

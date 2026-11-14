@@ -5,6 +5,8 @@ import { ExperienceExtractionSchema } from "@/lib/extraction-schema";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { recordActivity } from "@/lib/audit";
+import { getPublishSettings } from "@/lib/publish-settings";
+import { redactContactDetails } from "@/lib/pii";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -43,7 +45,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const draft = parsed.data;
+    // Remove email addresses and phone numbers before the record can publish.
+    const redaction = redactContactDetails(parsed.data);
+    const draft = redaction.value;
+    const redactions = redaction.count;
 
     if (!draft.company?.name && !draft.company?.normalized_name) {
       return NextResponse.json(
@@ -80,12 +85,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const moderationStatus = session.user.isAdmin ? "published" : "pending";
+    const publishSettings = session.user.isAdmin ? null : await getPublishSettings();
+    const moderationStatus = session.user.isAdmin
+      ? "published"
+      : publishSettings?.requireApproval
+        ? "pending"
+        : "published";
     const result = await ingestExperienceToCanonical(draft, author, { moderationStatus });
 
     if (result.duplicate) {
       return NextResponse.json({
         ...result,
+        moderation_status: moderationStatus,
+        redactions,
         message: `This source PDF is already published as ${result.assigned_id}.`,
       });
     }
@@ -108,7 +120,11 @@ export async function POST(req: NextRequest) {
     revalidatePath("/admin");
     revalidatePath("/");
 
-    return NextResponse.json({ ...result, moderation_status: moderationStatus });
+    return NextResponse.json({
+      ...result,
+      moderation_status: moderationStatus,
+      redactions,
+    });
   } catch (error) {
     console.error("[Ingest] failed:", error);
     return NextResponse.json({ error: "Ingestion failed" }, { status: 500 });

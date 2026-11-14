@@ -3,6 +3,7 @@ import { PenLine } from "lucide-react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getUserExperienceCount } from "@/lib/data";
+import { getPublishSettings } from "@/lib/publish-settings";
 import { PRIVATE_ROBOTS } from "@/lib/metadata";
 
 export const metadata = {
@@ -21,6 +22,7 @@ export default async function ContributePage() {
 
   const publishedCount = email ? await getUserExperienceCount(email) : 0;
   const hasPublished = publishedCount >= 1;
+  const publishSettings = await getPublishSettings();
 
   return (
     <div className="space-y-7">
@@ -35,7 +37,11 @@ export default async function ContributePage() {
         <div className="page-heading-icon"><PenLine className="w-5 h-5 text-ox-accent" /></div>
       </header>
 
-      <ManualEntryForm hasPublished={hasPublished} isAdmin={isAdmin} />
+      <ManualEntryForm
+        hasPublished={hasPublished}
+        isAdmin={isAdmin}
+        requireApproval={publishSettings.requireApproval}
+      />
     </div>
   );
 }

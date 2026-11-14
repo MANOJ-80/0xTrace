@@ -72,10 +72,11 @@ export default function PrivacyPage() {
       <section>
         <h2>Moderation</h2>
         <p>
-          New submissions are marked <strong>pending</strong> and stay out of the
-          public archive until a moderator approves them. A moderator can reject a
-          submission. Pending and rejected records are visible only to their author
-          and to administrators.
+          New submissions may publish immediately or wait for a moderator, depending
+          on the archive&apos;s current moderation setting. When review is required,
+          pending submissions stay out of the public archive until a moderator
+          approves them. A moderator can reject a submission. Pending and rejected
+          records are visible only to their author and to administrators.
         </p>
       </section>
 

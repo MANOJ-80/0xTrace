@@ -19,6 +19,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  ShieldCheck,
   Tags,
   Trash2,
   Users,
@@ -69,6 +70,8 @@ export default function AdminDashboardClient() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [reload, setReload] = useState(0);
+  const [requireApproval, setRequireApproval] = useState<boolean | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const loadOverview = useCallback(async () => {
     try {
@@ -80,9 +83,20 @@ export default function AdminDashboardClient() {
     }
   }, []);
 
+  const loadSettings = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/settings");
+      const data = await res.json();
+      if (res.ok) setRequireApproval(data.requireApproval === true);
+    } catch {
+      // The dashboard still works when the setting cannot be loaded.
+    }
+  }, []);
+
   useEffect(() => {
     loadOverview();
-  }, [loadOverview]);
+    loadSettings();
+  }, [loadOverview, loadSettings]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQ(q.trim()), 300);
@@ -171,13 +185,49 @@ export default function AdminDashboardClient() {
       setNotice(
         next === "published"
           ? "Record published to the archive."
-          : "Record rejected. It stays hidden from the archive."
+          : row.moderation_status === "published"
+            ? "Record unpublished. It is hidden from the archive."
+            : "Record rejected. It stays hidden from the archive."
       );
       refresh();
     } catch (err: any) {
       setError(err.message);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const toggleApproval = async () => {
+    if (requireApproval === null) return;
+    const next = !requireApproval;
+    if (
+      !next &&
+      !window.confirm(
+        "Turn off approval? New student submissions will publish immediately."
+      )
+    ) {
+      return;
+    }
+    setSavingSettings(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requireApproval: next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not save the setting");
+      setRequireApproval(data.requireApproval === true);
+      setNotice(
+        next
+          ? "New submissions now wait for admin approval."
+          : "New submissions now publish immediately."
+      );
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -382,6 +432,47 @@ export default function AdminDashboardClient() {
               </button>
             )}
           </div>
+        </div>
+      </section>
+
+      <section
+        className="ui-panel flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
+        aria-label="Publishing settings"
+      >
+        <div className="flex items-start gap-3">
+          <span className="admin-stat-icon"><ShieldCheck className="h-4 w-4" /></span>
+          <div>
+            <h2 className="text-sm font-semibold text-ox-ink">Publishing approval</h2>
+            <p className="mt-0.5 text-xs text-ox-muted">
+              {requireApproval === null
+                ? "Loading setting..."
+                : requireApproval
+                  ? "New student submissions wait for an admin before they appear in the archive."
+                  : "New student submissions publish immediately. Admin submissions always publish."}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-medium text-ox-muted">Require approval</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={requireApproval === true}
+            aria-label="Require admin approval before publishing"
+            onClick={toggleApproval}
+            disabled={savingSettings || requireApproval === null}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors disabled:opacity-50 ${
+              requireApproval
+                ? "border-ox-accent bg-ox-accent"
+                : "border-ox-edge bg-ox-surface-raised"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                requireApproval ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
         </div>
       </section>
 
@@ -602,6 +693,18 @@ export default function AdminDashboardClient() {
                               className="admin-icon-action admin-icon-action--danger"
                               aria-label={`Reject experience for ${row.company?.name || "unknown company"}`}
                               title="Reject submission"
+                            >
+                              <Ban className="h-4 w-4" />
+                            </button>
+                          )}
+                          {row.moderation_status === "published" && (
+                            <button
+                              type="button"
+                              onClick={() => setModeration(row, "rejected")}
+                              disabled={busy}
+                              className="admin-icon-action admin-icon-action--danger"
+                              aria-label={`Unpublish experience for ${row.company?.name || "unknown company"}`}
+                              title="Unpublish and hide"
                             >
                               <Ban className="h-4 w-4" />
                             </button>

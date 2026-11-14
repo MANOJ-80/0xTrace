@@ -23,6 +23,8 @@ interface ExtractionStudioProps {
   initialSample?: ExtractionResponse | null;
   hasPublished?: boolean;
   isAdmin?: boolean;
+  /** When true, new submissions wait for an admin before publishing. */
+  requireApproval?: boolean;
 }
 
 const OUTCOME_OPTIONS = ["selected", "rejected", "unknown"] as const;
@@ -31,6 +33,7 @@ export default function ExtractionStudio({
   initialSample,
   hasPublished = false,
   isAdmin = false,
+  requireApproval = false,
 }: ExtractionStudioProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +49,7 @@ export default function ExtractionStudio({
     duplicate?: boolean;
     message?: string;
     moderation_status?: "pending" | "published" | "rejected";
+    redactions?: number;
   } | null>(null);
   const [ingestError, setIngestError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
@@ -389,9 +393,12 @@ export default function ExtractionStudio({
               />
               <span>
                 I have permission to share this interview experience. I understand
-                that it goes to a moderator for review before publication, that my
-                full name is shortened in the public archive, and that I can request
-                removal at any time.{" "}
+                that{" "}
+                {requireApproval
+                  ? "it goes to a moderator for review before publication"
+                  : "it is published immediately after I confirm"}{" "}
+                and that my full name is shortened in the public archive. I can
+                request removal at any time.{" "}
                 <a href="/privacy" className="text-ox-accent underline underline-offset-2">
                   Privacy policy
                 </a>
@@ -597,6 +604,12 @@ export default function ExtractionStudio({
                         ? "A moderator will review this record before it appears in the public archive."
                         : `Total experiences in dataset: ${ingestResult.total_experiences}`)}
                   </p>
+                  {ingestResult.redactions ? (
+                    <p className="text-xs text-ox-muted mt-1">
+                      Removed {ingestResult.redactions} contact detail
+                      {ingestResult.redactions === 1 ? "" : "s"} from the submission.
+                    </p>
+                  ) : null}
                 </div>
               </div>
 

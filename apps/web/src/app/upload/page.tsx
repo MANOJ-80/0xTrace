@@ -3,6 +3,7 @@ import { FileUp } from "lucide-react";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getUserExperienceCount } from "@/lib/data";
+import { getPublishSettings } from "@/lib/publish-settings";
 import { PRIVATE_ROBOTS } from "@/lib/metadata";
 
 export const metadata = {
@@ -22,6 +23,7 @@ export default async function UploadPage() {
 
   const publishedCount = email ? await getUserExperienceCount(email) : 0;
   const hasPublished = publishedCount >= 1;
+  const publishSettings = await getPublishSettings();
 
   return (
     <div className="space-y-7">
@@ -31,7 +33,10 @@ export default async function UploadPage() {
           <h1 className="page-title">Turn a PDF into a published experience</h1>
           <p className="page-description">
             Upload the document, check the extracted company, rounds, and questions, then
-            confirm. Drafts are never published automatically.
+            confirm.{" "}
+            {publishSettings.requireApproval
+              ? "Submissions wait for a moderator before they appear in the public archive."
+              : "Submissions publish immediately after you confirm."}
           </p>
         </div>
         <div className="page-heading-icon">
@@ -39,7 +44,11 @@ export default async function UploadPage() {
         </div>
       </header>
 
-      <ExtractionStudio hasPublished={hasPublished} isAdmin={isAdmin} />
+      <ExtractionStudio
+        hasPublished={hasPublished}
+        isAdmin={isAdmin}
+        requireApproval={publishSettings.requireApproval}
+      />
     </div>
   );
 }
