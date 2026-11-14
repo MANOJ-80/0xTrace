@@ -453,8 +453,11 @@ export async function ingestExperienceToCanonical(
 export async function getUserExperienceCount(email: string): Promise<number> {
   const col = await getCollection("experiences");
   const escaped = email.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Rejected records do not count toward the one-submission limit, so an
+  // author can fix the problem and submit again.
   return await col.countDocuments({
     "author.email": { $regex: new RegExp(`^${escaped}$`, "i") },
+    moderation_status: { $ne: "rejected" },
   });
 }
 
