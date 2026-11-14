@@ -376,7 +376,9 @@ export default function ExtractionStudio({
                 ) : (
                   <>
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>{isAdmin ? "Confirm & publish" : "Confirm & submit"}</span>
+                    <span>
+                      {isAdmin || !requireApproval ? "Confirm & publish" : "Confirm & submit"}
+                    </span>
                   </>
                 )}
               </button>
