@@ -1,0 +1,5 @@
+interface:
+  display_name: "Human prose"
+  short_description: "Clean assistant prose while preserving meaning and tone"
+policy:
+  allow_implicit_invocation: true

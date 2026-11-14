@@ -1,0 +1,6 @@
+interface:
+  display_name: "Redesign existing projects"
+  short_description: "Improve the visual design of existing product interfaces"
+  default_prompt: "Use $redesign-existing-projects to improve this interface."
+policy:
+  allow_implicit_invocation: true

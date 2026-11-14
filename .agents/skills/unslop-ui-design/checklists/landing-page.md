@@ -1,0 +1,11 @@
+# Landing Page Review
+- [ ] The first screen explains what the product is.
+- [ ] The hero visual provides evidence or context.
+- [ ] Navigation reflects real information architecture.
+- [ ] Feature sections explain specific capabilities.
+- [ ] Social proof is authentic and attributable.
+- [ ] Pricing and plan differences are clear if present.
+- [ ] CTA hierarchy reflects user intent.
+- [ ] Footer contains useful navigation and company details.
+- [ ] Mobile reading order and CTA access are deliberate.
+- [ ] No generic section exists only to fill a template.
