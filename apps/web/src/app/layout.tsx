@@ -36,12 +36,21 @@ export const metadata: Metadata = {
     title: "0xTrace — Campus Interview Intelligence",
     description:
       "Explore campus placement interview experiences with round-by-round questions, company filters, and original candidate accounts preserved.",
+    images: [
+      {
+        url: "/og-home.png",
+        width: 1200,
+        height: 630,
+        alt: "0xTrace homepage with the interview record carousel",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "0xTrace — Campus Interview Intelligence",
     description:
       "Explore campus placement interview experiences with round-by-round questions, company filters, and original candidate accounts preserved.",
+    images: ["/og-home.png"],
   },
   robots: {
     index: true,
