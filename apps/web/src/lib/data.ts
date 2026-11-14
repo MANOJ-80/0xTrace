@@ -111,6 +111,112 @@ export async function getExperienceSummaries(): Promise<ExperienceSummary[]> {
   return rows.map((row) => toExperienceSummary(row as Record<string, any>));
 }
 
+export interface ArchiveStats {
+  experiences: number;
+  companies: number;
+  rounds: number;
+  questions: number;
+  /** Three rounds from one published record, with the company left out. */
+  sampleRounds: Array<{ type: string; questions: number }>;
+}
+
+/**
+ * Counts for the link preview and other summary surfaces.
+ *
+ * The aggregation mirrors the public summary projection, so pending and
+ * rejected records never change the numbers. It also returns three round
+ * types from one published record. Company and candidate details are not
+ * selected, which keeps the preview free of names.
+ */
+export async function getArchiveStats(): Promise<ArchiveStats> {
+  const col = await getCollection("experiences");
+
+  const questionCount = {
+    $sum: {
+      $map: {
+        input: { $ifNull: ["$rounds", []] },
+        as: "round",
+        in: { $size: { $ifNull: ["$$round.questions", []] } },
+      },
+    },
+  };
+
+  const [result] = await col
+    .aggregate([
+      { $match: { moderation_status: { $nin: ["pending", "rejected"] } } },
+      {
+        $facet: {
+          totals: [
+            {
+              $group: {
+                _id: null,
+                experiences: { $sum: 1 },
+                companies: {
+                  $addToSet: {
+                    $ifNull: ["$company.name", "$company.normalized_name"],
+                  },
+                },
+                rounds: { $sum: { $size: { $ifNull: ["$rounds", []] } } },
+                questions: { $sum: questionCount },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                experiences: 1,
+                companies: {
+                  $size: {
+                    $setDifference: [
+                      { $ifNull: ["$companies", []] },
+                      [null, ""],
+                    ],
+                  },
+                },
+                rounds: 1,
+                questions: 1,
+              },
+            },
+          ],
+          sample: [
+            { $match: { "rounds.2": { $exists: true } } },
+            { $addFields: { question_count: questionCount } },
+            { $sort: { question_count: -1 } },
+            { $limit: 1 },
+            {
+              $project: {
+                _id: 0,
+                rounds: {
+                  $map: {
+                    input: { $slice: ["$rounds", 3] },
+                    as: "round",
+                    in: {
+                      type: "$$round.type",
+                      questions: {
+                        $size: { $ifNull: ["$$round.questions", []] },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ])
+    .toArray();
+
+  const totals = result?.totals?.[0];
+  const sample = result?.sample?.[0];
+
+  return {
+    experiences: totals?.experiences ?? 0,
+    companies: totals?.companies ?? 0,
+    rounds: totals?.rounds ?? 0,
+    questions: totals?.questions ?? 0,
+    sampleRounds: Array.isArray(sample?.rounds) ? sample.rounds : [],
+  };
+}
+
 export async function getExperienceById(id: string): Promise<Experience | null> {
   const col = await getCollection("experiences");
   let doc = null;
