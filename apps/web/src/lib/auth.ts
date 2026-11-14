@@ -1,7 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-
-const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase());
+import { isAdminEmail } from "./admins";
+import { recordUserSignIn, shouldTouchLastSeen, touchUser } from "./users";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,13 +13,18 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user }) {
       if (user.email && user.email.endsWith("@psgitech.ac.in")) {
+        await recordUserSignIn(user);
         return true;
       }
       return "/unauthorized";
     },
     async jwt({ token, user }) {
       if (user) {
-        token.isAdmin = user.email ? adminEmails.includes(user.email.toLowerCase()) : false;
+        token.isAdmin = isAdminEmail(user.email);
+        token.lastSeenAt = Date.now();
+      } else if (token.email && shouldTouchLastSeen(token.lastSeenAt)) {
+        token.lastSeenAt = Date.now();
+        await touchUser(token.email);
       }
       return token;
     },

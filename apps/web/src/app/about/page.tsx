@@ -1,5 +1,6 @@
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import TeamAvatar from "@/components/TeamAvatar";
 
 export const metadata = {
   title: "About 0xTrace",
@@ -114,6 +115,50 @@ export default function AboutPage() {
           <p>Your interview account can help another candidate prepare.</p>
         </div>
         <Link href="/contribute" className="ui-action-primary">Share your experience <ArrowRight size={16} /></Link>
+      </section>
+
+      <section className="about-team" aria-labelledby="team-title">
+        <div className="about-section-heading">
+          <div className="page-kicker">Built by</div>
+          <h2 id="team-title">Built by students, for students.</h2>
+        </div>
+        <p className="about-team-intro">
+          We built 0xTrace to collect campus interview experiences in one place.
+        </p>
+        <div className="about-team-list">
+          <article className="about-team-member">
+            <TeamAvatar />
+            <div className="about-team-copy">
+              <h3>Manoj Ganesan</h3>
+              <p className="about-team-role">
+                Creator · Engineering and moderation
+              </p>
+              <p className="about-team-contribution">
+                Built the archive, submission flow, and moderation tools.
+              </p>
+              <a
+                href="https://manojganesan.vercel.app/?ref=0xtrace"
+                target="_blank"
+                rel="noreferrer"
+                className="about-team-link"
+              >
+                Portfolio <ArrowUpRight size={14} aria-hidden="true" />
+              </a>
+            </div>
+          </article>
+        </div>
+        <p className="about-team-note">
+          Feedback and contributions are welcome. Reach us through the profiles
+          above, or{" "}
+          <a
+            href="https://github.com/MANOJ-80/0xTrace/issues/new/choose"
+            target="_blank"
+            rel="noreferrer"
+          >
+            open an issue on GitHub
+          </a>
+          .
+        </p>
       </section>
     </div>
   );

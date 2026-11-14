@@ -1,122 +1,245 @@
-# 0xTrace 
+# 0xTrace
 
-> A platform to preserve, analyze, and share campus placement interview experiences.
+> Campus interview experiences, organized for the next candidate.
 
-0xTrace is a centralized vault for interview experiences. It features an automated AI extraction pipeline that parses raw candidate PDFs into a highly structured, searchable format while strictly preserving the original verbatim text. It serves as an interactive directory and question bank to help future candidates prepare for their campus placements.
+0xTrace is a student-run archive of campus placement interviews. It keeps each
+candidate's original writeup alongside structured company, round, question, and
+outcome data, so you can read the full account or search across the archive.
 
----
-
-## ✨ Features
-
-- **AI Extraction Studio (`/upload`)**: Upload raw interview PDFs and extract structured data (rounds, coding problems, questions, outcomes) using the Groq LLM API. Features an interactive review workbench before database ingestion.
-- **Experience Directory (`/experiences`)**: A comprehensive, searchable database of past interview experiences. Filter by company, outcome (Selected/Rejected), role, or candidate name.
-- **Question & Coding Bank (`/questions`)**: An aggregated repository of 490+ interview questions and 170+ coding problems drawn directly from real interviews. Filter by difficulty, topic (OS, DBMS, System Design), and company.
-- **Analytics Dashboard (`/analytics`)**: Detailed statistics and visualizations of the hiring landscape, including company-wise breakdowns, round type distributions, and outcome percentages.
-- **Manual Contribution (`/contribute`)**: A 4-step wizard allowing users to manually submit their interview walkthroughs, complete with dynamic round configurations.
-- **Admin Dashboard (`/admin`)**: Secure interface to manage the platform's data. View, edit (via raw JSON editor), and delete experiences directly from the database.
-- **Privacy First (PII Scrubbing)**: Built-in redaction pipeline that automatically masks candidate emails and phone numbers from both the structured JSON and the verbatim raw text.
+**Live site:** [https://0x-trace.vercel.app/](https://0x-trace.vercel.app/)
 
 ---
 
-## 🛠️ Tech Stack
+## What you can do
 
-**Frontend (Web)**
-- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Typography**: Geist Sans & Geist Mono
-- **Icons**: Lucide React
-- **Validation**: Zod
+### Browse interview experiences
 
-**Backend (API & Database)**
-- **Database**: MongoDB Atlas (Primary Data Store)
-- **AI Extraction**: Groq SDK (`llama-3.3-70b-versatile`)
-- **PDF Processing**: Python FastAPI, `pypdf`, Tesseract OCR
+- Search the directory by company, role, outcome, or candidate.
+- Open a record for structured round summaries, questions, tips, and the
+  candidate's original writeup.
+- Compare the structured summary with the source account when a detail looks
+  unclear.
+
+### Search the question and coding bank
+
+- Find technical and behavioral questions reported after real interviews.
+- Filter by topic, difficulty, and company.
+- Review coding problems with their descriptions and topics.
+
+### Read placement patterns
+
+- See company activity, interview round types, outcomes, and question topics
+  across the archive.
+- Use the summaries to spot trends, then open individual records for context.
+
+### Share an experience manually
+
+The contribution wizard walks through four steps:
+
+1. **Basic info** — company, role, candidate details, timeline, and package.
+2. **Rounds** — round names, types, modes, duration, difficulty, questions, and
+   coding problems.
+3. **Outcome and advice** — result, tips for future candidates, and pitfalls.
+4. **Review** — check the full entry before publishing.
+
+Each student account can publish one experience. You can edit or delete it later
+from **My Experiences**.
+
+### Turn a PDF into a draft
+
+- Upload a text-based interview PDF and review the extracted company, rounds,
+  questions, and outcome before publishing.
+- Text is extracted with layout preserved. Scanned PDFs can use OCR when the
+  optional Python parser and OCR tools are installed.
+- An LLM fills in the parts that regex cannot handle reliably. If the model is
+  unavailable, deterministic parsing still produces a usable draft.
+- Candidate emails and phone numbers are masked in the structured output and
+  raw text.
+- PDF extraction is rate-limited per account.
+
+### Manage your submissions
+
+- View every experience you have shared from **My Experiences**.
+- Edit or delete your own record at any time.
+
+### Sign in with a college account
+
+- Google sign-in is restricted to `@psgitech.ac.in` accounts.
+- Signing in unlocks record details, the question bank, analytics, and
+  contribution tools.
+
+### Control what is public
+
+- The public directory shows a summary card with company, role, year, outcome,
+  round count, and a shortened candidate name.
+- Full writeups, contact details, email addresses, and raw source text are
+  available only to signed-in users.
+- Authors can edit or delete their own record. Anyone can use the contact form
+  to request a removal or correction.
+- Experience pages include Open Graph previews for sharing.
 
 ---
 
-## 📂 Project Structure
+## Tech stack
+
+| Layer | Tools |
+| --- | --- |
+| Web | Next.js 15 (App Router), React 19, TypeScript |
+| Styling | Tailwind CSS 3, Geist Sans and Geist Mono, Lucide icons |
+| Data | MongoDB Atlas, Zod validation |
+| Auth | NextAuth v4 with Google OAuth |
+| PDF text | `unpdf`, optional `pdftotext`, `pypdf`, Tesseract OCR |
+| Extraction | Groq by default, with Cohere, NVIDIA NIM, OpenRouter, and local Ollama fallbacks |
+| Hosting | Vercel |
+
+---
+
+## Project structure
 
 ```text
 0xTrace/
 ├── apps/
-│   ├── api/                          # FastAPI Python backend (PDF parsing, OCR)
-│   └── web/                          # Next.js 14 frontend web application
-├── data/
-│   ├── canonical/                    # Legacy JSON dataset backups
-│   ├── audits/                       # Semantic audits & schema validation reports
-│   └── schema/                       # JSON Schema definition
-└── scripts/                          # Seeding (seed-mongodb.mjs) and testing scripts
+│   ├── api/        # Optional Python PDF text parser with OCR support
+│   └── web/        # Next.js web application
+├── docs/           # Extraction pipeline notes
+├── scripts/        # Seed and test helpers
+└── data/           # Local dataset and schema (not committed)
 ```
 
 ---
 
-## 🎨 Design System
+## Getting started
 
-0xTrace uses a custom **Graphite & Signal** palette with Neo-brutalist elements:
-- **Graphite Backgrounds**: Deep obsidian (`ox-void`), elevated surfaces (`ox-surface`).
-- **Signal Accents**: Electric blue (`ox-accent`), Emerald green for success (`ox-signal-pass`), Vibrant red for rejections (`ox-signal-fail`), and Amber for warnings (`ox-signal-warn`).
-- **Tactile UI**: Hard borders (`border-ox-edge`) and Neo-brutalist offset shadows (`shadow-neo`) for interactive elements.
+### Requirements
 
----
+- Node.js 20 or newer
+- A MongoDB Atlas cluster
+- A Google OAuth client
+- An LLM API key for PDF extraction (manual contributions work without one)
 
-## 🚀 Getting Started
+### 1. Install dependencies
 
-### 1. Web Application (Next.js)
-
-Navigate to the web app directory and install dependencies:
 ```bash
 cd apps/web
 npm install
 ```
 
-Set up your environment variables. Create an `apps/web/.env.local` file:
+### 2. Configure the web app
+
+Create `apps/web/.env.local`:
+
 ```env
-GROQ_API_KEY=your_groq_api_key
-GROQ_MODEL=llama-3.3-70b-versatile
 MONGODB_URI=mongodb+srv://...
-ADMIN_PASSWORD=your_admin_password
+MONGODB_DB=0xtrace
+
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=replace-with-a-long-random-string
+
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+
+GROQ_API_KEY=...
+GROQ_MODEL=openai/gpt-oss-120b
 EXTRACTION_HOURLY_LIMIT=5
 ```
 
-Run the development server:
-```bash
-npm run dev
-# Server runs on http://localhost:3000
+Add the Google OAuth redirect URI:
+
+```text
+http://localhost:3000/api/auth/callback/google
 ```
 
-### 2. PDF Extraction API (FastAPI) - *Optional*
+Optional provider keys are tried in order after Groq:
 
-The Python backend is primarily used for parsing raw text/OCR from PDFs before passing it to the Next.js app for LLM extraction.
+```env
+COHERE_API_KEY=...
+NVIDIA_API_KEY=...
+OPENROUTER_API_KEY=...
+
+# Local model, opt-in only
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=...
+```
+
+### 3. Run the app
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+### 4. Optional: Python PDF parser
+
+The web app falls back to `pdftotext` and `unpdf`, so this service is not
+required. Install it when you want the layout-aware parser and OCR path.
 
 ```bash
 cd apps/api
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-Create an `apps/api/.env` file:
-```env
-MAX_PDF_BYTES=20971520
-```
-
-Start the API:
-```bash
 uvicorn app.main:app --reload --port 8000
-# API runs on http://localhost:8000
+```
+
+For OCR, install `poppler` and `tesseract`. The web app also accepts a custom
+Python path through `PDF_PYTHON`.
+
+---
+
+## Access model
+
+| Area | Who can open it |
+| --- | --- |
+| Home, directory, about, privacy, terms, contact | Everyone |
+| Experience details, question bank, analytics | Signed-in college accounts |
+| Contribute, upload, my experiences | Signed-in college accounts |
+
+Sign-in is limited to `@psgitech.ac.in` Google accounts.
+
+---
+
+## Data
+
+MongoDB Atlas is the primary store. It holds the published experiences,
+temporary extraction usage counters, and removal or correction requests. The
+application validates structured records with Zod before writing them.
+
+If you have a canonical JSON export, the seed helper can load it into MongoDB:
+
+```bash
+MONGODB_URI="mongodb+srv://..." node scripts/seed-mongodb.mjs
+```
+
+The local `data/` directory is excluded from version control because it contains
+real candidate writeups and personal details.
+
+---
+
+## Checks
+
+```bash
+cd apps/web
+npm run typecheck
+npm run build
 ```
 
 ---
 
-## 📊 Data Architecture
+## Documentation
 
-0xTrace currently uses a flat-file JSON architecture to store canonical data. 
-- **Location**: `data/canonical/interview_experiences_v1.3.json`
-- **Integrity**: The dataset is fully validated against `data/schema/schema.json`.
-- **Scale**: Currently holds 120+ experiences, 470+ rounds, and 490+ questions. Ingestion scripts automatically back up the previous state before atomically writing new entries.
+- [Extraction pipeline](docs/extraction-pipeline.md) — how a PDF becomes a
+  structured, reviewable experience.
+- [Python parser](apps/api/README.md) — the optional PDF text service.
 
 ---
 
-## 📜 License
+## Feedback and contributions
 
-Private Repository. All rights reserved.
+Found a bug, spotted an incorrect record, or have an idea for the archive? Open
+an issue on GitHub:
+
+[https://github.com/MANOJ-80/0xTrace/issues/new/choose](https://github.com/MANOJ-80/0xTrace/issues/new/choose)
+
+You can also use the contact form on the live site to request a removal or
+correction.

@@ -345,6 +345,10 @@ export default function AdminDashboardClient() {
         </div>
         <div className="admin-page-actions">
           <nav className="admin-page-nav" aria-label="Admin tools">
+            <Link href="/admin/users" className="admin-nav-link">
+              <Users className="h-4 w-4" />
+              People
+            </Link>
             <Link href="/admin/activity" className="admin-nav-link">
               <Activity className="h-4 w-4" />
               Activity

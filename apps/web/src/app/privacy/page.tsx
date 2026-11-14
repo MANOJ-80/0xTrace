@@ -41,6 +41,11 @@ export default function PrivacyPage() {
         <ul>
           <li>Your Google name, email address, and profile image.</li>
           <li>
+            Account activity: when you first signed in, when you last signed in,
+            and how many times you have signed in. Administrators can see this
+            alongside your name and email.
+          </li>
+          <li>
             The interview experience you submit: company, role, timeline, rounds,
             questions, outcome, and any advice you choose to add.
           </li>
@@ -86,6 +91,10 @@ export default function PrivacyPage() {
           Records stay in the archive until you delete them or ask us to remove them.
           Deleting your record removes it from the live database. Backup copies may
           persist for a short period before they are overwritten.
+        </p>
+        <p>
+          Account activity stays while your account exists. You can ask us to remove
+          it through the <Link href="/contact">contact page</Link>.
         </p>
       </section>
 
